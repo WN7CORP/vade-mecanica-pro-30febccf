@@ -33,13 +33,13 @@ const ArticleContent = ({
   };
 
   return (
-    <div className="relative">
+    <div className="relative mt-8 mb-12">
       {renderContent()}
       
-      <div className="absolute left-0 bottom-0 flex flex-col space-y-2">
+      <div className="fixed right-4 bottom-24 flex flex-col space-y-2 z-10">
         <button 
           onClick={onIncreaseFontSize}
-          className="p-2 neomorph-sm text-gray-300 hover:text-primary-300"
+          className="p-2 neomorph-sm text-primary-300 hover:text-primary"
           aria-label="Aumentar fonte"
         >
           <ZoomIn size={18} />
@@ -47,7 +47,7 @@ const ArticleContent = ({
         
         <button 
           onClick={onDecreaseFontSize}
-          className="p-2 neomorph-sm text-gray-300 hover:text-primary-300"
+          className="p-2 neomorph-sm text-primary-300 hover:text-primary"
           aria-label="Diminuir fonte"
         >
           <ZoomOut size={18} />
@@ -56,7 +56,7 @@ const ArticleContent = ({
       
       <button 
         onClick={onScrollToTop}
-        className="absolute right-0 top-0 p-2 neomorph-sm text-gray-300 hover:text-primary-300"
+        className="fixed right-4 bottom-64 p-2 neomorph-sm text-primary-300 hover:text-primary z-10"
         aria-label="Voltar ao topo"
       >
         <ChevronUp size={18} />

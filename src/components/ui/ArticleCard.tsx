@@ -6,6 +6,7 @@ import ArticleContent from "./article/ArticleContent";
 import CopyToast from "./article/CopyToast";
 import VoiceNarration from "./VoiceNarration";
 import ArticleInteractions from "./ArticleInteractions";
+import ArticleNotes from "./ArticleNotes";
 
 interface ArticleCardProps {
   articleNumber: string;
@@ -27,6 +28,7 @@ const ArticleCard = ({
   const [showHighlightTools, setShowHighlightTools] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [showCopyToast, setShowCopyToast] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   
   const copyArticle = () => {
     const textToCopy = `Art. ${articleNumber}. ${content}`;
@@ -53,9 +55,7 @@ const ArticleCard = ({
   };
 
   const handleComment = () => {
-    if (onAskQuestion) {
-      onAskQuestion();
-    }
+    setShowNotes(true);
   };
 
   return (
@@ -101,6 +101,14 @@ const ArticleCard = ({
         isActive={isReading}
         onComplete={() => setIsReading(false)}
         onStop={() => setIsReading(false)}
+      />
+
+      <ArticleNotes
+        isOpen={showNotes}
+        onClose={() => setShowNotes(false)}
+        articleNumber={articleNumber}
+        articleContent={content}
+        lawName={lawName}
       />
     </div>
   );
