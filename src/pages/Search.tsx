@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -117,7 +116,7 @@ const Search = () => {
     setSelectedLaw(lawName);
   };
   
-  const handleExplainArticle = async (result: SearchResult) => {
+  const handleExplainArticle = async (result: SearchResult, type: 'technical' | 'formal' = 'technical') => {
     if (!result.article) return;
     
     setSelectedArticle(result);
@@ -128,7 +127,8 @@ const Search = () => {
       const aiExplanation = await generateArticleExplanation(
         result.article,
         result.content,
-        result.lawName
+        result.lawName,
+        type
       );
       
       setExplanation(aiExplanation);
@@ -205,7 +205,7 @@ const Search = () => {
                   articleNumber={result.article}
                   content={result.content}
                   lawName={result.lawName}
-                  onExplainRequest={() => handleExplainArticle(result)}
+                  onExplainRequest={(type) => handleExplainArticle(result, type)}
                   onAskQuestion={() => handleAskQuestion(result)}
                 />
               ))}

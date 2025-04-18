@@ -28,13 +28,11 @@ const LawView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
   
-  // Estados para explicação da IA
   const [showExplanation, setShowExplanation] = useState(false);
   const [explanation, setExplanation] = useState<AIExplanationType | null>(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   
-  // Estado para o chat de IA
   const [showChat, setShowChat] = useState(false);
   
   useEffect(() => {
@@ -129,7 +127,6 @@ const LawView = () => {
       <Header />
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
-        {/* Cabeçalho com nome da lei */}
         <div className="flex items-center mb-6">
           <button
             onClick={() => navigate("/leis")}
@@ -144,7 +141,6 @@ const LawView = () => {
           </h1>
         </div>
         
-        {/* Barra de pesquisa */}
         <div className="mb-6">
           <SearchBar 
             onSearch={handleSearch} 
@@ -153,7 +149,6 @@ const LawView = () => {
           />
         </div>
         
-        {/* Lista de artigos */}
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 text-primary-300 animate-spin" />
@@ -187,7 +182,6 @@ const LawView = () => {
               />
             )}
             
-            {/* Exibir o chat quando solicitado */}
             {showChat && selectedArticle && lawName && (
               <AIChat
                 articleNumber={selectedArticle.article}
@@ -197,7 +191,6 @@ const LawView = () => {
               />
             )}
             
-            {/* Botão de exportar PDF somente quando houver uma explicação carregada */}
             {showExplanation && !loadingExplanation && selectedArticle && explanation && (
               <div className="mt-4 flex justify-end">
                 <PDFExporter
@@ -212,7 +205,6 @@ const LawView = () => {
         )}
       </main>
       
-      {/* Botão de volta ao topo */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}

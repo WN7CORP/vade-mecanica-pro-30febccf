@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { 
   Copy, 
@@ -161,7 +162,7 @@ const ArticleCard = ({
           </button>
           
           <button 
-            onClick={onExplainRequest}
+            onClick={() => onExplainRequest && onExplainRequest('technical')}
             className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-200"
             aria-label="Explicar artigo"
           >
