@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -83,8 +82,8 @@ const LawView = () => {
     
     setFilteredArticles(filtered);
   };
-  
-  const handleExplainArticle = async (article: Article) => {
+
+  const handleExplainArticle = async (article: Article, type: 'technical' | 'formal') => {
     if (!article.article || !lawName) return;
     
     setSelectedArticle(article);
@@ -95,7 +94,8 @@ const LawView = () => {
       const aiExplanation = await generateArticleExplanation(
         article.article,
         article.content,
-        decodeURIComponent(lawName)
+        decodeURIComponent(lawName),
+        type
       );
       
       setExplanation(aiExplanation);
@@ -172,7 +172,7 @@ const LawView = () => {
                 articleNumber={article.article}
                 content={article.content}
                 lawName={lawName ? decodeURIComponent(lawName) : ""}
-                onExplainRequest={() => handleExplainArticle(article)}
+                onExplainRequest={(type) => handleExplainArticle(article, type)}
                 onAskQuestion={() => handleAskQuestion(article)}
               />
             ))}

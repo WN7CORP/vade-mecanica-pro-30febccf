@@ -1,9 +1,7 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Obtenha sua API key em https://makersuite.google.com/app/apikey
-// Esta é uma chave de demonstração e deve ser substituída por uma chave válida
-const API_KEY = "YOUR_GEMINI_API_KEY"; // Substituir por uma chave válida
+const API_KEY = "YOUR_GEMINI_API_KEY"; // Replace with your API key
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
@@ -17,11 +15,14 @@ export interface AIExplanation {
 export const generateArticleExplanation = async (
   articleNumber: string,
   articleContent: string,
-  lawName: string
+  lawName: string,
+  type: 'technical' | 'formal' = 'technical'
 ): Promise<AIExplanation> => {
   try {
     const prompt = `
-      Explique o seguinte artigo jurídico de forma detalhada e com linguagem acessível, mantendo o equilíbrio entre termos técnicos e clareza:
+      ${type === 'technical' 
+        ? 'Explique o seguinte artigo jurídico de forma técnica e detalhada, mantendo a linguagem formal e os termos técnicos apropriados:'
+        : 'Explique o seguinte artigo jurídico de forma clara e acessível, usando linguagem simples e exemplos práticos:'}
       
       Lei: ${lawName}
       Artigo ${articleNumber}: ${articleContent}

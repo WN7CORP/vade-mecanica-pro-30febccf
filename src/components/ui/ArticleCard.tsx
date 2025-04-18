@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Copy, 
@@ -17,12 +16,14 @@ import {
   Check
 } from "lucide-react";
 import VoiceNarration from "./VoiceNarration";
+import ArticleInteractions from "./ArticleInteractions";
+import { toast } from "@/hooks/use-toast";
 
 interface ArticleCardProps {
   articleNumber: string;
   content: string;
   lawName: string;
-  onExplainRequest?: () => void;
+  onExplainRequest?: (type: 'technical' | 'formal') => void;
   onAskQuestion?: () => void;
 }
 
@@ -109,6 +110,18 @@ const ArticleCard = ({
     ));
   };
 
+  const handleExplain = (type: 'technical' | 'formal') => {
+    if (onExplainRequest) {
+      onExplainRequest(type);
+    }
+  };
+
+  const handleComment = () => {
+    if (onAskQuestion) {
+      onAskQuestion();
+    }
+  };
+
   return (
     <div className="card-article mb-6">
       {/* Toast de cópia bem-sucedida */}
@@ -188,7 +201,7 @@ const ArticleCard = ({
         {/* Botão flutuante de aumentar fonte */}
         <div className="absolute left-0 bottom-0 flex flex-col space-y-2">
           <button 
-            onClick={increaseFontSize}
+            onClick={() => setFontSize(prev => Math.min(prev + 2, 24))}
             className="p-2 neomorph-sm text-gray-300 hover:text-primary-300"
             aria-label="Aumentar fonte"
           >
@@ -196,7 +209,7 @@ const ArticleCard = ({
           </button>
           
           <button 
-            onClick={decreaseFontSize}
+            onClick={() => setFontSize(prev => Math.max(prev - 2, 14))}
             className="p-2 neomorph-sm text-gray-300 hover:text-primary-300"
             aria-label="Diminuir fonte"
           >
@@ -206,7 +219,7 @@ const ArticleCard = ({
         
         {/* Botão flutuante de volta ao topo */}
         <button 
-          onClick={scrollToTop}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           className="absolute right-0 top-0 p-2 neomorph-sm text-gray-300 hover:text-primary-300"
           aria-label="Voltar ao topo"
         >
@@ -214,45 +227,21 @@ const ArticleCard = ({
         </button>
       </div>
       
-      {/* Barra de ações inferior */}
-      <div className="flex justify-between items-center mt-6">
-        <div>
-          {isReading ? (
-            <button 
-              onClick={stopReading}
-              className="shadow-button text-primary-200"
-            >
-              <Pause size={16} className="mr-1" />
-              Pausar narração
-            </button>
-          ) : (
-            <button 
-              onClick={startReading}
-              className="shadow-button text-gray-300 hover:text-primary-200"
-            >
-              <Volume2 size={16} className="mr-1" />
-              Narrar
-            </button>
-          )}
-        </div>
-        
-        <div>
-          <button 
-            onClick={onAskQuestion}
-            className="shadow-button text-gray-300 hover:text-primary-200"
-          >
-            <HelpCircle size={16} className="mr-1" />
-            Dúvida
-          </button>
-        </div>
-      </div>
+      {/* Article interactions */}
+      <ArticleInteractions 
+        articleNumber={articleNumber}
+        content={content}
+        onExplain={handleExplain}
+        onAddComment={handleComment}
+        onStartNarration={startReading}
+      />
       
-      {/* Componente de narração por voz */}
+      {/* Voice narration component */}
       <VoiceNarration
         text={content}
         isActive={isReading}
-        onComplete={stopReading}
-        onStop={stopReading}
+        onComplete={() => setIsReading(false)}
+        onStop={() => setIsReading(false)}
       />
     </div>
   );
