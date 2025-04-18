@@ -33,6 +33,7 @@ const LawView = () => {
     explanation,
     loadingExplanation,
     selectedArticle,
+    setSelectedArticle,
     handleExplainArticle
   } = useAIExplanation(lawName);
   

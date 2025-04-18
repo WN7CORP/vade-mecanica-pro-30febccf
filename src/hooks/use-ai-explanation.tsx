@@ -42,6 +42,7 @@ export const useAIExplanation = (lawName: string | undefined) => {
     explanation,
     loadingExplanation,
     selectedArticle,
+    setSelectedArticle,
     handleExplainArticle
   };
 };
