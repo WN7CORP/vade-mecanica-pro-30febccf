@@ -1,5 +1,5 @@
 
-import { ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut, ChevronUp } from "lucide-react";
 
 interface ArticleContentProps {
   content: string;
@@ -7,6 +7,7 @@ interface ArticleContentProps {
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
   articleNumber?: string;
+  onScrollToTop?: () => void;
 }
 
 const ArticleContent = ({
@@ -14,7 +15,8 @@ const ArticleContent = ({
   fontSize,
   onIncreaseFontSize,
   onDecreaseFontSize,
-  articleNumber
+  articleNumber,
+  onScrollToTop
 }: ArticleContentProps) => {
   const renderContent = () => {
     return content.split('\n').map((line, i) => {
@@ -56,6 +58,16 @@ const ArticleContent = ({
           <ZoomOut size={18} />
         </button>
       </div>
+      
+      {onScrollToTop && (
+        <button
+          onClick={onScrollToTop}
+          className="fixed bottom-20 right-4 p-3 neomorph-sm text-primary-300 z-10 hover:scale-105 transition-all animate-fade-in"
+          aria-label="Voltar ao topo"
+        >
+          <ChevronUp size={20} />
+        </button>
+      )}
     </div>
   );
 };

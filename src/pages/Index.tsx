@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
-import { Book, Search, Scale, BookOpen } from "lucide-react";
+import { Book, Search, Scale, BookOpen, Bookmark, ScrollText } from "lucide-react";
 import { fetchAvailableSheets } from "@/services/sheetsApi";
 
 const Index = () => {
