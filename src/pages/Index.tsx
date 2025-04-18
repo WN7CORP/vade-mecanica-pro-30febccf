@@ -64,7 +64,7 @@ const Index = () => {
           <div className="grid grid-cols-2 gap-4">
             <button 
               onClick={() => navigate("/pesquisa")}
-              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32"
+              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
             >
               <Search size={28} className="text-primary-300 mb-3" />
               <span className="text-gray-300 font-medium">Pesquisar</span>
@@ -74,8 +74,30 @@ const Index = () => {
             </button>
             
             <button 
+              onClick={() => navigate("/favoritos")}
+              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+            >
+              <Bookmark size={28} className="text-primary-300 mb-3" />
+              <span className="text-gray-300 font-medium">Favoritos</span>
+              <span className="text-xs text-gray-400 mt-1">
+                Artigos salvos
+              </span>
+            </button>
+
+            <button 
+              onClick={() => navigate("/anotacoes")}
+              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+            >
+              <ScrollText size={28} className="text-primary-300 mb-3" />
+              <span className="text-gray-300 font-medium">Anotações</span>
+              <span className="text-xs text-gray-400 mt-1">
+                Suas anotações e estudos
+              </span>
+            </button>
+            
+            <button 
               onClick={() => navigate("/leis")}
-              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32"
+              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
             >
               <BookOpen size={28} className="text-primary-300 mb-3" />
               <span className="text-gray-300 font-medium">Ver Tudo</span>

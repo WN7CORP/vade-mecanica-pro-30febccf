@@ -1,6 +1,6 @@
 
 import { Button } from "./button";
-import { BookOpen, MessageSquare, Copy, Volume2, BookmarkPlus, School } from "lucide-react";
+import { BookOpen, Bookmark, Copy, Volume2, ScrollText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
@@ -10,6 +10,8 @@ interface ArticleInteractionsProps {
   onExplain: (type: 'technical' | 'formal') => void;
   onAddComment: () => void;
   onStartNarration: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 const ArticleInteractions = ({
@@ -18,6 +20,8 @@ const ArticleInteractions = ({
   onExplain,
   onAddComment,
   onStartNarration,
+  isFavorite = false,
+  onToggleFavorite
 }: ArticleInteractionsProps) => {
   const [showExplainOptions, setShowExplainOptions] = useState(false);
 
@@ -36,30 +40,30 @@ const ArticleInteractions = ({
           variant="outline"
           size="sm"
           onClick={() => setShowExplainOptions(!showExplainOptions)}
-          className="flex items-center gap-2 bg-primary/10 text-primary-300 hover:text-primary hover:bg-primary/20 font-medium"
+          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
         >
           <BookOpen size={16} />
           Explicar
         </Button>
         
         {showExplainOptions && (
-          <div className="absolute bottom-full mb-2 left-0 z-10 w-48 neomorph p-2 rounded-md bg-background/95 backdrop-blur">
+          <div className="absolute bottom-full mb-2 left-0 z-10 w-48 neomorph p-2 rounded-md bg-background/95 backdrop-blur animate-fade-in">
             <Button
               variant="ghost"
               size="sm"
-              className="w-full mb-1 justify-start text-primary-300"
+              className="w-full mb-1 justify-start text-primary hover:text-primary-foreground"
               onClick={() => {
                 onExplain('technical');
                 setShowExplainOptions(false);
               }}
             >
-              <School size={16} className="mr-2" />
+              <BookOpen size={16} className="mr-2" />
               Explicação Técnica
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-primary-300"
+              className="w-full justify-start text-primary hover:text-primary-foreground"
               onClick={() => {
                 onExplain('formal');
                 setShowExplainOptions(false);
@@ -76,17 +80,17 @@ const ArticleInteractions = ({
         variant="outline"
         size="sm"
         onClick={onAddComment}
-        className="flex items-center gap-2 bg-primary/10 text-primary-300 hover:text-primary hover:bg-primary/20 font-medium"
+        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
       >
-        <MessageSquare size={16} />
-        Comentar
+        <ScrollText size={16} />
+        Anotações
       </Button>
 
       <Button
         variant="outline"
         size="sm"
         onClick={copyArticle}
-        className="flex items-center gap-2 bg-primary/10 text-primary-300 hover:text-primary hover:bg-primary/20 font-medium"
+        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
       >
         <Copy size={16} />
         Copiar
@@ -96,20 +100,27 @@ const ArticleInteractions = ({
         variant="outline"
         size="sm"
         onClick={onStartNarration}
-        className="flex items-center gap-2 bg-primary/10 text-primary-300 hover:text-primary hover:bg-primary/20 font-medium"
+        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
       >
         <Volume2 size={16} />
         Narrar
       </Button>
 
-      <Button
-        variant="outline"
-        size="sm"
-        className="flex items-center gap-2 bg-primary/10 text-primary-300 hover:text-primary hover:bg-primary/20 font-medium"
-      >
-        <BookmarkPlus size={16} />
-        Favoritar
-      </Button>
+      {onToggleFavorite && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onToggleFavorite}
+          className={`flex items-center gap-2 ${
+            isFavorite 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary"
+          } font-medium transition-all duration-300`}
+        >
+          <Bookmark size={16} className={isFavorite ? "fill-current" : ""} />
+          {isFavorite ? "Favoritado" : "Favoritar"}
+        </Button>
+      )}
     </div>
   );
 };

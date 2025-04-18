@@ -9,6 +9,8 @@ import AllLaws from "./pages/AllLaws";
 import LawView from "./pages/LawView";
 import AIChat from "./pages/AIChat";
 import NotFound from "./pages/NotFound";
+import Favorites from "./pages/Favorites";
+import Notes from "./pages/Notes";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/leis" element={<AllLaws />} />
           <Route path="/lei/:lawName" element={<LawView />} />
           <Route path="/duvidas" element={<AIChat />} />
+          <Route path="/favoritos" element={<Favorites />} />
+          <Route path="/anotacoes" element={<Notes />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
