@@ -1,18 +1,14 @@
+
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
-import ArticleCard from "@/components/ui/ArticleCard";
-import AIExplanation from "@/components/ui/AIExplanation";
-import AIChat from "@/components/ui/AIChat";
-import PDFExporter from "@/components/ui/PDFExporter";
-import { ArrowLeft, Loader2, BookOpen, ChevronUp } from "lucide-react";
-import { fetchSheetData } from "@/services/sheetsApi";
-import { 
-  generateArticleExplanation, 
-  AIExplanation as AIExplanationType 
-} from "@/services/aiService";
+import { ChevronUp } from "lucide-react";
+import LawHeader from "@/components/law/LawHeader";
+import ArticleList from "@/components/law/ArticleList";
+import { useLawArticles } from "@/hooks/use-law-articles";
+import { useAIExplanation } from "@/hooks/use-ai-explanation";
 
 interface Article {
   article: string;
@@ -21,19 +17,24 @@ interface Article {
 
 const LawView = () => {
   const { lawName } = useParams<{ lawName: string }>();
-  const navigate = useNavigate();
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
-  
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [explanation, setExplanation] = useState<AIExplanationType | null>(null);
-  const [loadingExplanation, setLoadingExplanation] = useState(false);
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  
   const [showChat, setShowChat] = useState(false);
+  
+  const {
+    filteredArticles,
+    isLoading,
+    searchTerm,
+    handleSearch
+  } = useLawArticles(lawName);
+
+  const {
+    showExplanation,
+    setShowExplanation,
+    explanation,
+    loadingExplanation,
+    selectedArticle,
+    handleExplainArticle
+  } = useAIExplanation(lawName);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -43,76 +44,12 @@ const LawView = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
-  useEffect(() => {
-    const loadArticles = async () => {
-      if (!lawName) return;
-      
-      try {
-        setIsLoading(true);
-        const decodedLawName = decodeURIComponent(lawName);
-        const data = await fetchSheetData(decodedLawName);
-        
-        setArticles(data);
-        setFilteredArticles(data);
-      } catch (error) {
-        console.error("Erro ao carregar artigos:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadArticles();
-  }, [lawName]);
-  
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    
-    if (!term) {
-      setFilteredArticles(articles);
-      return;
-    }
-    
-    const filtered = articles.filter(article => 
-      (article.article && article.article.toLowerCase().includes(term.toLowerCase())) ||
-      (article.content && article.content.toLowerCase().includes(term.toLowerCase()))
-    );
-    
-    setFilteredArticles(filtered);
-  };
 
-  const handleExplainArticle = async (article: Article, type: 'technical' | 'formal') => {
-    if (!article.article || !lawName) return;
-    
-    setSelectedArticle(article);
-    setShowExplanation(true);
-    setLoadingExplanation(true);
-    
-    try {
-      const aiExplanation = await generateArticleExplanation(
-        article.article,
-        article.content,
-        decodeURIComponent(lawName),
-        type
-      );
-      
-      setExplanation(aiExplanation);
-    } catch (error) {
-      console.error("Erro ao gerar explicação:", error);
-    } finally {
-      setLoadingExplanation(false);
-    }
-  };
-  
   const handleAskQuestion = (article: Article) => {
     if (!lawName) return;
     
     setSelectedArticle(article);
     setShowChat(true);
-  };
-  
-  const closeChat = () => {
-    setShowChat(false);
   };
   
   const scrollToTop = () => {
@@ -127,19 +64,7 @@ const LawView = () => {
       <Header />
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
-        <div className="flex items-center mb-6">
-          <button
-            onClick={() => navigate("/leis")}
-            className="p-2 neomorph-sm mr-3"
-            aria-label="Voltar"
-          >
-            <ArrowLeft size={18} className="text-primary-300" />
-          </button>
-          
-          <h1 className="text-xl font-heading font-semibold text-primary-300 line-clamp-1">
-            {lawName ? decodeURIComponent(lawName) : "Legislação"}
-          </h1>
-        </div>
+        <LawHeader lawName={lawName} />
         
         <div className="mb-6">
           <SearchBar 
@@ -149,60 +74,21 @@ const LawView = () => {
           />
         </div>
         
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 text-primary-300 animate-spin" />
-          </div>
-        ) : filteredArticles.length === 0 ? (
-          <div className="text-center py-8 neomorph">
-            <p className="text-gray-400">
-              Nenhum artigo encontrado com o termo "{searchTerm}".
-            </p>
-          </div>
-        ) : (
-          <div>
-            {filteredArticles.map((article, index) => (
-              <ArticleCard
-                key={index}
-                articleNumber={article.article}
-                content={article.content}
-                lawName={lawName ? decodeURIComponent(lawName) : ""}
-                onExplainRequest={(type) => handleExplainArticle(article, type)}
-                onAskQuestion={() => handleAskQuestion(article)}
-              />
-            ))}
-            
-            {showExplanation && selectedArticle && (
-              <AIExplanation
-                explanation={explanation}
-                isLoading={loadingExplanation}
-                articleNumber={selectedArticle.article}
-                lawName={lawName ? decodeURIComponent(lawName) : ""}
-                onClose={() => setShowExplanation(false)}
-              />
-            )}
-            
-            {showChat && selectedArticle && lawName && (
-              <AIChat
-                articleNumber={selectedArticle.article}
-                articleContent={selectedArticle.content}
-                lawName={decodeURIComponent(lawName)}
-                onClose={closeChat}
-              />
-            )}
-            
-            {showExplanation && !loadingExplanation && selectedArticle && explanation && (
-              <div className="mt-4 flex justify-end">
-                <PDFExporter
-                  articleNumber={selectedArticle.article}
-                  articleContent={selectedArticle.content}
-                  lawName={lawName ? decodeURIComponent(lawName) : ""}
-                  explanation={explanation}
-                />
-              </div>
-            )}
-          </div>
-        )}
+        <ArticleList
+          isLoading={isLoading}
+          searchTerm={searchTerm}
+          filteredArticles={filteredArticles}
+          lawName={lawName}
+          showExplanation={showExplanation}
+          explanation={explanation}
+          loadingExplanation={loadingExplanation}
+          selectedArticle={selectedArticle}
+          showChat={showChat}
+          onExplainArticle={handleExplainArticle}
+          onAskQuestion={handleAskQuestion}
+          onCloseChat={() => setShowChat(false)}
+          onCloseExplanation={() => setShowExplanation(false)}
+        />
       </main>
       
       {showScrollTop && (
