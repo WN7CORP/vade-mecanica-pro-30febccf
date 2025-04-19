@@ -9,7 +9,11 @@ import LawHeader from "@/components/law/LawHeader";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
-import { Article } from "@/services/lawService";
+
+interface Article {
+  article: string;
+  content: string;
+}
 
 const LawView = () => {
   const { lawName } = useParams<{ lawName: string }>();

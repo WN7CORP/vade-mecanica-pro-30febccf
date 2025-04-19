@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
 import { BookOpen, ChevronRight, Grid, List, Loader2 } from "lucide-react";
-import { fetchAvailableLaws } from "@/services/lawService";
+import { fetchAvailableSheets } from "@/services/sheetsApi";
 
 type ViewMode = "grid" | "list";
 
@@ -20,21 +21,11 @@ const AllLaws = () => {
     const loadLaws = async () => {
       try {
         setIsLoading(true);
-        const availableLaws = await fetchAvailableLaws();
-        
-        // If we get empty results, use at least one fallback item
-        const lawsList = availableLaws.length > 0 
-          ? availableLaws 
-          : ['Constituição Federal'];
-          
-        setLaws(lawsList);
-        setFilteredLaws(lawsList);
+        const availableLaws = await fetchAvailableSheets();
+        setLaws(availableLaws);
+        setFilteredLaws(availableLaws);
       } catch (error) {
         console.error("Erro ao carregar leis:", error);
-        // Even on error, provide a fallback
-        const fallback = ['Constituição Federal'];
-        setLaws(fallback);
-        setFilteredLaws(fallback);
       } finally {
         setIsLoading(false);
       }
@@ -59,12 +50,7 @@ const AllLaws = () => {
   };
   
   const navigateToLaw = (lawName: string) => {
-    // Convert display name back to table name format for the URL
-    const tableName = lawName
-      .toLowerCase()
-      .replace(/ /g, '_');
-    
-    navigate(`/lei/${encodeURIComponent(tableName)}`);
+    navigate(`/lei/${encodeURIComponent(lawName)}`);
   };
   
   const toggleViewMode = () => {

@@ -11,7 +11,6 @@ import ArticleNotes from "./ArticleNotes";
 interface ArticleCardProps {
   articleNumber: string;
   content: string;
-  example?: string;
   lawName: string;
   onExplainRequest?: (type: 'technical' | 'formal') => void;
   onAskQuestion?: () => void;
@@ -20,7 +19,6 @@ interface ArticleCardProps {
 const ArticleCard = ({
   articleNumber,
   content,
-  example,
   lawName,
   onExplainRequest,
   onAskQuestion
@@ -83,7 +81,6 @@ const ArticleCard = ({
       
       <ArticleContent
         content={content}
-        example={example}
         fontSize={fontSize}
         onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
         onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}

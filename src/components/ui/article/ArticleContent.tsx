@@ -8,7 +8,6 @@ interface ArticleContentProps {
   onDecreaseFontSize: () => void;
   articleNumber?: string;
   onScrollToTop?: () => void;
-  example?: string;
 }
 
 const ArticleContent = ({
@@ -17,8 +16,7 @@ const ArticleContent = ({
   onIncreaseFontSize,
   onDecreaseFontSize,
   articleNumber,
-  onScrollToTop,
-  example
+  onScrollToTop
 }: ArticleContentProps) => {
   const renderContent = () => {
     return content.split('\n').map((line, i) => {
@@ -42,15 +40,6 @@ const ArticleContent = ({
   return (
     <div className="relative mt-8 mb-12 animate-fade-in">
       {renderContent()}
-      
-      {example && (
-        <div className="mt-6 p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded">
-          <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
-          <p className="text-gray-600 whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
-            {example}
-          </p>
-        </div>
-      )}
       
       <div className="fixed left-4 bottom-24 flex flex-col space-y-2 z-10">
         <button 

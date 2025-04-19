@@ -1,7 +1,11 @@
 
 import { useState } from "react";
 import { generateArticleExplanation, AIExplanation as AIExplanationType } from "@/services/aiService";
-import { Article } from "@/services/lawService";
+
+interface Article {
+  article: string;
+  content: string;
+}
 
 export const useAIExplanation = (lawName: string | undefined) => {
   const [showExplanation, setShowExplanation] = useState(false);
@@ -10,7 +14,7 @@ export const useAIExplanation = (lawName: string | undefined) => {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
   const handleExplainArticle = async (article: Article, type: 'technical' | 'formal') => {
-    if (!article.numero || !lawName) return;
+    if (!article.article || !lawName) return;
     
     setSelectedArticle(article);
     setShowExplanation(true);
@@ -18,8 +22,8 @@ export const useAIExplanation = (lawName: string | undefined) => {
     
     try {
       const aiExplanation = await generateArticleExplanation(
-        article.numero,
-        article.conteudo,
+        article.article,
+        article.content,
         decodeURIComponent(lawName),
         type
       );

@@ -5,7 +5,11 @@ import AIExplanation from "@/components/ui/AIExplanation";
 import AIChat from "@/components/ui/AIChat";
 import PDFExporter from "@/components/ui/PDFExporter";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
-import { Article } from "@/services/lawService";
+
+interface Article {
+  article: string;
+  content: string;
+}
 
 interface ArticleListProps {
   isLoading: boolean;
@@ -61,9 +65,8 @@ const ArticleList = ({
       {filteredArticles.map((article, index) => (
         <ArticleCard
           key={index}
-          articleNumber={article.numero}
-          content={article.conteudo}
-          example={article.exemplo}
+          articleNumber={article.article}
+          content={article.content}
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onExplainRequest={(type) => onExplainArticle(article, type)}
           onAskQuestion={() => onAskQuestion(article)}
@@ -74,7 +77,7 @@ const ArticleList = ({
         <AIExplanation
           explanation={explanation}
           isLoading={loadingExplanation}
-          articleNumber={selectedArticle.numero}
+          articleNumber={selectedArticle.article}
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onClose={onCloseExplanation}
         />
@@ -82,8 +85,8 @@ const ArticleList = ({
       
       {showChat && selectedArticle && lawName && (
         <AIChat
-          articleNumber={selectedArticle.numero}
-          articleContent={selectedArticle.conteudo}
+          articleNumber={selectedArticle.article}
+          articleContent={selectedArticle.content}
           lawName={decodeURIComponent(lawName)}
           onClose={onCloseChat}
         />
@@ -92,8 +95,8 @@ const ArticleList = ({
       {showExplanation && !loadingExplanation && selectedArticle && explanation && (
         <div className="mt-4 flex justify-end">
           <PDFExporter
-            articleNumber={selectedArticle.numero}
-            articleContent={selectedArticle.conteudo}
+            articleNumber={selectedArticle.article}
+            articleContent={selectedArticle.content}
             lawName={lawName ? decodeURIComponent(lawName) : ""}
             explanation={explanation}
           />

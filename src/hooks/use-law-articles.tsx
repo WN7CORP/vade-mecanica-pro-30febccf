@@ -1,6 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { fetchLawArticles, Article } from "@/services/lawService";
+import { fetchSheetData } from "@/services/sheetsApi";
+
+interface Article {
+  article: string;
+  content: string;
+}
 
 export const useLawArticles = (lawName: string | undefined) => {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -15,7 +20,7 @@ export const useLawArticles = (lawName: string | undefined) => {
       try {
         setIsLoading(true);
         const decodedLawName = decodeURIComponent(lawName);
-        const data = await fetchLawArticles(decodedLawName);
+        const data = await fetchSheetData(decodedLawName);
         
         setArticles(data);
         setFilteredArticles(data);
@@ -38,8 +43,8 @@ export const useLawArticles = (lawName: string | undefined) => {
     }
     
     const filtered = articles.filter(article => 
-      (article.numero && article.numero.toLowerCase().includes(term.toLowerCase())) ||
-      (article.conteudo && article.conteudo.toLowerCase().includes(term.toLowerCase()))
+      (article.article && article.article.toLowerCase().includes(term.toLowerCase())) ||
+      (article.content && article.content.toLowerCase().includes(term.toLowerCase()))
     );
     
     setFilteredArticles(filtered);
