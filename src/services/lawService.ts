@@ -57,11 +57,11 @@ export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
       return [];
     }
     
-    // Handle the new table structure - using numero_artigo and texto_artigo as columns
+    // Using a type assertion to tell TypeScript this is a valid table name
     const { data, error } = await supabase
-      .from(tableName)
-      .select('numero_artigo, texto_artigo, exemplo_pratico')
-      .order('numero_artigo');
+      .from(tableName as any)
+      .select('numero, conteudo, exemplo')
+      .order('numero');
 
     if (error) {
       console.error('Error fetching articles:', error);
@@ -69,9 +69,9 @@ export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
     }
 
     return (data || []).map(item => ({
-      numero: item.numero_artigo,
-      conteudo: item.texto_artigo || '',
-      exemplo: item.exemplo_pratico
+      numero: item.numero,
+      conteudo: item.conteudo || '',
+      exemplo: item.exemplo
     }));
   } catch (error) {
     console.error('Error in fetchLawArticles:', error);
@@ -92,9 +92,9 @@ export const searchArticle = async (
     }
     
     const { data, error } = await supabase
-      .from(tableName)
-      .select('numero_artigo, texto_artigo, exemplo_pratico')
-      .eq('numero_artigo', articleNumber)
+      .from(tableName as any)
+      .select('numero, conteudo, exemplo')
+      .eq('numero', articleNumber)
       .single();
 
     if (error) {
@@ -103,9 +103,9 @@ export const searchArticle = async (
     }
 
     return {
-      numero: data.numero_artigo,
-      conteudo: data.texto_artigo || '',
-      exemplo: data.exemplo_pratico
+      numero: data.numero,
+      conteudo: data.conteudo || '',
+      exemplo: data.exemplo
     };
   } catch (error) {
     console.error('Error in searchArticle:', error);
@@ -128,9 +128,9 @@ export const searchByTerm = async (
     const term = searchTerm.toLowerCase();
 
     const { data, error } = await supabase
-      .from(tableName)
-      .select('numero_artigo, texto_artigo, exemplo_pratico')
-      .or(`numero_artigo.ilike.%${term}%,texto_artigo.ilike.%${term}%`);
+      .from(tableName as any)
+      .select('numero, conteudo, exemplo')
+      .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
     if (error) {
       console.error('Error searching by term:', error);
@@ -138,9 +138,9 @@ export const searchByTerm = async (
     }
 
     return (data || []).map(item => ({
-      numero: item.numero_artigo,
-      conteudo: item.texto_artigo || '',
-      exemplo: item.exemplo_pratico
+      numero: item.numero,
+      conteudo: item.conteudo || '',
+      exemplo: item.exemplo
     }));
   } catch (error) {
     console.error('Error in searchByTerm:', error);
