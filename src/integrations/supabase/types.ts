@@ -9,38 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      artigos: {
-        Row: {
-          conteudo: string | null
-          created_at: string | null
-          id: number
-          lei_id: number | null
-          numero: string
-        }
-        Insert: {
-          conteudo?: string | null
-          created_at?: string | null
-          id?: number
-          lei_id?: number | null
-          numero: string
-        }
-        Update: {
-          conteudo?: string | null
-          created_at?: string | null
-          id?: number
-          lei_id?: number | null
-          numero?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "artigos_lei_id_fkey"
-            columns: ["lei_id"]
-            isOneToOne: false
-            referencedRelation: "leis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       codigo_civil: {
         Row: {
           conteudo: string | null
@@ -206,24 +174,6 @@ export type Database = {
           exemplo?: string | null
           id?: number
           numero?: string | null
-        }
-        Relationships: []
-      }
-      leis: {
-        Row: {
-          created_at: string | null
-          id: number
-          nome: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: number
-          nome: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: number
-          nome?: string
         }
         Relationships: []
       }

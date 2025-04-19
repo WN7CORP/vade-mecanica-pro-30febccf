@@ -12,12 +12,17 @@ export const useLawArticles = (lawName: string | undefined) => {
 
   useEffect(() => {
     const loadArticles = async () => {
-      if (!lawName) return;
+      if (!lawName) {
+        console.log("Nome da lei não fornecido");
+        setIsLoading(false);
+        return;
+      }
       
       try {
         setIsLoading(true);
         const decodedLawName = decodeURIComponent(lawName);
         console.log("Carregando artigos para:", decodedLawName);
+        
         const data = await fetchLawArticles(decodedLawName);
         console.log("Artigos carregados:", data.length);
         
@@ -27,9 +32,11 @@ export const useLawArticles = (lawName: string | undefined) => {
         console.error("Erro ao carregar artigos:", error);
         toast({
           title: "Erro",
-          description: "Não foi possível carregar os artigos",
+          description: "Não foi possível carregar os artigos. Verifique se a lei existe no banco de dados.",
           variant: "destructive"
         });
+        setArticles([]);
+        setFilteredArticles([]);
       } finally {
         setIsLoading(false);
       }

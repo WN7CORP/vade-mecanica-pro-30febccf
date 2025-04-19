@@ -14,6 +14,7 @@ export interface LawOption {
   table: string;
 }
 
+// Atualizando para incluir apenas as leis que existem no banco de dados
 export const LAW_OPTIONS: LawOption[] = [
   { display: "Constituição Federal",         table: "constituicao_federal"      },
   { display: "Código Civil",                 table: "codigo_civil"              },
@@ -41,10 +42,13 @@ export const fetchLawArticles = async (
 ): Promise<Article[]> => {
   const tableName = getTableName(lawDisplayName);
   if (!tableName) {
+    console.error(`Lei inválida: "${lawDisplayName}"`);
     throw new Error(`Lei inválida: "${lawDisplayName}"`);
   }
 
-  // Proper TypeScript typing for dynamic table querying
+  console.log(`Buscando artigos da tabela: ${tableName}`);
+  
+  // Using 'as any' for the dynamic table name
   const { data, error } = await supabase
     .from(tableName as any)
     .select("*")
@@ -55,8 +59,10 @@ export const fetchLawArticles = async (
     throw new Error("Falha ao carregar artigos");
   }
   
-  // First convert to unknown, then to Article[] to fix TypeScript error
-  return (data ? (data as unknown as Article[]) : []);
+  // Proper type handling for TypeScript
+  const articles = data as unknown as Article[];
+  console.log(`Artigos encontrados: ${articles.length}`);
+  return articles || [];
 };
 
 export const searchArticle = async (
@@ -80,7 +86,6 @@ export const searchArticle = async (
     return null;
   }
   
-  // First convert to unknown, then to Article to fix TypeScript error
   return data as unknown as Article;
 };
 
@@ -105,6 +110,5 @@ export const searchByTerm = async (
     return [];
   }
   
-  // First convert to unknown, then to Article[] to fix TypeScript error
-  return (data ? (data as unknown as Article[]) : []);
+  return (data as unknown as Article[]) || [];
 };
