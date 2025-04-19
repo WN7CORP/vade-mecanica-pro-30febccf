@@ -17,10 +17,12 @@ const validTables = [
   'codigo_defesa_consumidor',
   'codigo_tributario',
   'Constituição Federal'
-];
+] as const;
 
-function convertToTableName(lawName: string): string {
-  const nameMap: Record<string, string> = {
+type ValidTable = typeof validTables[number];
+
+function convertToTableName(lawName: string): ValidTable {
+  const nameMap: Record<string, ValidTable> = {
     'constituição federal': 'Constituição Federal',
     'código civil': 'codigo_civil',
     'código penal': 'codigo_penal',
@@ -31,11 +33,11 @@ function convertToTableName(lawName: string): string {
   };
   
   const normalized = lawName.toLowerCase().trim();
-  return nameMap[normalized] || normalized;
+  return nameMap[normalized] || 'codigo_civil'; // Default to codigo_civil if not found
 }
 
-function isValidTable(tableName: string): boolean {
-  return validTables.includes(tableName);
+function isValidTable(tableName: string): tableName is ValidTable {
+  return validTables.includes(tableName as ValidTable);
 }
 
 export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
@@ -57,7 +59,7 @@ export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
       throw new Error('Falha ao carregar artigos');
     }
 
-    return data || [];
+    return data as Article[];
   } catch (error) {
     console.error('Error in fetchLawArticles:', error);
     throw new Error('Falha ao carregar artigos');
@@ -87,7 +89,7 @@ export const searchArticle = async (
       return null;
     }
 
-    return data;
+    return data as Article;
   } catch (error) {
     console.error('Error in searchArticle:', error);
     return null;
@@ -118,7 +120,7 @@ export const searchByTerm = async (
       return [];
     }
 
-    return data || [];
+    return data as Article[];
   } catch (error) {
     console.error('Error in searchByTerm:', error);
     return [];
