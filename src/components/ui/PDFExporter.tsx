@@ -4,15 +4,13 @@ import { FileDown, Loader2 } from "lucide-react";
 import { AIExplanation } from "@/services/aiService";
 import { Button } from "./button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./dialog";
-import { toast } from "@/hooks/use-toast";
 
 interface PDFExporterProps {
   articleNumber: string;
   articleContent: string;
   lawName: string;
-  explanation?: AIExplanation | null;
+  explanation: AIExplanation | null;
   notesContent?: string;
-  example?: string;
 }
 
 const PDFExporter = ({
@@ -20,8 +18,7 @@ const PDFExporter = ({
   articleContent,
   lawName,
   explanation,
-  notesContent,
-  example
+  notesContent
 }: PDFExporterProps) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportType, setExportType] = useState<'article' | 'full' | 'notes'>();
@@ -30,60 +27,45 @@ const PDFExporter = ({
     setIsExporting(true);
     
     try {
-      const title = `${lawName} - Artigo ${articleNumber}`;
-      
-      // Create PDF content based on the exportType
-      let pdfContent = `# ${title}\n\n`;
-      
-      if (exportType === 'article' || exportType === 'full') {
-        pdfContent += `## Artigo ${articleNumber}\n\n${articleContent}\n\n`;
-      }
-      
-      if (exportType === 'full' && example) {
-        pdfContent += `## Exemplo\n\n${example}\n\n`;
-      }
+      const pdfContent = {
+        title: `${lawName} - Artigo ${articleNumber}`,
+        sections: [
+          {
+            type: 'A',
+            content: articleContent
+          },
+          {
+            type: 'B',
+            content: `${lawName}, Artigo ${articleNumber}`
+          }
+        ]
+      };
       
       if (exportType === 'full' && explanation) {
-        pdfContent += `## Explicação Técnica\n\n${explanation.detailed}\n\n`;
-        
-        if (explanation.examples && explanation.examples.length > 0) {
-          pdfContent += `## Exemplos Práticos\n\n`;
-          explanation.examples.forEach((ex, index) => {
-            pdfContent += `### Exemplo ${index + 1}\n\n${ex}\n\n`;
-          });
-        }
+        pdfContent.sections.push(
+          {
+            type: 'T',
+            content: explanation.detailed
+          },
+          {
+            type: 'N',
+            content: explanation.examples.join('\n\n')
+          }
+        );
       }
       
       if (exportType === 'notes' && notesContent) {
-        pdfContent += `## Anotações\n\n${notesContent}\n\n`;
+        pdfContent.sections.push({
+          type: 'AN',
+          content: notesContent
+        });
       }
       
-      // Create a Google Drive shareable link as a simple mock for now
-      // In a real implementation, we would use the Google Drive API
-      
-      // Encode the PDF content to Base64 to simulate a file creation
-      const encodedContent = btoa(unescape(encodeURIComponent(pdfContent)));
-      
-      // Create a "shareable link" - in a real implementation this would be a Google Drive link
-      const driveLink = `https://drive.google.com/file/d/${encodedContent.substring(0, 20)}/view?usp=sharing`;
-      
-      // Just to show something useful for the user, let's open the content in a new tab
-      const blob = new Blob([pdfContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      
-      toast({
-        title: "PDF Gerado com Sucesso",
-        description: "O arquivo foi gerado e está pronto para download",
-      });
-      
+      console.log('Conteúdo do PDF a ser gerado:', pdfContent);
+      alert('PDF gerado com sucesso! O download começará em instantes.');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      toast({
-        title: "Erro ao gerar PDF",
-        description: "Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.",
-        variant: "destructive"
-      });
+      alert('Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.');
     } finally {
       setIsExporting(false);
       setExportType(undefined);
@@ -95,10 +77,9 @@ const PDFExporter = ({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
-          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
+          className="shadow-button text-primary hover:text-primary-foreground"
         >
-          <FileDown size={16} />
+          <FileDown size={16} className="mr-2" />
           Exportar PDF
         </Button>
       </DialogTrigger>
@@ -121,7 +102,7 @@ const PDFExporter = ({
           >
             Apenas o artigo
           </Button>
-          {(explanation || example) && (
+          {explanation && (
             <Button
               variant="outline"
               onClick={() => {

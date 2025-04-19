@@ -1,5 +1,5 @@
 
-import { Copy, PenLine, BookOpen, Volume2, Bookmark, BookmarkCheck } from "lucide-react";
+import { Copy, PenLine, BookOpen } from "lucide-react";
 
 interface ArticleHeaderProps {
   articleNumber: string;
@@ -7,9 +7,6 @@ interface ArticleHeaderProps {
   onCopy: () => void;
   onToggleHighlight: () => void;
   onExplainRequest: (type: 'technical' | 'formal') => void;
-  onNarrate: () => void;
-  onToggleFavorite?: () => void;
-  isFavorite?: boolean;
   showHighlightTools: boolean;
 }
 
@@ -19,9 +16,6 @@ const ArticleHeader = ({
   onCopy,
   onToggleHighlight,
   onExplainRequest,
-  onNarrate,
-  onToggleFavorite,
-  isFavorite = false,
   showHighlightTools
 }: ArticleHeaderProps) => {
   return (
@@ -35,11 +29,11 @@ const ArticleHeader = ({
       
       <div className="flex space-x-2">
         <button 
-          onClick={onNarrate}
-          className="p-1.5 neomorph-sm text-primary-300 hover:text-primary-200"
-          aria-label="Narrar artigo"
+          onClick={onCopy}
+          className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-200"
+          aria-label="Copiar artigo"
         >
-          <Volume2 size={16} />
+          <Copy size={16} />
         </button>
         
         <button 
@@ -57,28 +51,6 @@ const ArticleHeader = ({
         >
           <BookOpen size={16} />
         </button>
-        
-        <button 
-          onClick={onCopy}
-          className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-200"
-          aria-label="Copiar artigo"
-        >
-          <Copy size={16} />
-        </button>
-        
-        {onToggleFavorite && (
-          <button 
-            onClick={onToggleFavorite}
-            className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-200"
-            aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-          >
-            {isFavorite ? (
-              <BookmarkCheck size={16} className="fill-primary-300 text-primary-300" />
-            ) : (
-              <Bookmark size={16} />
-            )}
-          </button>
-        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -16,7 +16,6 @@ const LawView = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const mainRef = useRef<HTMLDivElement>(null);
   
   const {
     filteredArticles,
@@ -61,7 +60,7 @@ const LawView = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen pb-16 pt-20 px-4" ref={mainRef}>
+    <div className="flex flex-col min-h-screen pb-16 pt-20 px-4">
       <Header />
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
@@ -95,7 +94,7 @@ const LawView = () => {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-20 right-4 p-3 neomorph-sm text-primary-300 z-10 hover:scale-105 transition-all"
+          className="fixed bottom-20 right-4 p-3 neomorph-sm text-primary-300 z-10"
           aria-label="Voltar ao topo"
         >
           <ChevronUp size={20} />

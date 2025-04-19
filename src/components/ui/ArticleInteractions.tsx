@@ -1,18 +1,15 @@
 
 import { Button } from "./button";
-import { BookOpen, Bookmark, Copy, Volume2, ScrollText, FileDown, Sparkles } from "lucide-react";
+import { BookOpen, Bookmark, Copy, Volume2, ScrollText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import PDFExporter from "./PDFExporter";
 
 interface ArticleInteractionsProps {
   articleNumber: string;
   content: string;
-  example?: string;
   onExplain: (type: 'technical' | 'formal') => void;
   onAddComment: () => void;
   onStartNarration: () => void;
-  onNarrateExample?: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
@@ -20,16 +17,13 @@ interface ArticleInteractionsProps {
 const ArticleInteractions = ({
   articleNumber,
   content,
-  example,
   onExplain,
   onAddComment,
   onStartNarration,
-  onNarrateExample,
   isFavorite = false,
   onToggleFavorite
 }: ArticleInteractionsProps) => {
   const [showExplainOptions, setShowExplainOptions] = useState(false);
-  const [showNarrationOptions, setShowNarrationOptions] = useState(false);
 
   const copyArticle = () => {
     const textToCopy = `Art. ${articleNumber}. ${content}`;
@@ -82,50 +76,6 @@ const ArticleInteractions = ({
         )}
       </div>
 
-      <div className="relative">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowNarrationOptions(!showNarrationOptions)}
-          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
-        >
-          <Sparkles size={16} />
-          Narrar
-        </Button>
-        
-        {showNarrationOptions && (
-          <div className="absolute bottom-full mb-2 left-0 z-10 w-48 neomorph p-2 rounded-md bg-background/95 backdrop-blur animate-fade-in">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full mb-1 justify-start text-primary hover:text-primary-foreground"
-              onClick={() => {
-                onStartNarration();
-                setShowNarrationOptions(false);
-              }}
-            >
-              <Volume2 size={16} className="mr-2" />
-              Narrar Artigo
-            </Button>
-            
-            {example && onNarrateExample && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-primary hover:text-primary-foreground"
-                onClick={() => {
-                  onNarrateExample();
-                  setShowNarrationOptions(false);
-                }}
-              >
-                <Volume2 size={16} className="mr-2" />
-                Narrar Exemplo
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-
       <Button
         variant="outline"
         size="sm"
@@ -146,12 +96,15 @@ const ArticleInteractions = ({
         Copiar
       </Button>
 
-      <PDFExporter
-        articleNumber={articleNumber}
-        articleContent={content}
-        lawName="Lei"
-        example={example}
-      />
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onStartNarration}
+        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
+      >
+        <Volume2 size={16} />
+        Narrar
+      </Button>
 
       {onToggleFavorite && (
         <Button
