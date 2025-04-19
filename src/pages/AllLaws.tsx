@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
 import { BookOpen, ChevronRight, Grid, List, Loader2 } from "lucide-react";
-import { fetchAvailableSheets } from "@/services/sheetsApi";
+import { fetchAvailableLaws } from "@/services/lawService";
 
 type ViewMode = "grid" | "list";
 
@@ -21,7 +20,7 @@ const AllLaws = () => {
     const loadLaws = async () => {
       try {
         setIsLoading(true);
-        const availableLaws = await fetchAvailableSheets();
+        const availableLaws = await fetchAvailableLaws();
         setLaws(availableLaws);
         setFilteredLaws(availableLaws);
       } catch (error) {

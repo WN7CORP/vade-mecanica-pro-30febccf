@@ -9,10 +9,11 @@ import AIChat from "@/components/ui/AIChat";
 import PDFExporter from "@/components/ui/PDFExporter";
 import { Loader2, FileText, BookOpen } from "lucide-react";
 import { 
-  fetchAvailableSheets, 
   searchArticle, 
-  searchByTerm 
-} from "@/services/sheetsApi";
+  searchByTerm,
+  fetchAvailableLaws,
+  LAW_OPTIONS
+} from "@/services/lawService";
 import { 
   generateArticleExplanation, 
   AIExplanation as AIExplanationType 
@@ -46,7 +47,7 @@ const Search = () => {
   useEffect(() => {
     const loadLaws = async () => {
       try {
-        const laws = await fetchAvailableSheets();
+        const laws = fetchAvailableLaws();
         setAvailableLaws(laws);
         
         // Se não houver lei selecionada, usar a primeira
@@ -73,10 +74,10 @@ const Search = () => {
         // Primeira tentativa: buscar artigo exato
         const article = await searchArticle(selectedLaw, query);
         
-        if (article && article.article) {
+        if (article && article.numero) {
           setSearchResults([{
-            article: article.article,
-            content: article.content,
+            article: article.numero,
+            content: article.conteudo,
             lawName: selectedLaw
           }]);
         } else {
@@ -86,8 +87,8 @@ const Search = () => {
           if (results.length > 0) {
             setSearchResults(
               results.map(result => ({
-                article: result.article,
-                content: result.content,
+                article: result.numero,
+                content: result.conteudo,
                 lawName: selectedLaw
               }))
             );
@@ -164,17 +165,17 @@ const Search = () => {
         {/* Seletor de lei */}
         <div className="mb-6 overflow-x-auto scrollbar-thin pb-2">
           <div className="flex space-x-2">
-            {availableLaws.map((law) => (
+            {LAW_OPTIONS.map((law) => (
               <button
-                key={law}
-                onClick={() => handleLawChange(law)}
+                key={law.table}
+                onClick={() => handleLawChange(law.display)}
                 className={`px-4 py-2 whitespace-nowrap text-sm ${
-                  selectedLaw === law
+                  selectedLaw === law.display
                     ? "neomorph text-primary-300"
                     : "text-gray-400 hover:text-gray-300"
                 }`}
               >
-                {law}
+                {law.display}
               </button>
             ))}
           </div>

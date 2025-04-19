@@ -155,25 +155,25 @@ export type Database = {
       }
       constituicao_federal: {
         Row: {
-          conteudo: string | null
+          conteudo: string
           created_at: string
           exemplo: string | null
           id: number
-          numero: string | null
+          numero: string
         }
         Insert: {
-          conteudo?: string | null
+          conteudo: string
           created_at?: string
           exemplo?: string | null
           id?: number
-          numero?: string | null
+          numero: string
         }
         Update: {
-          conteudo?: string | null
+          conteudo?: string
           created_at?: string
           exemplo?: string | null
           id?: number
-          numero?: string | null
+          numero?: string
         }
         Relationships: []
       }

@@ -1,11 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
 import { Book, Search, Scale, BookOpen, Bookmark, ScrollText } from "lucide-react";
-import { fetchAvailableSheets } from "@/services/sheetsApi";
+import { fetchAvailableLaws, LAW_OPTIONS } from "@/services/lawService";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -16,7 +15,7 @@ const Index = () => {
     const loadRecentLaws = async () => {
       try {
         // Carregar algumas leis para exibição rápida
-        const sheets = await fetchAvailableSheets();
+        const sheets = await fetchAvailableLaws();
         setRecentLaws(sheets.slice(0, 4));
       } catch (error) {
         console.error("Erro ao carregar leis recentes:", error);
