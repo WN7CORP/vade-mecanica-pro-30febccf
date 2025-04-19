@@ -4,18 +4,18 @@ import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
+import { ChevronUp } from "lucide-react";
 import LawHeader from "@/components/law/LawHeader";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Article } from "@/services/lawService";
 
 const LawView = () => {
   const { lawName } = useParams<{ lawName: string }>();
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const isMobile = useIsMobile();
   
   const {
     filteredArticles,
@@ -32,14 +32,13 @@ const LawView = () => {
     handleExplainArticle
   } = useAIExplanation(lawName);
   
-  // Ensure all audio is stopped when navigating
   useEffect(() => {
-    return () => {
-      if (window.currentAudio) {
-        window.currentAudio.pause();
-        window.currentAudio = null;
-      }
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
     };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleAskQuestion = (article: Article) => {
@@ -52,9 +51,16 @@ const LawView = () => {
     setSelectedArticle(article);
     await handleExplainArticle(article, type);
   };
+  
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
 
   return (
-    <div className="flex flex-col min-h-screen pb-16 pt-20 px-4" style={{ background: '#131620' }}>
+    <div className="flex flex-col min-h-screen pb-16 pt-20 px-4">
       <Header />
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
@@ -84,6 +90,16 @@ const LawView = () => {
           onCloseExplanation={() => setShowExplanation(false)}
         />
       </main>
+      
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-20 right-4 p-3 neomorph-sm text-primary-300 z-10"
+          aria-label="Voltar ao topo"
+        >
+          <ChevronUp size={20} />
+        </button>
+      )}
       
       <Footer />
     </div>

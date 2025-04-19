@@ -14,7 +14,7 @@ export interface LawOption {
   table: string;
 }
 
-// Define the tables using a string union type based on actual database tables
+// Defining the allowed table names as a type to match Supabase's type system
 export type LawTableName = 
   | "constituicao_federal"
   | "codigo_civil"
@@ -22,11 +22,9 @@ export type LawTableName =
   | "codigo_processo_civil"
   | "codigo_processo_penal"
   | "codigo_defesa_consumidor"
-  | "codigo_tributario"
-  | "consolidacao_leis_trabalho"
-  | "codigo_transito";
+  | "codigo_tributario";
 
-// Atualizando para incluir todas as leis disponíveis no banco
+// Atualizando para incluir apenas as leis que existem no banco de dados
 export const LAW_OPTIONS: LawOption[] = [
   { display: "Constituição Federal",         table: "constituicao_federal"      },
   { display: "Código Civil",                 table: "codigo_civil"              },
@@ -35,8 +33,6 @@ export const LAW_OPTIONS: LawOption[] = [
   { display: "Código de Processo Penal",     table: "codigo_processo_penal"     },
   { display: "Código de Defesa do Consumidor", table: "codigo_defesa_consumidor" },
   { display: "Código Tributário Nacional",   table: "codigo_tributario"         },
-  { display: "Consolidação das Leis do Trabalho", table: "consolidacao_leis_trabalho" },
-  { display: "Código de Trânsito Brasileiro", table: "codigo_transito"          }
 ];
 
 /** Retorna apenas os nomes para popular um dropdown/menu */
@@ -62,12 +58,10 @@ export const fetchLawArticles = async (
 
   console.log(`Buscando artigos da tabela: ${tableName}`);
   
-  // Use type assertion with 'as any' to bypass TypeScript's strict type checking
-  // This is necessary because the dynamic table names don't match TypeScript's expectations
-  const { data, error } = await (supabase
-    .from(tableName as any)
+  const { data, error } = await supabase
+    .from(tableName)
     .select("*")
-    .order("numero", { ascending: true }));
+    .order("numero", { ascending: true });
 
   if (error) {
     console.error("Erro ao buscar artigos:", error);
@@ -78,8 +72,7 @@ export const fetchLawArticles = async (
     return [];
   }
 
-  // Use an explicit type assertion to convert data to Article[]
-  return data as unknown as Article[];
+  return data as Article[];
 };
 
 export const searchArticle = async (
@@ -92,20 +85,18 @@ export const searchArticle = async (
     return null;
   }
 
-  // Use type assertion to bypass TypeScript's strict type checking
-  const { data, error } = await (supabase
-    .from(tableName as any)
+  const { data, error } = await supabase
+    .from(tableName)
     .select("*")
     .eq("numero", articleNumber)
-    .maybeSingle());
+    .maybeSingle();
 
   if (error) {
     console.error("Erro ao buscar artigo:", error);
     return null;
   }
   
-  // Use an explicit type assertion to convert data to Article
-  return data as unknown as Article | null;
+  return data as Article | null;
 };
 
 export const searchByTerm = async (
@@ -119,11 +110,10 @@ export const searchByTerm = async (
   }
 
   const term = searchTerm.toLowerCase();
-  // Use type assertion to bypass TypeScript's strict type checking
-  const { data, error } = await (supabase
-    .from(tableName as any)
+  const { data, error } = await supabase
+    .from(tableName)
     .select("*")
-    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`));
+    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
   if (error) {
     console.error("Erro na busca por termo:", error);
@@ -134,6 +124,6 @@ export const searchByTerm = async (
     return [];
   }
 
-  // Use an explicit type assertion to convert data to Article[]
-  return data as unknown as Article[];
+  return data as Article[];
 };
+

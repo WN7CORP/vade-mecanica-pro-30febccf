@@ -7,10 +7,9 @@ import { toast } from "@/hooks/use-toast";
 interface ArticleInteractionsProps {
   articleNumber: string;
   content: string;
-  example?: string;
   onExplain: (type: 'technical' | 'formal') => void;
   onAddComment: () => void;
-  onStartNarration: (content: 'article' | 'example') => void;
+  onStartNarration: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
@@ -18,7 +17,6 @@ interface ArticleInteractionsProps {
 const ArticleInteractions = ({
   articleNumber,
   content,
-  example,
   onExplain,
   onAddComment,
   onStartNarration,
@@ -101,24 +99,12 @@ const ArticleInteractions = ({
       <Button
         variant="outline"
         size="sm"
-        onClick={() => onStartNarration('article')}
+        onClick={onStartNarration}
         className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
       >
         <Volume2 size={16} />
-        Narrar Artigo
+        Narrar
       </Button>
-
-      {example && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onStartNarration('example')}
-          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
-        >
-          <Volume2 size={16} />
-          Narrar Exemplo
-        </Button>
-      )}
 
       {onToggleFavorite && (
         <Button

@@ -1,5 +1,5 @@
 
-import { ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut, ChevronUp } from "lucide-react";
 
 interface ArticleContentProps {
   content: string;
@@ -7,6 +7,7 @@ interface ArticleContentProps {
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
   articleNumber?: string;
+  onScrollToTop?: () => void;
   example?: string;
 }
 
@@ -16,20 +17,20 @@ const ArticleContent = ({
   onIncreaseFontSize,
   onDecreaseFontSize,
   articleNumber,
+  onScrollToTop,
   example
 }: ArticleContentProps) => {
   const renderContent = () => {
     return content.split('\n').map((line, i) => {
-      // For articles with numbers, align text left; otherwise center and make bold
+      // Check if the line contains any content for centereing
       const shouldCenter = !articleNumber && i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.');
-      const shouldBold = !articleNumber && line.trim().length > 0;
       
       return (
         <p 
           key={i} 
-          className={`mb-4 whitespace-pre-wrap transition-all duration-200 ${
-            shouldCenter ? "text-center" : "text-left"
-          } ${shouldBold ? "font-semibold" : ""} ${!articleNumber && i === 0 ? "text-sm text-gray-400" : "text-white"}`}
+          className={`mb-2 whitespace-pre-wrap transition-all duration-200 ${
+            shouldCenter ? "text-center" : ""
+          } ${!articleNumber && i === 0 ? "text-sm text-gray-400" : ""}`}
           style={{ fontSize: `${fontSize + 2}px` }}
         >
           {line}
@@ -45,7 +46,7 @@ const ArticleContent = ({
       {example && (
         <div className="mt-6 p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded">
           <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
-          <p className="text-gray-400 whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
+          <p className="text-gray-600 whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
             {example}
           </p>
         </div>
@@ -68,6 +69,16 @@ const ArticleContent = ({
           <ZoomOut size={18} />
         </button>
       </div>
+      
+      {onScrollToTop && (
+        <button
+          onClick={onScrollToTop}
+          className="fixed bottom-20 right-4 p-3 neomorph-sm text-primary-300 z-10 hover:scale-105 transition-all animate-fade-in"
+          aria-label="Voltar ao topo"
+        >
+          <ChevronUp size={20} />
+        </button>
+      )}
     </div>
   );
 };
