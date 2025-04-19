@@ -1,27 +1,25 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
 import { BookOpen, ChevronRight, Grid, List, Loader2 } from "lucide-react";
-import { fetchAvailableSheets } from "@/services/sheetsApi";
-
-type ViewMode = "grid" | "list";
+import { fetchAvailableLaws } from "@/services/lawService";
+import { Law } from "@/types/law";
 
 const AllLaws = () => {
   const navigate = useNavigate();
-  const [laws, setLaws] = useState<string[]>([]);
-  const [filteredLaws, setFilteredLaws] = useState<string[]>([]);
+  const [laws, setLaws] = useState<Law[]>([]);
+  const [filteredLaws, setFilteredLaws] = useState<Law[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
   useEffect(() => {
     const loadLaws = async () => {
       try {
         setIsLoading(true);
-        const availableLaws = await fetchAvailableSheets();
+        const availableLaws = await fetchAvailableLaws();
         setLaws(availableLaws);
         setFilteredLaws(availableLaws);
       } catch (error) {
@@ -43,14 +41,14 @@ const AllLaws = () => {
     }
     
     const filtered = laws.filter(law => 
-      law.toLowerCase().includes(term.toLowerCase())
+      law.nome.toLowerCase().includes(term.toLowerCase())
     );
     
     setFilteredLaws(filtered);
   };
   
-  const navigateToLaw = (lawName: string) => {
-    navigate(`/lei/${encodeURIComponent(lawName)}`);
+  const navigateToLaw = (law: Law) => {
+    navigate(`/lei/${encodeURIComponent(law.nome)}`);
   };
   
   const toggleViewMode = () => {
@@ -109,7 +107,7 @@ const AllLaws = () => {
                 >
                   <BookOpen size={24} className="text-primary-300 mb-3" />
                   <span className="text-gray-300 text-sm font-medium line-clamp-2">
-                    {law}
+                    {law.nome}
                   </span>
                 </button>
               ) : (
@@ -120,7 +118,7 @@ const AllLaws = () => {
                 >
                   <div className="flex items-center">
                     <BookOpen size={18} className="text-primary-300 mr-3" />
-                    <span className="text-gray-300">{law}</span>
+                    <span className="text-gray-300">{law.nome}</span>
                   </div>
                   <ChevronRight size={16} className="text-gray-500" />
                 </button>
