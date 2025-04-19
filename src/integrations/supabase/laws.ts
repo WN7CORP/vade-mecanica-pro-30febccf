@@ -78,7 +78,8 @@ export const fetchLawArticles = async (
     return [];
   }
 
-  return data as Article[];
+  // Use an explicit type assertion to convert data to Article[]
+  return data as unknown as Article[];
 };
 
 export const searchArticle = async (
@@ -103,7 +104,8 @@ export const searchArticle = async (
     return null;
   }
   
-  return data as Article | null;
+  // Use an explicit type assertion to convert data to Article
+  return data as unknown as Article | null;
 };
 
 export const searchByTerm = async (
@@ -132,5 +134,6 @@ export const searchByTerm = async (
     return [];
   }
 
-  return data as Article[];
+  // Use an explicit type assertion to convert data to Article[]
+  return data as unknown as Article[];
 };
