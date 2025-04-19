@@ -14,7 +14,7 @@ export interface LawOption {
   table: string;
 }
 
-// Defining the allowed table names as a type to match Supabase's type system
+// Define the tables using a string union type based on actual database tables
 export type LawTableName = 
   | "constituicao_federal"
   | "codigo_civil"
@@ -62,10 +62,12 @@ export const fetchLawArticles = async (
 
   console.log(`Buscando artigos da tabela: ${tableName}`);
   
-  const { data, error } = await supabase
-    .from(tableName)
+  // Use type assertion with 'as any' to bypass TypeScript's strict type checking
+  // This is necessary because the dynamic table names don't match TypeScript's expectations
+  const { data, error } = await (supabase
+    .from(tableName as any)
     .select("*")
-    .order("numero", { ascending: true });
+    .order("numero", { ascending: true }));
 
   if (error) {
     console.error("Erro ao buscar artigos:", error);
@@ -89,11 +91,12 @@ export const searchArticle = async (
     return null;
   }
 
-  const { data, error } = await supabase
-    .from(tableName)
+  // Use type assertion to bypass TypeScript's strict type checking
+  const { data, error } = await (supabase
+    .from(tableName as any)
     .select("*")
     .eq("numero", articleNumber)
-    .maybeSingle();
+    .maybeSingle());
 
   if (error) {
     console.error("Erro ao buscar artigo:", error);
@@ -114,10 +117,11 @@ export const searchByTerm = async (
   }
 
   const term = searchTerm.toLowerCase();
-  const { data, error } = await supabase
-    .from(tableName)
+  // Use type assertion to bypass TypeScript's strict type checking
+  const { data, error } = await (supabase
+    .from(tableName as any)
     .select("*")
-    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
+    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`));
 
   if (error) {
     console.error("Erro na busca por termo:", error);
