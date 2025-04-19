@@ -5,7 +5,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
 import { BookOpen, ChevronRight, Grid, List, Loader2 } from "lucide-react";
-import { fetchAvailableSheets } from "@/services/sheetsApi";
+import { fetchAvailableLaws } from "@/services/lawService";
 
 type ViewMode = "grid" | "list";
 
@@ -21,7 +21,7 @@ const AllLaws = () => {
     const loadLaws = async () => {
       try {
         setIsLoading(true);
-        const availableLaws = await fetchAvailableSheets();
+        const availableLaws = await fetchAvailableLaws();
         setLaws(availableLaws);
         setFilteredLaws(availableLaws);
       } catch (error) {
@@ -50,7 +50,12 @@ const AllLaws = () => {
   };
   
   const navigateToLaw = (lawName: string) => {
-    navigate(`/lei/${encodeURIComponent(lawName)}`);
+    // Convert display name back to table name format for the URL
+    const tableName = lawName
+      .toLowerCase()
+      .replace(/ /g, '_');
+    
+    navigate(`/lei/${encodeURIComponent(tableName)}`);
   };
   
   const toggleViewMode = () => {
