@@ -22,9 +22,11 @@ export type LawTableName =
   | "codigo_processo_civil"
   | "codigo_processo_penal"
   | "codigo_defesa_consumidor"
-  | "codigo_tributario";
+  | "codigo_tributario"
+  | "consolidacao_leis_trabalho"
+  | "codigo_transito";
 
-// Atualizando para incluir apenas as leis que existem no banco de dados
+// Atualizando para incluir todas as leis disponíveis no banco
 export const LAW_OPTIONS: LawOption[] = [
   { display: "Constituição Federal",         table: "constituicao_federal"      },
   { display: "Código Civil",                 table: "codigo_civil"              },
@@ -33,6 +35,8 @@ export const LAW_OPTIONS: LawOption[] = [
   { display: "Código de Processo Penal",     table: "codigo_processo_penal"     },
   { display: "Código de Defesa do Consumidor", table: "codigo_defesa_consumidor" },
   { display: "Código Tributário Nacional",   table: "codigo_tributario"         },
+  { display: "Consolidação das Leis do Trabalho", table: "consolidacao_leis_trabalho" },
+  { display: "Código de Trânsito Brasileiro", table: "codigo_transito"          }
 ];
 
 /** Retorna apenas os nomes para popular um dropdown/menu */
@@ -126,4 +130,3 @@ export const searchByTerm = async (
 
   return data as Article[];
 };
-
