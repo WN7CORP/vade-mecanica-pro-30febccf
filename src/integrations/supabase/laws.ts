@@ -55,8 +55,8 @@ export const fetchLawArticles = async (
     throw new Error("Falha ao carregar artigos");
   }
   
-  // Proper type casting after error checking
-  return (data || []) as Article[];
+  // First convert to unknown, then to Article[] to fix TypeScript error
+  return (data ? (data as unknown as Article[]) : []);
 };
 
 export const searchArticle = async (
@@ -80,8 +80,8 @@ export const searchArticle = async (
     return null;
   }
   
-  // Proper type casting after error checking
-  return data as Article;
+  // First convert to unknown, then to Article to fix TypeScript error
+  return data as unknown as Article;
 };
 
 export const searchByTerm = async (
@@ -105,6 +105,6 @@ export const searchByTerm = async (
     return [];
   }
   
-  // Proper type casting after error checking
-  return (data || []) as Article[];
+  // First convert to unknown, then to Article[] to fix TypeScript error
+  return (data ? (data as unknown as Article[]) : []);
 };
