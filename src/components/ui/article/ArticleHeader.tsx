@@ -1,5 +1,5 @@
 
-import { Copy, PenLine, BookOpen } from "lucide-react";
+import { Copy, PenLine, BookOpen, Bookmark } from "lucide-react";
 
 interface ArticleHeaderProps {
   articleNumber: string;
@@ -8,6 +8,8 @@ interface ArticleHeaderProps {
   onToggleHighlight: () => void;
   onExplainRequest: (type: 'technical' | 'formal') => void;
   showHighlightTools: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 const ArticleHeader = ({
@@ -16,7 +18,9 @@ const ArticleHeader = ({
   onCopy,
   onToggleHighlight,
   onExplainRequest,
-  showHighlightTools
+  showHighlightTools,
+  isFavorite = false,
+  onToggleFavorite
 }: ArticleHeaderProps) => {
   return (
     <div className="flex justify-between items-center mb-4">
@@ -51,6 +55,16 @@ const ArticleHeader = ({
         >
           <BookOpen size={16} />
         </button>
+        
+        {onToggleFavorite && (
+          <button 
+            onClick={onToggleFavorite}
+            className={`p-1.5 neomorph-sm ${isFavorite ? "text-primary-300" : "text-gray-400 hover:text-primary-200"}`}
+            aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+          >
+            <Bookmark size={16} className={isFavorite ? "fill-current" : ""} />
+          </button>
+        )}
       </div>
     </div>
   );

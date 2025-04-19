@@ -205,21 +205,18 @@ export type Database = {
         Row: {
           conteudo: string | null
           created_at: string
-          exemplo: string | null
           id: number
           numero: string | null
         }
         Insert: {
           conteudo?: string | null
           created_at?: string
-          exemplo?: string | null
           id?: number
           numero?: string | null
         }
         Update: {
           conteudo?: string | null
           created_at?: string
-          exemplo?: string | null
           id?: number
           numero?: string | null
         }

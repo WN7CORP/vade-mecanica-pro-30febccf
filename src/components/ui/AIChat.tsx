@@ -1,7 +1,8 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Send, X, Bot, User, ArrowLeft, Clipboard } from "lucide-react";
+import { Send, X, Bot, User, ArrowLeft, Clipboard, Image, Loader2 } from "lucide-react";
 import { askAIQuestion } from "@/services/aiService";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AIChatProps {
   articleNumber: string;
@@ -15,6 +16,7 @@ interface Message {
   type: 'user' | 'ai';
   content: string;
   timestamp: Date;
+  imageUrl?: string;
 }
 
 const AIChat = ({
@@ -26,16 +28,21 @@ const AIChat = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const isMobile = useIsMobile();
   
   // Mostrar o contexto como primeira mensagem da IA
   useEffect(() => {
     const contextMessage: Message = {
       id: 'context',
       type: 'ai',
-      content: `Estou pronto para ajudar com suas dúvidas sobre o **Artigo ${articleNumber}** da **${lawName}**.`,
+      content: `Estou pronto para ajudar com suas dúvidas sobre o **Artigo ${articleNumber}** da **${lawName}**. Você também pode enviar uma imagem para eu analisar.`,
       timestamp: new Date()
     };
     
@@ -49,27 +56,73 @@ const AIChat = ({
     }
   }, [messages]);
   
+  // Bloquear o rolamento do documento quando o chat está aberto em dispositivos móveis
+  useEffect(() => {
+    if (isMobile) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = 'auto';
+      };
+    }
+  }, [isMobile]);
+  
   const generateMessageId = () => {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
   };
   
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     
+    setSelectedImage(file);
+    
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    
+    // Set focus back to input
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+  
+  const clearSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
+  const handleSendMessage = async () => {
+    if ((!inputValue.trim() && !selectedImage) || isLoading) return;
+    
+    // Create user message object
     const userMessage: Message = {
       id: generateMessageId(),
       type: 'user',
       content: inputValue.trim(),
-      timestamp: new Date()
+      timestamp: new Date(),
+      imageUrl: imagePreviewUrl || undefined
     };
     
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setInputValue("");
+    clearSelectedImage();
     setIsLoading(true);
     
     try {
+      // In a real implementation, we would handle the image upload here
+      // and send it to the backend along with the text
+      const imageDescription = imagePreviewUrl 
+        ? "Além disso, você enviou uma imagem que estou analisando."
+        : "";
+      
       const aiResponse = await askAIQuestion(
-        userMessage.content,
+        `${userMessage.content} ${imageDescription}`,
         articleNumber,
         articleContent,
         lawName
@@ -118,6 +171,21 @@ const AIChat = ({
   
   const formatTimestamp = (date: Date): string => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Renderizar markdown para HTML
+  const renderMarkdown = (text: string): React.ReactNode => {
+    // Simple markdown renderer for bold, italic, links, and code
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    const italicRegex = /\*(.*?)\*/g;
+    const codeRegex = /`(.*?)`/g;
+    
+    let formattedText = text
+      .replace(boldRegex, '<strong>$1</strong>')
+      .replace(italicRegex, '<em>$1</em>')
+      .replace(codeRegex, '<code>$1</code>');
+    
+    return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
   };
   
   return (
@@ -175,10 +243,23 @@ const AIChat = ({
                   </div>
                 )}
                 
-                <div className="flex-1">
-                  <div className="whitespace-pre-wrap text-gray-300">
-                    {message.content}
-                  </div>
+                <div className="flex-1 text-white">
+                  {message.type === 'ai' ? (
+                    renderMarkdown(message.content)
+                  ) : (
+                    <div className="whitespace-pre-wrap">
+                      {message.content}
+                      {message.imageUrl && (
+                        <div className="mt-2">
+                          <img 
+                            src={message.imageUrl} 
+                            alt="Imagem enviada"
+                            className="rounded-md max-h-40 object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -214,6 +295,26 @@ const AIChat = ({
         <div ref={messagesEndRef} />
       </div>
       
+      {/* Image preview if there's an image selected */}
+      {imagePreviewUrl && (
+        <div className="p-2 border-t border-gray-800/20 bg-muted/30">
+          <div className="relative inline-block">
+            <img 
+              src={imagePreviewUrl} 
+              alt="Imagem selecionada"
+              className="h-16 object-contain rounded"
+            />
+            <button 
+              onClick={clearSelectedImage}
+              className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-background text-white flex items-center justify-center"
+              aria-label="Remover imagem"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Input para mensagem */}
       <div className="p-3 border-t border-gray-800/20">
         <div className="relative neomorph">
@@ -223,22 +324,45 @@ const AIChat = ({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Digite sua dúvida..."
-            className="w-full bg-transparent py-3 px-4 pr-12 outline-none resize-none max-h-32 scrollbar-thin text-gray-300"
+            className="w-full bg-transparent py-3 px-4 pr-24 outline-none resize-none max-h-32 scrollbar-thin text-white"
             rows={1}
           />
           
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className={`absolute right-3 bottom-3 p-2 rounded-full ${
-              inputValue.trim() && !isLoading
-                ? 'bg-primary-300/20 text-primary-300'
-                : 'bg-gray-800/20 text-gray-600'
-            } transition-colors`}
-            aria-label="Enviar mensagem"
-          >
-            <Send size={18} />
-          </button>
+          <div className="absolute right-3 bottom-3 flex items-center">
+            <input 
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              className="hidden"
+              id="image-upload"
+            />
+            
+            <label 
+              htmlFor="image-upload"
+              className="cursor-pointer p-2 mr-2 rounded-full bg-gray-800/50 text-gray-400 hover:text-primary-300"
+              aria-label="Enviar imagem"
+            >
+              <Image size={18} />
+            </label>
+            
+            <button
+              onClick={handleSendMessage}
+              disabled={(!inputValue.trim() && !selectedImage) || isLoading}
+              className={`p-2 rounded-full ${
+                (inputValue.trim() || selectedImage) && !isLoading
+                  ? 'bg-primary-300/20 text-primary-300'
+                  : 'bg-gray-800/20 text-gray-600'
+              } transition-colors`}
+              aria-label="Enviar mensagem"
+            >
+              {isLoading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Send size={18} />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

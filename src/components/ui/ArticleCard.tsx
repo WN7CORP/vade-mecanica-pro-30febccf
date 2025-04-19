@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
 import ArticleContent from "./article/ArticleContent";
@@ -17,6 +17,18 @@ interface ArticleCardProps {
   onAskQuestion?: () => void;
 }
 
+// Create a global variable to track current audio
+declare global {
+  interface Window {
+    currentAudio: HTMLAudioElement | null;
+  }
+}
+
+// Initialize if not already present
+if (typeof window !== 'undefined' && !window.currentAudio) {
+  window.currentAudio = null;
+}
+
 const ArticleCard = ({
   articleNumber,
   content,
@@ -27,10 +39,18 @@ const ArticleCard = ({
 }: ArticleCardProps) => {
   const [fontSize, setFontSize] = useState(16);
   const [isReading, setIsReading] = useState(false);
+  const [readingContent, setReadingContent] = useState<{text: string, title: string}>({text: '', title: ''});
   const [showHighlightTools, setShowHighlightTools] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  
+  // Load favorite status from localStorage on mount
+  useEffect(() => {
+    const favorites = JSON.parse(localStorage.getItem('favoritedArticles') || '{}');
+    setIsFavorite(!!favorites[`${lawName}-${articleNumber}`]);
+  }, [lawName, articleNumber]);
   
   const copyArticle = () => {
     const textToCopy = `Art. ${articleNumber}. ${content}`;
@@ -41,13 +61,35 @@ const ArticleCard = ({
   
   const handleColorSelect = (colorClass: string) => {
     setSelectedColor(colorClass);
+    
+    // Handle text selection
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      document.execCommand('hiliteColor', false, colorClass);
+    }
   };
   
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+  const toggleFavorite = () => {
+    const newStatus = !isFavorite;
+    setIsFavorite(newStatus);
+    
+    // Save to localStorage
+    const favorites = JSON.parse(localStorage.getItem('favoritedArticles') || '{}');
+    const key = `${lawName}-${articleNumber}`;
+    
+    if (newStatus) {
+      favorites[key] = { 
+        articleNumber, 
+        content, 
+        example, 
+        lawName,
+        timestamp: new Date().toISOString()
+      };
+    } else {
+      delete favorites[key];
+    }
+    
+    localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
   };
 
   const handleExplain = (type: 'technical' | 'formal') => {
@@ -58,6 +100,35 @@ const ArticleCard = ({
 
   const handleComment = () => {
     setShowNotes(true);
+  };
+  
+  const handleNarration = (contentType: 'article' | 'example') => {
+    if (isReading && contentType === 'article' && readingContent.title === 'Artigo') {
+      // If already narrating this content, stop it
+      setIsReading(false);
+      return;
+    }
+    
+    if (isReading && contentType === 'example' && readingContent.title === 'Exemplo') {
+      // If already narrating this content, stop it
+      setIsReading(false);
+      return;
+    }
+    
+    // Start narration of the requested content
+    if (contentType === 'article') {
+      setReadingContent({
+        text: content,
+        title: 'Artigo'
+      });
+    } else if (contentType === 'example' && example) {
+      setReadingContent({
+        text: example,
+        title: 'Exemplo'
+      });
+    }
+    
+    setIsReading(true);
   };
 
   return (
@@ -71,6 +142,8 @@ const ArticleCard = ({
         onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
         onExplainRequest={handleExplain}
         showHighlightTools={showHighlightTools}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
       />
       
       {showHighlightTools && (
@@ -87,20 +160,23 @@ const ArticleCard = ({
         fontSize={fontSize}
         onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
         onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
-        onScrollToTop={scrollToTop}
         articleNumber={articleNumber}
       />
       
       <ArticleInteractions 
         articleNumber={articleNumber}
         content={content}
+        example={example}
         onExplain={handleExplain}
         onAddComment={handleComment}
-        onStartNarration={() => setIsReading(true)}
+        onStartNarration={handleNarration}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
       />
       
       <VoiceNarration
-        text={content}
+        text={readingContent.text}
+        title={readingContent.title}
         isActive={isReading}
         onComplete={() => setIsReading(false)}
         onStop={() => setIsReading(false)}

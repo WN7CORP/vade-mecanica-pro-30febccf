@@ -1,9 +1,10 @@
 
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import ArticleCard from "@/components/ui/ArticleCard";
 import AIExplanation from "@/components/ui/AIExplanation";
 import AIChat from "@/components/ui/AIChat";
-import PDFExporter from "@/components/ui/PDFExporter";
+import VoiceNarration from "@/components/ui/VoiceNarration";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
 import { Article } from "@/services/lawService";
 
@@ -38,6 +39,23 @@ const ArticleList = ({
   onCloseChat,
   onCloseExplanation
 }: ArticleListProps) => {
+  const [isNarratingExplanation, setIsNarratingExplanation] = useState(false);
+  const [narratingContent, setNarratingContent] = useState<{text: string, title: string}>({text: '', title: ''});
+
+  const handleNarrateExplanation = (content: string, title: string) => {
+    if (isNarratingExplanation && title === narratingContent.title) {
+      // If already narrating this content, stop it
+      setIsNarratingExplanation(false);
+      return;
+    }
+    
+    setNarratingContent({
+      text: content,
+      title: title
+    });
+    setIsNarratingExplanation(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -77,6 +95,7 @@ const ArticleList = ({
           articleNumber={selectedArticle.numero}
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onClose={onCloseExplanation}
+          onNarrateExplanation={handleNarrateExplanation}
         />
       )}
       
@@ -89,16 +108,13 @@ const ArticleList = ({
         />
       )}
       
-      {showExplanation && !loadingExplanation && selectedArticle && explanation && (
-        <div className="mt-4 flex justify-end">
-          <PDFExporter
-            articleNumber={selectedArticle.numero}
-            articleContent={selectedArticle.conteudo}
-            lawName={lawName ? decodeURIComponent(lawName) : ""}
-            explanation={explanation}
-          />
-        </div>
-      )}
+      <VoiceNarration
+        text={narratingContent.text}
+        title={narratingContent.title}
+        isActive={isNarratingExplanation}
+        onComplete={() => setIsNarratingExplanation(false)}
+        onStop={() => setIsNarratingExplanation(false)}
+      />
     </div>
   );
 };
