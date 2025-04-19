@@ -12,7 +12,15 @@ const validTables = [
   'codigo_penal',
   'codigo_processo_civil',
   'codigo_processo_penal',
-  'Constituição Federal'
+  'Constituição Federal',
+  'codigo_defesa_consumidor',
+  'codigo_tributario',
+  'codigo_comercial',
+  'codigo_eleitoral',
+  'codigo_transito',
+  'codigo_florestal',
+  'codigo_penal_militar',
+  'codigo_processo_penal_militar'
 ];
 
 function convertToTableName(lawName: string): string {
@@ -21,8 +29,15 @@ function convertToTableName(lawName: string): string {
     'código civil': 'codigo_civil',
     'código penal': 'codigo_penal',
     'código de processo civil': 'codigo_processo_civil',
-    'código de processo penal': 'codigo_processo_penal
-    'código de processo penal': 'codigo_processo_penal'
+    'código de processo penal': 'codigo_processo_penal',
+    'código de defesa do consumidor': 'codigo_defesa_consumidor',
+    'código tributário nacional': 'codigo_tributario',
+    'código comercial': 'codigo_comercial',
+    'código eleitoral': 'codigo_eleitoral',
+    'código de trânsito brasileiro': 'codigo_transito',
+    'código florestal': 'codigo_florestal',
+    'código penal militar': 'codigo_penal_militar',
+    'código de processo penal militar': 'codigo_processo_penal_militar'
   };
   
   const normalized = lawName.toLowerCase().trim();
