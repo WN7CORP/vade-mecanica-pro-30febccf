@@ -26,7 +26,7 @@ export type LawTableName =
 
 // Atualizando para incluir apenas as leis que existem no banco de dados
 export const LAW_OPTIONS: LawOption[] = [
-  { display: "Constituição Federal",         table: "constituicao_federal"      },
+  { display: "Constituicao Federal",         table: "constituicao_federal"      },
   { display: "Código Civil",                 table: "codigo_civil"              },
   { display: "Código Penal",                 table: "codigo_penal"              },
   { display: "Código de Processo Civil",     table: "codigo_processo_civil"     },
