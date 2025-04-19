@@ -19,6 +19,9 @@ const ArticleContent = ({
   onScrollToTop
 }: ArticleContentProps) => {
   const renderContent = () => {
+    // Verifica se content existe antes de chamar split
+    if (!content) return null;
+    
     return content.split('\n').map((line, i) => {
       // Check if the line contains any content for centereing
       const shouldCenter = !articleNumber && i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.');

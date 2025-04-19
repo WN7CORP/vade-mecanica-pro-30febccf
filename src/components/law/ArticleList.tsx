@@ -5,11 +5,7 @@ import AIExplanation from "@/components/ui/AIExplanation";
 import AIChat from "@/components/ui/AIChat";
 import PDFExporter from "@/components/ui/PDFExporter";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
-
-interface Article {
-  article: string;
-  content: string;
-}
+import { Article } from "@/types/law";
 
 interface ArticleListProps {
   isLoading: boolean;
@@ -65,8 +61,8 @@ const ArticleList = ({
       {filteredArticles.map((article, index) => (
         <ArticleCard
           key={index}
-          articleNumber={article.article}
-          content={article.content}
+          articleNumber={article.numero}
+          content={article.conteudo || ''}
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onExplainRequest={(type) => onExplainArticle(article, type)}
           onAskQuestion={() => onAskQuestion(article)}
@@ -77,7 +73,7 @@ const ArticleList = ({
         <AIExplanation
           explanation={explanation}
           isLoading={loadingExplanation}
-          articleNumber={selectedArticle.article}
+          articleNumber={selectedArticle.numero}
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onClose={onCloseExplanation}
         />
@@ -85,8 +81,8 @@ const ArticleList = ({
       
       {showChat && selectedArticle && lawName && (
         <AIChat
-          articleNumber={selectedArticle.article}
-          articleContent={selectedArticle.content}
+          articleNumber={selectedArticle.numero}
+          articleContent={selectedArticle.conteudo || ''}
           lawName={decodeURIComponent(lawName)}
           onClose={onCloseChat}
         />
@@ -95,8 +91,8 @@ const ArticleList = ({
       {showExplanation && !loadingExplanation && selectedArticle && explanation && (
         <div className="mt-4 flex justify-end">
           <PDFExporter
-            articleNumber={selectedArticle.article}
-            articleContent={selectedArticle.content}
+            articleNumber={selectedArticle.numero}
+            articleContent={selectedArticle.conteudo || ''}
             lawName={lawName ? decodeURIComponent(lawName) : ""}
             explanation={explanation}
           />

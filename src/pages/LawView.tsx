@@ -10,6 +10,7 @@ import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
 import { fetchAvailableLaws } from "@/services/lawService";
+import { Article } from "@/types/law";
 
 const LawView = () => {
   const { lawName } = useParams<{ lawName: string }>();

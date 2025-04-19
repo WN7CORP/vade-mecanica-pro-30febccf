@@ -11,15 +11,27 @@ export const useLawArticles = (lawId: number | undefined) => {
 
   useEffect(() => {
     const loadArticles = async () => {
-      if (!lawId) return;
+      if (!lawId) {
+        setIsLoading(false);
+        return;
+      }
       
       try {
         setIsLoading(true);
         const data = await fetchLawArticles(lawId);
-        setArticles(data);
-        setFilteredArticles(data);
+        
+        // Garantir que todos os artigos têm conteudo definido
+        const validatedData = data.map(article => ({
+          ...article,
+          conteudo: article.conteudo || ''
+        }));
+        
+        setArticles(validatedData);
+        setFilteredArticles(validatedData);
       } catch (error) {
         console.error("Erro ao carregar artigos:", error);
+        setArticles([]);
+        setFilteredArticles([]);
       } finally {
         setIsLoading(false);
       }
@@ -40,7 +52,14 @@ export const useLawArticles = (lawId: number | undefined) => {
     
     try {
       const searchResults = await searchArticles(lawId, term);
-      setFilteredArticles(searchResults);
+      
+      // Garantir que todos os artigos têm conteudo definido
+      const validatedResults = searchResults.map(article => ({
+        ...article,
+        conteudo: article.conteudo || ''
+      }));
+      
+      setFilteredArticles(validatedResults);
     } catch (error) {
       console.error("Erro na pesquisa:", error);
       setFilteredArticles([]);
