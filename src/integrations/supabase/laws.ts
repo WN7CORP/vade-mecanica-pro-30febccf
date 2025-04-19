@@ -14,6 +14,16 @@ export interface LawOption {
   table: string;
 }
 
+// Defining the allowed table names as a type to match Supabase's type system
+export type LawTableName = 
+  | "constituicao_federal"
+  | "codigo_civil"
+  | "codigo_penal"
+  | "codigo_processo_civil"
+  | "codigo_processo_penal"
+  | "codigo_defesa_consumidor"
+  | "codigo_tributario";
+
 // Atualizando para incluir apenas as leis que existem no banco de dados
 export const LAW_OPTIONS: LawOption[] = [
   { display: "Constituição Federal",         table: "constituicao_federal"      },
@@ -30,11 +40,11 @@ export const fetchAvailableLaws = (): string[] =>
   LAW_OPTIONS.map((opt) => opt.display);
 
 /** Busca o nome da tabela a partir do texto exibido */
-function getTableName(displayName: string): string | null {
+function getTableName(displayName: string): LawTableName | null {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
   );
-  return found?.table ?? null;
+  return found?.table as LawTableName ?? null;
 }
 
 export const fetchLawArticles = async (
@@ -116,4 +126,3 @@ export const searchByTerm = async (
 
   return data as Article[];
 };
-
