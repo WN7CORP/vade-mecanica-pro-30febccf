@@ -44,7 +44,7 @@ export const fetchLawArticles = async (
     throw new Error(`Lei inválida: "${lawDisplayName}"`);
   }
 
-  // Usando o operador "as" para informar ao TypeScript que tableName é válido
+  // Proper TypeScript typing for dynamic table querying
   const { data, error } = await supabase
     .from(tableName as any)
     .select("*")
@@ -54,7 +54,9 @@ export const fetchLawArticles = async (
     console.error("Erro ao buscar artigos:", error);
     throw new Error("Falha ao carregar artigos");
   }
-  return data as Article[];
+  
+  // Proper type casting after error checking
+  return (data || []) as Article[];
 };
 
 export const searchArticle = async (
@@ -77,6 +79,8 @@ export const searchArticle = async (
     console.error("Erro ao buscar artigo:", error);
     return null;
   }
+  
+  // Proper type casting after error checking
   return data as Article;
 };
 
@@ -100,5 +104,7 @@ export const searchByTerm = async (
     console.error("Erro na busca por termo:", error);
     return [];
   }
-  return data as Article[];
+  
+  // Proper type casting after error checking
+  return (data || []) as Article[];
 };
