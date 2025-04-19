@@ -12,7 +12,7 @@ const validTables = [
   'codigo_penal',
   'codigo_processo_civil',
   'codigo_processo_penal',
-  'Constituição Federal',
+  'constituicao_federal',
   'codigo_defesa_consumidor',
   'codigo_tributario',
   'codigo_comercial',
@@ -25,7 +25,7 @@ const validTables = [
 
 function convertToTableName(lawName: string): string {
   const nameMap: Record<string, string> = {
-    'constituição federal': 'Constituição Federal',
+    'constituição federal': 'constituicao_federal',
     'código civil': 'codigo_civil',
     'código penal': 'codigo_penal',
     'código de processo civil': 'codigo_processo_civil',
@@ -68,10 +68,13 @@ export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
       throw new Error('Falha ao carregar artigos');
     }
 
-    return (data || []).map(item => ({
-      numero: item.numero,
-      conteudo: item.conteudo || '',
-      exemplo: item.exemplo
+    if (!data) return [];
+    
+    // Explicitly cast the data to ensure type safety
+    return data.map(item => ({
+      numero: String(item.numero || ''),
+      conteudo: String(item.conteudo || ''),
+      exemplo: item.exemplo ? String(item.exemplo) : undefined
     }));
   } catch (error) {
     console.error('Error in fetchLawArticles:', error);
@@ -95,17 +98,19 @@ export const searchArticle = async (
       .from(tableName as any)
       .select('numero, conteudo, exemplo')
       .eq('numero', articleNumber)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error searching article:', error);
       return null;
     }
 
+    if (!data) return null;
+
     return {
-      numero: data.numero,
-      conteudo: data.conteudo || '',
-      exemplo: data.exemplo
+      numero: String(data.numero || ''),
+      conteudo: String(data.conteudo || ''),
+      exemplo: data.exemplo ? String(data.exemplo) : undefined
     };
   } catch (error) {
     console.error('Error in searchArticle:', error);
@@ -137,10 +142,12 @@ export const searchByTerm = async (
       return [];
     }
 
-    return (data || []).map(item => ({
-      numero: item.numero,
-      conteudo: item.conteudo || '',
-      exemplo: item.exemplo
+    if (!data) return [];
+
+    return data.map(item => ({
+      numero: String(item.numero || ''),
+      conteudo: String(item.conteudo || ''),
+      exemplo: item.exemplo ? String(item.exemplo) : undefined
     }));
   } catch (error) {
     console.error('Error in searchByTerm:', error);
