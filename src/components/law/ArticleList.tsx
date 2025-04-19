@@ -1,4 +1,3 @@
-
 import { Loader2 } from "lucide-react";
 import ArticleCard from "@/components/ui/ArticleCard";
 import AIExplanation from "@/components/ui/AIExplanation";
@@ -7,8 +6,9 @@ import PDFExporter from "@/components/ui/PDFExporter";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
 
 interface Article {
-  article: string;
-  content: string;
+  numero: string;
+  conteudo: string;
+  exemplo?: string;
 }
 
 interface ArticleListProps {
@@ -65,8 +65,9 @@ const ArticleList = ({
       {filteredArticles.map((article, index) => (
         <ArticleCard
           key={index}
-          articleNumber={article.article}
-          content={article.content}
+          articleNumber={article.numero}
+          content={article.content || ''}
+          example={article.exemplo || ''}
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onExplainRequest={(type) => onExplainArticle(article, type)}
           onAskQuestion={() => onAskQuestion(article)}
