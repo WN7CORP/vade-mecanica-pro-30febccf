@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
@@ -9,43 +9,19 @@ import LawHeader from "@/components/law/LawHeader";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
-import { fetchAvailableLaws } from "@/services/lawService";
-import { Article } from "@/types/law";
+import { Article } from "@/services/lawService";
 
 const LawView = () => {
   const { lawName } = useParams<{ lawName: string }>();
-  const navigate = useNavigate();
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [lawId, setLawId] = useState<number>();
-  
-  useEffect(() => {
-    const loadLawId = async () => {
-      try {
-        const laws = await fetchAvailableLaws();
-        const law = laws.find(l => l.nome === lawName);
-        if (law) {
-          setLawId(law.id);
-        } else {
-          navigate('/leis');
-        }
-      } catch (error) {
-        console.error('Error loading law:', error);
-        navigate('/leis');
-      }
-    };
-    
-    if (lawName) {
-      loadLawId();
-    }
-  }, [lawName, navigate]);
   
   const {
     filteredArticles,
     isLoading,
     searchTerm,
     handleSearch
-  } = useLawArticles(lawId);
+  } = useLawArticles(lawName);
 
   const {
     showExplanation,

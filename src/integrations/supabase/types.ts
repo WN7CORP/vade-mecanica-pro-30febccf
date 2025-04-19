@@ -9,77 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      artigos: {
+      codigo_processo_civil: {
         Row: {
           conteudo: string | null
           created_at: string | null
-          id: number
-          lei_id: number | null
-          numero: string
-        }
-        Insert: {
-          conteudo?: string | null
-          created_at?: string | null
-          id?: number
-          lei_id?: number | null
-          numero: string
-        }
-        Update: {
-          conteudo?: string | null
-          created_at?: string | null
-          id?: number
-          lei_id?: number | null
-          numero?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "artigos_lei_id_fkey"
-            columns: ["lei_id"]
-            isOneToOne: false
-            referencedRelation: "leis"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      "Constituição Federal": {
-        Row: {
-          conteudo: string | null
-          created_at: string
           exemplo: string | null
-          id: number
-          numero: string | null
+          id: string
+          numero: string
         }
         Insert: {
           conteudo?: string | null
-          created_at?: string
+          created_at?: string | null
           exemplo?: string | null
-          id?: number
-          numero?: string | null
+          id?: string
+          numero: string
         }
         Update: {
           conteudo?: string | null
-          created_at?: string
+          created_at?: string | null
           exemplo?: string | null
-          id?: number
-          numero?: string | null
+          id?: string
+          numero?: string
         }
         Relationships: []
       }
-      leis: {
+      codigo_processo_penal: {
         Row: {
+          conteudo: string | null
           created_at: string | null
-          id: number
-          nome: string
+          exemplo: string | null
+          id: string
+          numero: string
         }
         Insert: {
+          conteudo?: string | null
           created_at?: string | null
-          id?: number
-          nome: string
+          exemplo?: string | null
+          id?: string
+          numero: string
         }
         Update: {
+          conteudo?: string | null
           created_at?: string | null
-          id?: number
-          nome?: string
+          exemplo?: string | null
+          id?: string
+          numero?: string
         }
         Relationships: []
       }

@@ -54,21 +54,10 @@ const VoiceNarration = ({
     if (text) {
       const paragraphs = text.split('\n').filter(p => p.trim());
       setHighlightedText(paragraphs);
-    } else {
-      setHighlightedText([]);
     }
   }, [text]);
   
   const startNarration = async () => {
-    if (!text) {
-      toast({
-        description: "Não há texto para narrar.",
-        variant: "destructive"
-      });
-      onStop();
-      return;
-    }
-    
     setIsLoading(true);
     
     try {
@@ -258,18 +247,14 @@ const VoiceNarration = ({
           
           {/* Texto sendo lido */}
           <div className="max-h-32 overflow-y-auto scrollbar-thin neomorph-inset p-3 text-sm">
-            {highlightedText.length > 0 ? (
-              highlightedText.map((paragraph, index) => (
-                <p 
-                  key={index} 
-                  className="mb-2 text-primary-300"
-                >
-                  {paragraph}
-                </p>
-              ))
-            ) : (
-              <p className="text-gray-400">Nenhum texto disponível</p>
-            )}
+            {highlightedText.map((paragraph, index) => (
+              <p 
+                key={index} 
+                className="mb-2 text-primary-300"
+              >
+                {paragraph}
+              </p>
+            ))}
           </div>
         </div>
       </div>

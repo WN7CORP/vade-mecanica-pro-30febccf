@@ -1,9 +1,8 @@
 
 import { useState, useEffect } from "react";
-import { fetchLawArticles, searchArticles } from "@/services/lawService";
-import { Article } from "@/types/law";
+import { fetchLawArticles, Article } from "@/services/lawService";
 
-export const useLawArticles = (lawId: number | undefined) => {
+export const useLawArticles = (lawName: string | undefined) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -11,59 +10,39 @@ export const useLawArticles = (lawId: number | undefined) => {
 
   useEffect(() => {
     const loadArticles = async () => {
-      if (!lawId) {
-        setIsLoading(false);
-        return;
-      }
+      if (!lawName) return;
       
       try {
         setIsLoading(true);
-        const data = await fetchLawArticles(lawId);
+        const decodedLawName = decodeURIComponent(lawName);
+        const data = await fetchLawArticles(decodedLawName);
         
-        // Garantir que todos os artigos têm conteudo definido
-        const validatedData = data.map(article => ({
-          ...article,
-          conteudo: article.conteudo || ''
-        }));
-        
-        setArticles(validatedData);
-        setFilteredArticles(validatedData);
+        setArticles(data);
+        setFilteredArticles(data);
       } catch (error) {
         console.error("Erro ao carregar artigos:", error);
-        setArticles([]);
-        setFilteredArticles([]);
       } finally {
         setIsLoading(false);
       }
     };
     
     loadArticles();
-  }, [lawId]);
+  }, [lawName]);
 
-  const handleSearch = async (term: string) => {
+  const handleSearch = (term: string) => {
     setSearchTerm(term);
-    
-    if (!lawId) return;
     
     if (!term) {
       setFilteredArticles(articles);
       return;
     }
     
-    try {
-      const searchResults = await searchArticles(lawId, term);
-      
-      // Garantir que todos os artigos têm conteudo definido
-      const validatedResults = searchResults.map(article => ({
-        ...article,
-        conteudo: article.conteudo || ''
-      }));
-      
-      setFilteredArticles(validatedResults);
-    } catch (error) {
-      console.error("Erro na pesquisa:", error);
-      setFilteredArticles([]);
-    }
+    const filtered = articles.filter(article => 
+      (article.numero && article.numero.toLowerCase().includes(term.toLowerCase())) ||
+      (article.conteudo && article.conteudo.toLowerCase().includes(term.toLowerCase()))
+    );
+    
+    setFilteredArticles(filtered);
   };
 
   return {

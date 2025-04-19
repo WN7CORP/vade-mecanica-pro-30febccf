@@ -5,7 +5,7 @@ import AIExplanation from "@/components/ui/AIExplanation";
 import AIChat from "@/components/ui/AIChat";
 import PDFExporter from "@/components/ui/PDFExporter";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
-import { Article } from "@/types/law";
+import { Article } from "@/services/lawService";
 
 interface ArticleListProps {
   isLoading: boolean;
@@ -62,7 +62,8 @@ const ArticleList = ({
         <ArticleCard
           key={index}
           articleNumber={article.numero}
-          content={article.conteudo || ''}
+          content={article.conteudo}
+          example={article.exemplo}
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onExplainRequest={(type) => onExplainArticle(article, type)}
           onAskQuestion={() => onAskQuestion(article)}
@@ -82,7 +83,7 @@ const ArticleList = ({
       {showChat && selectedArticle && lawName && (
         <AIChat
           articleNumber={selectedArticle.numero}
-          articleContent={selectedArticle.conteudo || ''}
+          articleContent={selectedArticle.conteudo}
           lawName={decodeURIComponent(lawName)}
           onClose={onCloseChat}
         />
@@ -92,7 +93,7 @@ const ArticleList = ({
         <div className="mt-4 flex justify-end">
           <PDFExporter
             articleNumber={selectedArticle.numero}
-            articleContent={selectedArticle.conteudo || ''}
+            articleContent={selectedArticle.conteudo}
             lawName={lawName ? decodeURIComponent(lawName) : ""}
             explanation={explanation}
           />
