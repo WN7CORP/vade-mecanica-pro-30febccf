@@ -15,6 +15,7 @@ const LawView = () => {
   const { lawName } = useParams<{ lawName: string }>();
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   
   const {
     filteredArticles,
@@ -28,8 +29,6 @@ const LawView = () => {
     setShowExplanation,
     explanation,
     loadingExplanation,
-    selectedArticle,
-    setSelectedArticle,
     handleExplainArticle
   } = useAIExplanation(lawName);
   
@@ -44,9 +43,13 @@ const LawView = () => {
 
   const handleAskQuestion = (article: Article) => {
     if (!lawName) return;
-    
     setSelectedArticle(article);
     setShowChat(true);
+  };
+
+  const handleExplain = async (article: Article, type: 'technical' | 'formal') => {
+    setSelectedArticle(article);
+    await handleExplainArticle(article, type);
   };
   
   const scrollToTop = () => {
@@ -81,7 +84,7 @@ const LawView = () => {
           loadingExplanation={loadingExplanation}
           selectedArticle={selectedArticle}
           showChat={showChat}
-          onExplainArticle={handleExplainArticle}
+          onExplainArticle={handleExplain}
           onAskQuestion={handleAskQuestion}
           onCloseChat={() => setShowChat(false)}
           onCloseExplanation={() => setShowExplanation(false)}

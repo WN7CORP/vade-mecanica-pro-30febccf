@@ -2,9 +2,11 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
+  id: number;
   numero: string;
   conteudo: string;
   exemplo?: string;
+  created_at: string;
 }
 
 const validTables = [
@@ -12,6 +14,8 @@ const validTables = [
   'codigo_penal',
   'codigo_processo_civil',
   'codigo_processo_penal',
+  'codigo_defesa_consumidor',
+  'codigo_tributario',
   'Constituição Federal'
 ];
 
@@ -21,7 +25,9 @@ function convertToTableName(lawName: string): string {
     'código civil': 'codigo_civil',
     'código penal': 'codigo_penal',
     'código de processo civil': 'codigo_processo_civil',
-    'código de processo penal': 'codigo_processo_penal'
+    'código de processo penal': 'codigo_processo_penal',
+    'código de defesa do consumidor': 'codigo_defesa_consumidor',
+    'código tributário nacional': 'codigo_tributario'
   };
   
   const normalized = lawName.toLowerCase().trim();
@@ -41,27 +47,9 @@ export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
       return [];
     }
     
-    if (tableName === 'Constituição Federal') {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('numero:"Número do artigo", conteudo, exemplo')
-        .order('Número do artigo');
-
-      if (error) {
-        console.error('Error fetching articles:', error);
-        throw new Error('Falha ao carregar artigos');
-      }
-
-      return (data || []).map(item => ({
-        numero: item.numero,
-        conteudo: item.conteudo || '',
-        exemplo: item.exemplo
-      }));
-    }
-
     const { data, error } = await supabase
       .from(tableName)
-      .select('numero, conteudo, exemplo')
+      .select('*')
       .order('numero');
 
     if (error) {
@@ -88,28 +76,9 @@ export const searchArticle = async (
       return null;
     }
     
-    if (tableName === 'Constituição Federal') {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('numero:"Número do artigo", conteudo, exemplo')
-        .eq('Número do artigo', articleNumber)
-        .single();
-
-      if (error) {
-        console.error('Error searching article:', error);
-        return null;
-      }
-
-      return {
-        numero: data.numero,
-        conteudo: data.conteudo || '',
-        exemplo: data.exemplo
-      };
-    }
-    
     const { data, error } = await supabase
       .from(tableName)
-      .select('numero, conteudo, exemplo')
+      .select('*')
       .eq('numero', articleNumber)
       .single();
 
@@ -138,28 +107,10 @@ export const searchByTerm = async (
     }
     
     const term = searchTerm.toLowerCase();
-
-    if (tableName === 'Constituição Federal') {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select('numero:"Número do artigo", conteudo, exemplo')
-        .or(`"Número do artigo".ilike.%${term}%,conteudo.ilike.%${term}%`);
-
-      if (error) {
-        console.error('Error searching by term:', error);
-        return [];
-      }
-
-      return (data || []).map(item => ({
-        numero: item.numero,
-        conteudo: item.conteudo || '',
-        exemplo: item.exemplo
-      }));
-    }
     
     const { data, error } = await supabase
       .from(tableName)
-      .select('numero, conteudo, exemplo')
+      .select('*')
       .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
     if (error) {
@@ -180,6 +131,8 @@ export const fetchAvailableLaws = async (): Promise<string[]> => {
     'Código Civil',
     'Código Penal',
     'Código de Processo Civil',
-    'Código de Processo Penal'
+    'Código de Processo Penal',
+    'Código de Defesa do Consumidor',
+    'Código Tributário Nacional'
   ];
 };

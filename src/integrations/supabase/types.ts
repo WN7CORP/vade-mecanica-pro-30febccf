@@ -9,51 +9,221 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      codigo_processo_civil: {
+      artigos: {
         Row: {
           conteudo: string | null
           created_at: string | null
-          exemplo: string | null
-          id: string
+          id: number
+          lei_id: number | null
           numero: string
         }
         Insert: {
           conteudo?: string | null
           created_at?: string | null
-          exemplo?: string | null
-          id?: string
+          id?: number
+          lei_id?: number | null
           numero: string
         }
         Update: {
           conteudo?: string | null
           created_at?: string | null
-          exemplo?: string | null
-          id?: string
+          id?: number
+          lei_id?: number | null
           numero?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artigos_lei_id_fkey"
+            columns: ["lei_id"]
+            isOneToOne: false
+            referencedRelation: "leis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      codigo_civil: {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          exemplo: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      codigo_defesa_consumidor: {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          exemplo: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      codigo_penal: {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          exemplo: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      codigo_processo_civil: {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          exemplo: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
         }
         Relationships: []
       }
       codigo_processo_penal: {
         Row: {
           conteudo: string | null
-          created_at: string | null
+          created_at: string
           exemplo: string | null
-          id: string
-          numero: string
+          id: number
+          numero: string | null
         }
         Insert: {
           conteudo?: string | null
-          created_at?: string | null
+          created_at?: string
           exemplo?: string | null
-          id?: string
-          numero: string
+          id?: never
+          numero?: string | null
         }
         Update: {
           conteudo?: string | null
-          created_at?: string | null
+          created_at?: string
           exemplo?: string | null
-          id?: string
-          numero?: string
+          id?: never
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      codigo_tributario: {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          exemplo: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: never
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      "Constituição Federal": {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          exemplo: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      leis: {
+        Row: {
+          created_at: string | null
+          id: number
+          nome: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          nome: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          nome?: string
         }
         Relationships: []
       }
