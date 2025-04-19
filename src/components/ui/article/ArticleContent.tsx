@@ -22,15 +22,22 @@ const ArticleContent = ({
 }: ArticleContentProps) => {
   const renderContent = () => {
     return content.split('\n').map((line, i) => {
-      // Check if the line contains any content for centereing
-      const shouldCenter = !articleNumber && i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.');
+      // Check if the line contains article number for alignment
+      const hasArticleNumber = line.trim().startsWith('Art.') || line.trim().match(/^\d+\.?/);
+      const isParagraph = line.trim().startsWith('§');
+      const isHeader = !articleNumber && i === 0;
+      
+      // Determine text alignment and style
+      const textAlignment = hasArticleNumber || isParagraph ? "text-left law-article-numbered" : "text-center law-article-unnumbered";
+      const textStyle = isHeader ? "text-sm text-gray-400" : "";
+      const fontWeight = !hasArticleNumber && !isParagraph && !isHeader ? "font-bold" : "";
       
       return (
         <p 
           key={i} 
-          className={`mb-2 whitespace-pre-wrap transition-all duration-200 ${
-            shouldCenter ? "text-center" : ""
-          } ${!articleNumber && i === 0 ? "text-sm text-gray-400" : ""}`}
+          className={`law-article-paragraph whitespace-pre-wrap transition-all duration-200 ${
+            textAlignment
+          } ${textStyle} ${fontWeight}`}
           style={{ fontSize: `${fontSize + 2}px` }}
         >
           {line}
@@ -46,7 +53,7 @@ const ArticleContent = ({
       {example && (
         <div className="mt-6 p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded">
           <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
-          <p className="text-gray-600 whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
+          <p className="law-example whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
             {example}
           </p>
         </div>
