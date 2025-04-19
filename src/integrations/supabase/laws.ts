@@ -48,9 +48,8 @@ export const fetchLawArticles = async (
 
   console.log(`Buscando artigos da tabela: ${tableName}`);
   
-  // Using 'as any' for the dynamic table name
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select("*")
     .order("numero", { ascending: true });
 
@@ -59,10 +58,11 @@ export const fetchLawArticles = async (
     throw new Error("Falha ao carregar artigos");
   }
   
-  // Proper type handling for TypeScript
-  const articles = data as unknown as Article[];
-  console.log(`Artigos encontrados: ${articles.length}`);
-  return articles || [];
+  if (!data) {
+    return [];
+  }
+
+  return data as Article[];
 };
 
 export const searchArticle = async (
@@ -76,17 +76,17 @@ export const searchArticle = async (
   }
 
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select("*")
     .eq("numero", articleNumber)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Erro ao buscar artigo:", error);
     return null;
   }
   
-  return data as unknown as Article;
+  return data as Article | null;
 };
 
 export const searchByTerm = async (
@@ -101,7 +101,7 @@ export const searchByTerm = async (
 
   const term = searchTerm.toLowerCase();
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select("*")
     .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
@@ -110,5 +110,10 @@ export const searchByTerm = async (
     return [];
   }
   
-  return (data as unknown as Article[]) || [];
+  if (!data) {
+    return [];
+  }
+
+  return data as Article[];
 };
+
