@@ -7,69 +7,41 @@ export interface Article {
   exemplo?: string;
 }
 
+// Function to get table names from the Supabase database
 async function getValidTables(): Promise<string[]> {
   try {
-    // Use a raw query to get all tables in the public schema since the typed client
-    // doesn't support querying system tables directly
-    const { data: tables, error: tablesError } = await supabase
-      .rpc('get_all_tables', {}) as unknown as { 
-        data: { tablename: string }[], 
-        error: any 
-      };
+    // Use a simple client.rpc call instead of trying to query system tables
+    const { data, error } = await supabase.rpc('get_tables') as unknown as { 
+      data: string[], 
+      error: any 
+    };
 
-    if (tablesError || !tables) {
-      console.error('Error fetching tables:', tablesError);
-      return [];
+    if (error) {
+      console.error('Error fetching tables:', error);
+      // If the RPC fails, fall back to a known table
+      return ['constituição_federal'];
     }
 
-    // Validate each table's structure
-    const validTables = [];
-    for (const { tablename } of tables) {
-      // Skip system tables and tables that don't match our naming convention
-      if (tablename.startsWith('pg_') || tablename.includes('information_schema')) {
-        continue;
-      }
-
-      // Instead of querying schema, try to get a sample row to check structure
-      const { data: sample, error: sampleError } = await supabase
-        .from(tablename)
-        .select('numero, conteudo, exemplo, id, created_at')
-        .limit(1) as any;
-
-      if (sampleError) {
-        console.error(`Error checking table ${tablename}:`, sampleError);
-        continue;
-      }
-
-      // If we can query these columns, the table has the right structure
-      validTables.push(tablename);
+    if (!data || !Array.isArray(data)) {
+      console.warn('Unexpected response format from get_tables RPC');
+      return ['constituição_federal'];
     }
 
-    return validTables;
+    // Filter out system tables and tables that don't match our naming convention
+    const filteredTables = data.filter(tableName => {
+      return !tableName.startsWith('pg_') && !tableName.includes('information_schema');
+    });
+
+    return filteredTables.length > 0 ? filteredTables : ['constituição_federal'];
   } catch (error) {
     console.error('Error in getValidTables:', error);
-    return [];
+    return ['constituição_federal'];
   }
 }
 
-// Fallback function to get valid tables if RPC method is not available
+// Fallback function to get a simple list of known tables
 async function getValidTablesSimple(): Promise<string[]> {
-  try {
-    // Try to query the constituição_federal table as a known reference
-    const { data: test } = await supabase
-      .from('constituição_federal')
-      .select('id')
-      .limit(1);
-    
-    // If we can query it, return it
-    if (test) {
-      return ['constituição_federal'];
-    }
-    return [];
-  } catch (error) {
-    console.error('Error in getValidTablesSimple:', error);
-    return [];
-  }
+  return ['constituição_federal'];
 }
 
 function convertTableNameToDisplay(tableName: string): string {
@@ -80,22 +52,36 @@ function convertTableNameToDisplay(tableName: string): string {
     .join(' ');
 }
 
-export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
+// Helper function to handle dynamic table queries safely
+async function queryTable<T>(
+  tableName: string, 
+  queryBuilder: (table: any) => any
+): Promise<T[]> {
   try {
     // Use type assertion to bypass TypeScript's strict typing
-    const { data, error } = await supabase
-      .from(lawName)
-      .select('numero, conteudo, exemplo')
-      .order('numero') as any;
+    const query = queryBuilder(supabase.from(tableName) as any);
+    const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching articles:', error);
-      throw new Error('Falha ao carregar artigos');
+      console.error(`Error querying table ${tableName}:`, error);
+      return [];
     }
 
-    if (!data) return [];
+    return (data || []) as T[];
+  } catch (error) {
+    console.error(`Error in queryTable for ${tableName}:`, error);
+    return [];
+  }
+}
+
+export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
+  try {
+    const articles = await queryTable<Article>(
+      lawName,
+      (table) => table.select('numero, conteudo, exemplo').order('numero')
+    );
     
-    return data.map((item: any) => ({
+    return articles.map(item => ({
       numero: String(item.numero || ''),
       conteudo: String(item.conteudo || ''),
       exemplo: item.exemplo ? String(item.exemplo) : undefined
@@ -111,22 +97,20 @@ export const searchArticle = async (
   articleNumber: string
 ): Promise<Article | null> => {
   try {
-    // Use type assertion to bypass TypeScript's strict typing
-    const { data, error } = await supabase
-      .from(lawName)
-      .select('numero, conteudo, exemplo')
-      .eq('numero', articleNumber)
-      .maybeSingle() as any;
+    const articles = await queryTable<Article>(
+      lawName,
+      (table) => table.select('numero, conteudo, exemplo').eq('numero', articleNumber).limit(1)
+    );
 
-    if (error || !data) {
-      console.error('Error searching article:', error);
+    if (!articles || articles.length === 0) {
       return null;
     }
 
+    const article = articles[0];
     return {
-      numero: String(data.numero || ''),
-      conteudo: String(data.conteudo || ''),
-      exemplo: data.exemplo ? String(data.exemplo) : undefined
+      numero: String(article.numero || ''),
+      conteudo: String(article.conteudo || ''),
+      exemplo: article.exemplo ? String(article.exemplo) : undefined
     };
   } catch (error) {
     console.error('Error in searchArticle:', error);
@@ -140,21 +124,14 @@ export const searchByTerm = async (
 ): Promise<Article[]> => {
   try {
     const term = searchTerm.toLowerCase();
+    
+    const articles = await queryTable<Article>(
+      lawName,
+      (table) => table.select('numero, conteudo, exemplo')
+        .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`)
+    );
 
-    // Use type assertion to bypass TypeScript's strict typing
-    const { data, error } = await supabase
-      .from(lawName)
-      .select('numero, conteudo, exemplo')
-      .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`) as any;
-
-    if (error) {
-      console.error('Error searching by term:', error);
-      return [];
-    }
-
-    if (!data) return [];
-
-    return data.map((item: any) => ({
+    return articles.map(item => ({
       numero: String(item.numero || ''),
       conteudo: String(item.conteudo || ''),
       exemplo: item.exemplo ? String(item.exemplo) : undefined
@@ -166,38 +143,33 @@ export const searchByTerm = async (
 };
 
 export const fetchAvailableLaws = async (): Promise<string[]> => {
-  // Try to use the function to get tables, if it fails, use the simple method
   try {
-    // First try to use RPC
+    // First try to use the function to get tables
     const tables = await getValidTables();
-    if (tables.length > 0) {
-      return tables.map(convertTableNameToDisplay);
-    }
     
-    // If that fails, use simple method
-    const simpleTables = await getValidTablesSimple();
-    return simpleTables.map(convertTableNameToDisplay);
+    // Convert table names to display format
+    return tables.map(convertTableNameToDisplay);
   } catch (error) {
     console.error('Error fetching available laws:', error);
-    // Return at least the known table as fallback
-    return ['Constituição Federal'];
+    
+    // Return fallback if everything fails
+    const fallbackTables = await getValidTablesSimple();
+    return fallbackTables.map(convertTableNameToDisplay);
   }
 };
 
-// We need to create this RPC function in Supabase
-const createGetAllTablesFunction = async () => {
-  // This is just a reference of the SQL to create in Supabase if needed
-  // Not executed here - just for documentation
-  const sql = `
-  CREATE OR REPLACE FUNCTION get_all_tables()
-  RETURNS TABLE(tablename text) 
-  SECURITY DEFINER 
-  AS $$
-  BEGIN
-    RETURN QUERY SELECT table_name::text FROM information_schema.tables 
-    WHERE table_schema = 'public';
-  END;
-  $$ LANGUAGE plpgsql;
-  `;
-  console.log('SQL to create in Supabase:', sql);
-};
+// Create a RPC function in the Supabase database to get all tables
+// This is just a reference - needs to be created in Supabase SQL editor
+const createGetTablesFunction = `
+CREATE OR REPLACE FUNCTION get_tables()
+RETURNS TABLE(tablename text) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN QUERY SELECT table_name::text 
+  FROM information_schema.tables 
+  WHERE table_schema = 'public';
+END;
+$$;
+`;

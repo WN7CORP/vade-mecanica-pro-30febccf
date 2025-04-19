@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -22,10 +21,20 @@ const AllLaws = () => {
       try {
         setIsLoading(true);
         const availableLaws = await fetchAvailableLaws();
-        setLaws(availableLaws);
-        setFilteredLaws(availableLaws);
+        
+        // If we get empty results, use at least one fallback item
+        const lawsList = availableLaws.length > 0 
+          ? availableLaws 
+          : ['Constituição Federal'];
+          
+        setLaws(lawsList);
+        setFilteredLaws(lawsList);
       } catch (error) {
         console.error("Erro ao carregar leis:", error);
+        // Even on error, provide a fallback
+        const fallback = ['Constituição Federal'];
+        setLaws(fallback);
+        setFilteredLaws(fallback);
       } finally {
         setIsLoading(false);
       }
