@@ -185,7 +185,7 @@ export type Database = {
         }
         Relationships: []
       }
-      "Constituição Federal": {
+      constituicao_federal: {
         Row: {
           conteudo: string | null
           created_at: string

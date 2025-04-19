@@ -24,9 +24,11 @@ export const LAW_OPTIONS: LawOption[] = [
   { display: "Código Tributário Nacional",   table: "codigo_tributario"         },
 ];
 
+/** Retorna apenas os nomes para popular um dropdown/menu */
 export const fetchAvailableLaws = (): string[] =>
   LAW_OPTIONS.map((opt) => opt.display);
 
+/** Busca o nome da tabela a partir do texto exibido */
 function getTableName(displayName: string): string | null {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
@@ -42,8 +44,9 @@ export const fetchLawArticles = async (
     throw new Error(`Lei inválida: "${lawDisplayName}"`);
   }
 
+  // Usando o operador "as" para informar ao TypeScript que tableName é válido
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .order("numero", { ascending: true });
 
@@ -65,7 +68,7 @@ export const searchArticle = async (
   }
 
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .eq("numero", articleNumber)
     .single();
@@ -89,7 +92,7 @@ export const searchByTerm = async (
 
   const term = searchTerm.toLowerCase();
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 

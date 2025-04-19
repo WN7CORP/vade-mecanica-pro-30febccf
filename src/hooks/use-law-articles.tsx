@@ -1,12 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { fetchLawArticles, Article } from "@/services/lawService";
+import { useToast } from "@/hooks/use-toast";
 
 export const useLawArticles = (lawName: string | undefined) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadArticles = async () => {
@@ -15,19 +17,26 @@ export const useLawArticles = (lawName: string | undefined) => {
       try {
         setIsLoading(true);
         const decodedLawName = decodeURIComponent(lawName);
+        console.log("Carregando artigos para:", decodedLawName);
         const data = await fetchLawArticles(decodedLawName);
+        console.log("Artigos carregados:", data.length);
         
         setArticles(data);
         setFilteredArticles(data);
       } catch (error) {
         console.error("Erro ao carregar artigos:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os artigos",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
     
     loadArticles();
-  }, [lawName]);
+  }, [lawName, toast]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
