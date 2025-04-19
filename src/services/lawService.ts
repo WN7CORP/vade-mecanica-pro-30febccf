@@ -1,16 +1,29 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-interface Article {
+export interface Article {
   numero: string;
   conteudo: string;
   exemplo?: string;
 }
 
+const validTables = [
+  'codigo_civil',
+  'codigo_penal',
+  'codigo_processo_civil',
+  'codigo_processo_penal',
+  'constituicao_federal'
+];
+
 export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
   try {
     // Convert law name to table name format
-    const tableName = lawName.toLowerCase().replace(/ /g, '_');
+    const tableName = convertToTableName(lawName);
+    
+    if (!isValidTable(tableName)) {
+      console.error(`Invalid table name: ${tableName}`);
+      return [];
+    }
     
     const { data, error } = await supabase
       .from(tableName)
@@ -34,7 +47,12 @@ export const searchArticle = async (
   articleNumber: string
 ): Promise<Article | null> => {
   try {
-    const tableName = lawName.toLowerCase().replace(/ /g, '_');
+    const tableName = convertToTableName(lawName);
+    
+    if (!isValidTable(tableName)) {
+      console.error(`Invalid table name: ${tableName}`);
+      return null;
+    }
     
     const { data, error } = await supabase
       .from(tableName)
@@ -59,7 +77,13 @@ export const searchByTerm = async (
   searchTerm: string
 ): Promise<Article[]> => {
   try {
-    const tableName = lawName.toLowerCase().replace(/ /g, '_');
+    const tableName = convertToTableName(lawName);
+    
+    if (!isValidTable(tableName)) {
+      console.error(`Invalid table name: ${tableName}`);
+      return [];
+    }
+    
     const term = searchTerm.toLowerCase();
     
     const { data, error } = await supabase
@@ -88,3 +112,22 @@ export const fetchAvailableLaws = async (): Promise<string[]> => {
     'Código de Processo Penal'
   ];
 };
+
+// Helper function to convert law name to valid table name
+function convertToTableName(lawName: string): string {
+  const nameMap: Record<string, string> = {
+    'constituição federal': 'constituicao_federal',
+    'código civil': 'codigo_civil',
+    'código penal': 'codigo_penal',
+    'código de processo civil': 'codigo_processo_civil',
+    'código de processo penal': 'codigo_processo_penal'
+  };
+  
+  const normalized = lawName.toLowerCase().trim();
+  return nameMap[normalized] || normalized.replace(/ /g, '_');
+}
+
+// Helper function to check if table name is valid
+function isValidTable(tableName: string): boolean {
+  return validTables.includes(tableName);
+}

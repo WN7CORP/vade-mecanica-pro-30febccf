@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -9,11 +9,7 @@ import LawHeader from "@/components/law/LawHeader";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
-
-interface Article {
-  article: string;
-  content: string;
-}
+import { Article } from "@/services/lawService";
 
 const LawView = () => {
   const { lawName } = useParams<{ lawName: string }>();
@@ -37,14 +33,14 @@ const LawView = () => {
     handleExplainArticle
   } = useAIExplanation(lawName);
   
-  useEffect(() => {
+  useState(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
     };
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  });
 
   const handleAskQuestion = (article: Article) => {
     if (!lawName) return;

@@ -1,12 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { fetchLawArticles } from "@/services/lawService";
-
-interface Article {
-  numero: string;
-  conteudo: string;
-  exemplo?: string;
-}
+import { fetchLawArticles, Article } from "@/services/lawService";
 
 export const useLawArticles = (lawName: string | undefined) => {
   const [articles, setArticles] = useState<Article[]>([]);
