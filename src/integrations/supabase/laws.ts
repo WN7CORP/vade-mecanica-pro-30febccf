@@ -126,3 +126,4 @@ export const searchByTerm = async (
 
   return data as Article[];
 };
+

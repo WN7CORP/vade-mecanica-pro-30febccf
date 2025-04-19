@@ -11,3 +11,4 @@ export {
   fetchAvailableLaws,
   LAW_OPTIONS 
 } from "@/integrations/supabase/laws";
+
