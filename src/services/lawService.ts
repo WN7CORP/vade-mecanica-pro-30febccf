@@ -7,59 +7,66 @@ export interface Article {
   exemplo?: string;
 }
 
-const validTables = [
-  'codigo_civil',
-  'codigo_penal',
-  'codigo_processo_civil',
-  'codigo_processo_penal',
-  'constituicao_federal',
-  'codigo_defesa_consumidor',
-  'codigo_tributario',
-  'codigo_comercial',
-  'codigo_eleitoral',
-  'codigo_transito',
-  'codigo_florestal',
-  'codigo_penal_militar',
-  'codigo_processo_penal_militar'
-];
+async function getValidTables(): Promise<string[]> {
+  try {
+    // Fetch all tables in the public schema
+    const { data: tables, error: tablesError } = await supabase
+      .from('pg_tables')
+      .select('tablename')
+      .eq('schemaname', 'public');
 
-function convertToTableName(lawName: string): string {
-  const nameMap: Record<string, string> = {
-    'constituição federal': 'constituicao_federal',
-    'código civil': 'codigo_civil',
-    'código penal': 'codigo_penal',
-    'código de processo civil': 'codigo_processo_civil',
-    'código de processo penal': 'codigo_processo_penal',
-    'código de defesa do consumidor': 'codigo_defesa_consumidor',
-    'código tributário nacional': 'codigo_tributario',
-    'código comercial': 'codigo_comercial',
-    'código eleitoral': 'codigo_eleitoral',
-    'código de trânsito brasileiro': 'codigo_transito',
-    'código florestal': 'codigo_florestal',
-    'código penal militar': 'codigo_penal_militar',
-    'código de processo penal militar': 'codigo_processo_penal_militar'
-  };
-  
-  const normalized = lawName.toLowerCase().trim();
-  return nameMap[normalized] || normalized;
+    if (tablesError || !tables) {
+      console.error('Error fetching tables:', tablesError);
+      return [];
+    }
+
+    // Validate each table's structure
+    const validTables = [];
+    for (const { tablename } of tables) {
+      const { data: columns, error: columnsError } = await supabase
+        .from('information_schema.columns')
+        .select('column_name, data_type')
+        .eq('table_schema', 'public')
+        .eq('table_name', tablename);
+
+      if (columnsError || !columns) continue;
+
+      // Check if table has required columns with correct types
+      const hasRequiredStructure = columns.every(col => {
+        const required = {
+          exemplo: 'text',
+          numero: 'text',
+          id: 'bigint',
+          conteudo: 'text',
+          created_at: 'timestamp with time zone'
+        };
+        return required[col.column_name] === col.data_type;
+      });
+
+      if (hasRequiredStructure) {
+        validTables.push(tablename);
+      }
+    }
+
+    return validTables;
+  } catch (error) {
+    console.error('Error in getValidTables:', error);
+    return [];
+  }
 }
 
-function isValidTable(tableName: string): boolean {
-  return validTables.includes(tableName);
+function convertTableNameToDisplay(tableName: string): string {
+  // Convert snake_case to Title Case
+  return tableName
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
   try {
-    const tableName = convertToTableName(lawName);
-    
-    if (!isValidTable(tableName)) {
-      console.error(`Invalid table name: ${tableName}`);
-      return [];
-    }
-    
-    // Using a type assertion to tell TypeScript this is a valid table name
     const { data, error } = await supabase
-      .from(tableName as any)
+      .from(lawName)
       .select('numero, conteudo, exemplo')
       .order('numero');
 
@@ -70,7 +77,6 @@ export const fetchLawArticles = async (lawName: string): Promise<Article[]> => {
 
     if (!data) return [];
     
-    // Explicitly cast the data to ensure type safety
     return data.map(item => ({
       numero: String(item.numero || ''),
       conteudo: String(item.conteudo || ''),
@@ -87,25 +93,16 @@ export const searchArticle = async (
   articleNumber: string
 ): Promise<Article | null> => {
   try {
-    const tableName = convertToTableName(lawName);
-    
-    if (!isValidTable(tableName)) {
-      console.error(`Invalid table name: ${tableName}`);
-      return null;
-    }
-    
     const { data, error } = await supabase
-      .from(tableName as any)
+      .from(lawName)
       .select('numero, conteudo, exemplo')
       .eq('numero', articleNumber)
       .maybeSingle();
 
-    if (error) {
+    if (error || !data) {
       console.error('Error searching article:', error);
       return null;
     }
-
-    if (!data) return null;
 
     return {
       numero: String(data.numero || ''),
@@ -123,17 +120,10 @@ export const searchByTerm = async (
   searchTerm: string
 ): Promise<Article[]> => {
   try {
-    const tableName = convertToTableName(lawName);
-    
-    if (!isValidTable(tableName)) {
-      console.error(`Invalid table name: ${tableName}`);
-      return [];
-    }
-    
     const term = searchTerm.toLowerCase();
 
     const { data, error } = await supabase
-      .from(tableName as any)
+      .from(lawName)
       .select('numero, conteudo, exemplo')
       .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
@@ -156,19 +146,7 @@ export const searchByTerm = async (
 };
 
 export const fetchAvailableLaws = async (): Promise<string[]> => {
-  return [
-    'Constituição Federal',
-    'Código Civil',
-    'Código Penal',
-    'Código de Processo Civil',
-    'Código de Processo Penal',
-    'Código de Defesa do Consumidor',
-    'Código Tributário Nacional',
-    'Código Comercial',
-    'Código Eleitoral',
-    'Código de Trânsito Brasileiro',
-    'Código Florestal',
-    'Código Penal Militar',
-    'Código de Processo Penal Militar'
-  ];
+  const validTables = await getValidTables();
+  return validTables.map(convertTableNameToDisplay);
 };
+

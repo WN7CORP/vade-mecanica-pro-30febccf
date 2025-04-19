@@ -9,54 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      codigo_processo_civil: {
-        Row: {
-          conteudo: string | null
-          created_at: string | null
-          exemplo: string | null
-          id: string
-          numero: string
-        }
-        Insert: {
-          conteudo?: string | null
-          created_at?: string | null
-          exemplo?: string | null
-          id?: string
-          numero: string
-        }
-        Update: {
-          conteudo?: string | null
-          created_at?: string | null
-          exemplo?: string | null
-          id?: string
-          numero?: string
-        }
-        Relationships: []
-      }
-      codigo_processo_penal: {
-        Row: {
-          conteudo: string | null
-          created_at: string | null
-          exemplo: string | null
-          id: string
-          numero: string
-        }
-        Insert: {
-          conteudo?: string | null
-          created_at?: string | null
-          exemplo?: string | null
-          id?: string
-          numero: string
-        }
-        Update: {
-          conteudo?: string | null
-          created_at?: string | null
-          exemplo?: string | null
-          id?: string
-          numero?: string
-        }
-        Relationships: []
-      }
       constituição_federal: {
         Row: {
           conteudo: string | null
