@@ -24,7 +24,9 @@ const ArticleContent = ({
     return content.split('\n').map((line, i) => {
       // Se articleNumber for indefinido ou vazio, centralize apenas o primeiro parágrafo
       // Caso contrário, centralize apenas linhas que começam com § ou Art.
-      const shouldCenter = !articleNumber && i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.');
+      const shouldCenter = (!articleNumber && i === 0) || 
+                           line.trim().startsWith('§') || 
+                           line.trim().startsWith('Art.');
       
       return (
         <p 
@@ -32,7 +34,7 @@ const ArticleContent = ({
           className={`mb-2 whitespace-pre-wrap transition-all duration-200 ${
             shouldCenter ? "text-center" : "text-left"
           } ${!articleNumber && i === 0 ? "text-sm text-gray-400" : ""}`}
-          style={{ fontSize: `${fontSize + 2}px` }}
+          style={{ fontSize: `${fontSize}px` }}
         >
           {line}
         </p>

@@ -44,7 +44,7 @@ function getTableName(displayName: string): LawTableName | null {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
   );
-  return found?.table as LawTableName ?? null;
+  return found ? found.table as LawTableName : null;
 }
 
 export const fetchLawArticles = async (
@@ -61,7 +61,7 @@ export const fetchLawArticles = async (
   const { data, error } = await supabase
     .from(tableName)
     .select("*")
-    .order("numero", { ascending: true });
+    .order("numero", { ascending: true }) as { data: Article[] | null, error: any };
 
   if (error) {
     console.error("Erro ao buscar artigos:", error);
@@ -89,14 +89,14 @@ export const searchArticle = async (
     .from(tableName)
     .select("*")
     .eq("numero", articleNumber)
-    .maybeSingle();
+    .maybeSingle() as { data: Article | null, error: any };
 
   if (error) {
     console.error("Erro ao buscar artigo:", error);
     return null;
   }
   
-  return data as Article | null;
+  return data;
 };
 
 export const searchByTerm = async (
@@ -113,7 +113,7 @@ export const searchByTerm = async (
   const { data, error } = await supabase
     .from(tableName)
     .select("*")
-    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
+    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`) as { data: Article[] | null, error: any };
 
   if (error) {
     console.error("Erro na busca por termo:", error);
@@ -124,6 +124,5 @@ export const searchByTerm = async (
     return [];
   }
 
-  return data as Article[];
+  return data;
 };
-

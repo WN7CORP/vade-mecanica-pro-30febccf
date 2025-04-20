@@ -5,8 +5,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollText, Search, ChartBar, FileDown, Loader2 } from "lucide-react";
-import PDFExporter from "@/components/ui/PDFExporter";
+import { ScrollText, Search, ChartBar, Loader2 } from "lucide-react";
 
 const Notes = () => {
   const navigate = useNavigate();

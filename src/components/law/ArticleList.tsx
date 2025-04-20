@@ -3,7 +3,6 @@ import { Loader2 } from "lucide-react";
 import ArticleCard from "@/components/ui/ArticleCard";
 import AIExplanation from "@/components/ui/AIExplanation";
 import AIChat from "@/components/ui/AIChat";
-import PDFExporter from "@/components/ui/PDFExporter";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
 import { Article } from "@/services/lawService";
 
@@ -87,17 +86,6 @@ const ArticleList = ({
           lawName={decodeURIComponent(lawName)}
           onClose={onCloseChat}
         />
-      )}
-      
-      {showExplanation && !loadingExplanation && selectedArticle && explanation && (
-        <div className="mt-4 flex justify-end">
-          <PDFExporter
-            articleNumber={selectedArticle.numero}
-            articleContent={selectedArticle.conteudo}
-            lawName={lawName ? decodeURIComponent(lawName) : ""}
-            explanation={explanation}
-          />
-        </div>
       )}
     </div>
   );

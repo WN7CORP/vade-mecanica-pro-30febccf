@@ -7,6 +7,7 @@ import CopyToast from "./article/CopyToast";
 import VoiceNarration from "./VoiceNarration";
 import ArticleInteractions from "./ArticleInteractions";
 import ArticleNotes from "./ArticleNotes";
+import { toast } from "@/hooks/use-toast";
 
 interface ArticleCardProps {
   articleNumber: string;
@@ -105,19 +106,6 @@ const ArticleCard = ({
 
   const handleComment = () => {
     setShowNotes(true);
-  };
-  
-  const toast = {
-    description: (message: string) => {
-      const toastEl = document.createElement('div');
-      toastEl.className = 'fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-primary-300 text-white px-4 py-2 rounded-md shadow-lg z-50';
-      toastEl.textContent = message;
-      document.body.appendChild(toastEl);
-      
-      setTimeout(() => {
-        toastEl.remove();
-      }, 3000);
-    }
   };
 
   return (
