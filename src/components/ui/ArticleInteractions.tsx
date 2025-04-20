@@ -1,7 +1,9 @@
+
 import { Button } from "./button";
 import { BookOpen, Bookmark, Copy, Volume2, ScrollText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+
 interface ArticleInteractionsProps {
   articleNumber: string;
   content: string;
@@ -11,6 +13,7 @@ interface ArticleInteractionsProps {
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
+
 const ArticleInteractions = ({
   articleNumber,
   content,
@@ -21,6 +24,7 @@ const ArticleInteractions = ({
   onToggleFavorite
 }: ArticleInteractionsProps) => {
   const [showExplainOptions, setShowExplainOptions] = useState(false);
+  
   const copyArticle = () => {
     const textToCopy = `Art. ${articleNumber}. ${content}`;
     navigator.clipboard.writeText(textToCopy);
@@ -28,6 +32,7 @@ const ArticleInteractions = ({
       description: "Artigo copiado com sucesso!"
     });
   };
+  
   return <div className="flex flex-wrap gap-2 mt-6">
       <div className="relative">
         <Button variant="outline" size="sm" onClick={() => setShowExplainOptions(!showExplainOptions)} className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300">
@@ -74,4 +79,5 @@ const ArticleInteractions = ({
         </Button>}
     </div>;
 };
+
 export default ArticleInteractions;
