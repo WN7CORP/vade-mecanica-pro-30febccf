@@ -28,17 +28,32 @@ const PDFExporter = ({
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       // Create a simple text file with the content
-      const content = `
+      let content = `
 Lei: ${lawName}
 Artigo: ${articleNumber}
 
 ${articleContent}
-
-${explanation ? `
-EXPLICAÇÃO:
-${explanation.explanation}
-` : ''}
-      `;
+`;
+      
+      // Add explanation content if available
+      if (explanation) {
+        content += `\nEXPLICAÇÃO:`;
+        
+        if (explanation.summary) {
+          content += `\nResumo: ${explanation.summary}`;
+        }
+        
+        if (explanation.detailed) {
+          content += `\nDetalhado: ${explanation.detailed}`;
+        }
+        
+        if (explanation.examples && explanation.examples.length > 0) {
+          content += `\n\nEXEMPLOS:`;
+          explanation.examples.forEach((example, index) => {
+            content += `\nExemplo ${index + 1}: ${example}`;
+          });
+        }
+      }
       
       // Create a blob
       const blob = new Blob([content], { type: 'text/plain' });

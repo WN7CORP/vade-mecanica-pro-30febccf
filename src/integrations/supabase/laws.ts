@@ -14,7 +14,7 @@ export interface LawOption {
   table: string;
 }
 
-// Defining the allowed table names as a type to match Supabase's type system
+// Define the allowed table names as a type
 export type LawTableName = 
   | "constituicao_federal"
   | "codigo_civil"
@@ -24,7 +24,7 @@ export type LawTableName =
   | "codigo_defesa_consumidor"
   | "codigo_tributario";
 
-// Atualizando para incluir apenas as leis que existem no banco de dados
+// Update to include only the laws that exist in the database
 export const LAW_OPTIONS: LawOption[] = [
   { display: "Constituição Federal",         table: "constituicao_federal"      },
   { display: "Código Civil",                 table: "codigo_civil"              },
@@ -58,10 +58,11 @@ export const fetchLawArticles = async (
 
   console.log(`Buscando artigos da tabela: ${tableName}`);
   
+  // Use a type assertion to fix TypeScript errors with dynamic table names
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
-    .order("numero", { ascending: true }) as { data: Article[] | null, error: any };
+    .order("numero", { ascending: true });
 
   if (error) {
     console.error("Erro ao buscar artigos:", error);
@@ -85,18 +86,19 @@ export const searchArticle = async (
     return null;
   }
 
+  // Use a type assertion to fix TypeScript errors with dynamic table names
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .eq("numero", articleNumber)
-    .maybeSingle() as { data: Article | null, error: any };
+    .maybeSingle();
 
   if (error) {
     console.error("Erro ao buscar artigo:", error);
     return null;
   }
   
-  return data;
+  return data as Article | null;
 };
 
 export const searchByTerm = async (
@@ -110,10 +112,12 @@ export const searchByTerm = async (
   }
 
   const term = searchTerm.toLowerCase();
+  
+  // Use a type assertion to fix TypeScript errors with dynamic table names
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
-    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`) as { data: Article[] | null, error: any };
+    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
   if (error) {
     console.error("Erro na busca por termo:", error);
@@ -124,5 +128,5 @@ export const searchByTerm = async (
     return [];
   }
 
-  return data;
+  return data as Article[];
 };
