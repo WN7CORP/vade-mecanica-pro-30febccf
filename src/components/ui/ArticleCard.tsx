@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -248,7 +249,7 @@ const ArticleCard = ({
 
         {example && (
           <button
-            onClick={handleShowExample}
+            onClick={() => handleShowExample()}
             className="mt-3 mb-2 text-primary-300 hover:underline transition-all px-4 py-2 rounded"
           >
             {showExample ? "Ocultar Exemplo" : "Ver Exemplo"}
