@@ -19,10 +19,19 @@ const mockData: ActivityData[] = [
   { name: "Sab", points: 349 },
 ];
 
-// Define a custom tooltip component with proper typing
-const CustomTooltip = ({ active, payload, label, ...rest }: TooltipProps<number, string>) => {
+// Create a custom tooltip component function that matches what Recharts expects
+const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
-    return <ChartTooltipContent active={active} payload={payload} label={label} {...rest} />;
+    return (
+      <div className="rounded-lg border bg-background p-2 shadow-md">
+        <p className="font-medium">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={`item-${index}`} className="text-sm" style={{ color: entry.color }}>
+            {entry.value} pontos
+          </p>
+        ))}
+      </div>
+    );
   }
   return null;
 };
