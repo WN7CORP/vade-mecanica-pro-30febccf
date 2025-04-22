@@ -1,22 +1,56 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Loader2, Bookmark, PieChart } from "lucide-react";
+import { useUserActivity } from "@/hooks/useUserActivity";
+import { toast } from "@/hooks/use-toast";
 
 const Favorites = () => {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | undefined>();
+  const { logUserActivity } = useUserActivity(userId);
+  
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+    
+    checkAuth();
+  }, []);
   
   useEffect(() => {
     const loadFavorites = () => {
-      const saved = localStorage.getItem('favorites');
-      if (saved) {
-        setFavorites(JSON.parse(saved));
+      try {
+        const favoritedArticles = localStorage.getItem('favoritedArticles');
+        if (favoritedArticles) {
+          const parsed = JSON.parse(favoritedArticles);
+          const favoritesList = Object.entries(parsed).map(([key, value]) => {
+            const [lawName, articleNumber] = key.split('-');
+            return {
+              ...value as any,
+              lawName,
+              articleNumber
+            };
+          });
+          setFavorites(favoritesList);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar favoritos:", error);
+        toast({
+          description: "Erro ao carregar favoritos. Tente novamente.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     
     loadFavorites();
@@ -47,7 +81,12 @@ const Favorites = () => {
             {favorites.map((fav, index) => (
               <button
                 key={index}
-                onClick={() => navigate(`/lei/${encodeURIComponent(fav.lawName)}`)}
+                onClick={() => {
+                  navigate(`/lei/${encodeURIComponent(fav.lawName)}`);
+                  if (userId) {
+                    logUserActivity('favorite_view', fav.lawName, fav.articleNumber);
+                  }
+                }}
                 className="w-full p-4 neomorph flex items-center justify-between hover:scale-[1.02] transition-all duration-300"
               >
                 <div className="flex items-center gap-3">

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "./button";
 import { Textarea } from "./textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
@@ -8,6 +8,8 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from ".
 import { askAIQuestion } from "@/services/aiService";
 import { Badge } from "./badge";
 import { toast } from "@/hooks/use-toast";
+import { useUserActivity } from "@/hooks/useUserActivity";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ArticleNotesProps {
   isOpen: boolean;
@@ -31,29 +33,69 @@ const ArticleNotes = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [studyPurpose, setStudyPurpose] = useState<string>("");
   const [showAiHelp, setShowAiHelp] = useState<boolean>(false);
+  const aiHelpRef = useRef<HTMLDivElement>(null);
+  const [userId, setUserId] = useState<string | undefined>();
+  const { logUserActivity } = useUserActivity(userId);
   
   const storageKey = `article-notes-${articleNumber}-${lawName}`;
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+    
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
     // Load saved notes from localStorage
-    const savedData = localStorage.getItem(storageKey);
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setNotes(parsedData.notes || "");
-      setTopics(parsedData.topics || []);
+    try {
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setNotes(parsedData.notes || "");
+        setTopics(parsedData.topics || []);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar anotações:", error);
     }
   }, [storageKey]);
 
+  // Scroll para o topo quando o AI help for exibido
+  useEffect(() => {
+    if (showAiHelp && aiHelpRef.current) {
+      setTimeout(() => {
+        aiHelpRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [showAiHelp]);
+
   const saveNotes = () => {
-    const dataToSave = {
-      notes,
-      topics,
-      lastUpdated: new Date().toISOString()
-    };
-    localStorage.setItem(storageKey, JSON.stringify(dataToSave));
-    toast({
-      description: "Suas anotações foram salvas",
-    });
+    try {
+      const dataToSave = {
+        notes,
+        topics,
+        lastUpdated: new Date().toISOString()
+      };
+      localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+      
+      if (userId) {
+        logUserActivity('note', lawName, articleNumber);
+      }
+      
+      toast({
+        description: "Suas anotações foram salvas",
+      });
+    } catch (error) {
+      console.error("Erro ao salvar anotações:", error);
+      toast({
+        description: "Erro ao salvar anotações. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   const addTopic = () => {
@@ -101,7 +143,7 @@ const ArticleNotes = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="max-h-[85vh]">
+      <DrawerContent className="max-h-[85vh] overflow-y-auto">
         <DrawerHeader>
           <DrawerTitle className="flex items-center justify-between">
             <span className="text-primary-300">Anotações - Art. {articleNumber}</span>
@@ -112,6 +154,54 @@ const ArticleNotes = ({
         </DrawerHeader>
         
         <div className="px-4 pb-16">
+          {showAiHelp && (
+            <Card className="mb-4 border-primary/20" ref={aiHelpRef}>
+              <CardHeader>
+                <CardTitle className="text-sm text-primary-300">Assistente Jurídico IA</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-3">
+                  <label className="text-sm text-muted-foreground">
+                    Para que você está estudando este artigo?
+                  </label>
+                  <Textarea
+                    placeholder="Ex: para uma prova da OAB, para entender meus direitos..."
+                    value={studyPurpose}
+                    onChange={(e) => setStudyPurpose(e.target.value)}
+                    className="mt-2"
+                  />
+                </div>
+                
+                {aiResponse && (
+                  <div className="mt-4 p-3 bg-muted/40 rounded-md text-sm">
+                    <p className="mb-2 font-medium text-primary-300">Sugestão da IA:</p>
+                    <p className="whitespace-pre-wrap">{aiResponse}</p>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="flex justify-end gap-2">
+                {aiResponse ? (
+                  <Button 
+                    size="sm" 
+                    onClick={useAISuggestion}
+                    className="bg-primary/80 hover:bg-primary"
+                  >
+                    Usar esta sugestão
+                  </Button>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    onClick={handleAskAI} 
+                    disabled={loading}
+                    className="bg-primary/80 hover:bg-primary"
+                  >
+                    {loading ? "Consultando IA..." : "Obter sugestão"}
+                  </Button>
+                )}
+              </CardFooter>
+            </Card>
+          )}
+
           <div className="flex flex-wrap gap-2 mb-3">
             {topics.map((topic, index) => (
               <Badge key={index} className="bg-primary/20 text-primary-foreground hover:bg-primary/30">
@@ -171,54 +261,6 @@ const ArticleNotes = ({
               Destacar no texto
             </Button>
           </div>
-          
-          {showAiHelp && (
-            <Card className="mb-4 border-primary/20">
-              <CardHeader>
-                <CardTitle className="text-sm text-primary-300">Assistente Jurídico IA</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-3">
-                  <label className="text-sm text-muted-foreground">
-                    Para que você está estudando este artigo?
-                  </label>
-                  <Textarea
-                    placeholder="Ex: para uma prova da OAB, para entender meus direitos..."
-                    value={studyPurpose}
-                    onChange={(e) => setStudyPurpose(e.target.value)}
-                    className="mt-2"
-                  />
-                </div>
-                
-                {aiResponse && (
-                  <div className="mt-4 p-3 bg-muted/40 rounded-md text-sm">
-                    <p className="mb-2 font-medium text-primary-300">Sugestão da IA:</p>
-                    <p className="whitespace-pre-wrap">{aiResponse}</p>
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2">
-                {aiResponse ? (
-                  <Button 
-                    size="sm" 
-                    onClick={useAISuggestion}
-                    className="bg-primary/80 hover:bg-primary"
-                  >
-                    Usar esta sugestão
-                  </Button>
-                ) : (
-                  <Button 
-                    size="sm" 
-                    onClick={handleAskAI} 
-                    disabled={loading}
-                    className="bg-primary/80 hover:bg-primary"
-                  >
-                    {loading ? "Consultando IA..." : "Obter sugestão"}
-                  </Button>
-                )}
-              </CardFooter>
-            </Card>
-          )}
         </div>
       </DrawerContent>
     </Drawer>

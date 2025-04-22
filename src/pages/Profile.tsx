@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { FileText, Star, Search, BookOpen } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
 import { RankingList } from "@/components/profile/RankingList";
 import { ActivityChart } from "@/components/profile/ActivityChart";
 import { useRankings } from "@/hooks/useRankings";
@@ -13,8 +13,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface UserStats {
   totalSearches: number;
-  totalFavorites: number;
-  totalNotes: number;
   totalReads: number;
 }
 
@@ -27,8 +25,6 @@ const Profile = () => {
 
   const { data: stats = {
     totalSearches: 0,
-    totalFavorites: 0,
-    totalNotes: 0,
     totalReads: 0
   } } = useQuery({
     queryKey: ['user-stats', userId],
@@ -42,15 +38,11 @@ const Profile = () => {
 
       if (!statsData) return {
         totalSearches: 0,
-        totalFavorites: 0,
-        totalNotes: 0,
         totalReads: 0
       };
 
       return {
         totalSearches: statsData.filter(s => s.action_type === 'search').length,
-        totalFavorites: statsData.filter(s => s.action_type === 'favorite').length,
-        totalNotes: statsData.filter(s => s.action_type === 'note').length,
         totalReads: statsData.filter(s => s.action_type === 'read').length
       };
     },
@@ -147,30 +139,6 @@ const Profile = () => {
                   <p className="text-2xl font-bold">{stats.totalSearches}</p>
                 </div>
                 <Search className="h-6 w-6 text-primary-300" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Favoritos</p>
-                  <p className="text-2xl font-bold">{stats.totalFavorites}</p>
-                </div>
-                <Star className="h-6 w-6 text-primary-300" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Anotações</p>
-                  <p className="text-2xl font-bold">{stats.totalNotes}</p>
-                </div>
-                <FileText className="h-6 w-6 text-primary-300" />
               </div>
             </CardContent>
           </Card>

@@ -7,6 +7,8 @@ import CopyToast from "./article/CopyToast";
 import VoiceNarration from "./VoiceNarration";
 import ArticleInteractions from "./ArticleInteractions";
 import ArticleNotes from "./ArticleNotes";
+import { useUserActivity } from "@/hooks/useUserActivity";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ArticleCardProps {
   articleNumber: string;
@@ -45,18 +47,46 @@ const ArticleCard = ({
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>();
+  const { logUserActivity } = useUserActivity(userId);
+  
+  // Verificar autenticação
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+    
+    checkAuth();
+  }, []);
   
   // Load favorite status from localStorage on mount
   useEffect(() => {
-    const favorites = JSON.parse(localStorage.getItem('favoritedArticles') || '{}');
-    setIsFavorite(!!favorites[`${lawName}-${articleNumber}`]);
+    try {
+      const favoritedArticles = localStorage.getItem('favoritedArticles');
+      if (favoritedArticles) {
+        const favorites = JSON.parse(favoritedArticles);
+        setIsFavorite(!!favorites[`${lawName}-${articleNumber}`]);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar status de favorito:", error);
+    }
   }, [lawName, articleNumber]);
   
   const copyArticle = () => {
     const textToCopy = `Art. ${articleNumber}. ${content}`;
-    navigator.clipboard.writeText(textToCopy);
-    setShowCopyToast(true);
-    setTimeout(() => setShowCopyToast(false), 2000);
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        setShowCopyToast(true);
+        setTimeout(() => setShowCopyToast(false), 2000);
+        
+        if (userId) {
+          logUserActivity('copy', lawName, articleNumber);
+        }
+      })
+      .catch(err => console.error("Erro ao copiar: ", err));
   };
   
   const handleColorSelect = (colorClass: string) => {
@@ -65,41 +95,81 @@ const ArticleCard = ({
     // Handle text selection
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
-      document.execCommand('hiliteColor', false, colorClass);
+      // Criar um range para o texto selecionado
+      const range = selection.getRangeAt(0);
+      
+      // Criar um span para envolver o texto selecionado
+      const span = document.createElement('span');
+      span.className = colorClass;
+      
+      // Aplicar o span ao texto selecionado
+      try {
+        range.surroundContents(span);
+        
+        if (userId) {
+          logUserActivity('highlight', lawName, articleNumber);
+        }
+      } catch (e) {
+        console.error("Erro ao destacar texto: ", e);
+        // Alternativa se o range contiver elementos parciais
+        const fragment = range.extractContents();
+        span.appendChild(fragment);
+        range.insertNode(span);
+      }
+      
+      // Limpar a seleção
+      selection.removeAllRanges();
     }
   };
   
   const toggleFavorite = () => {
-    const newStatus = !isFavorite;
-    setIsFavorite(newStatus);
-    
-    // Save to localStorage
-    const favorites = JSON.parse(localStorage.getItem('favoritedArticles') || '{}');
-    const key = `${lawName}-${articleNumber}`;
-    
-    if (newStatus) {
-      favorites[key] = { 
-        articleNumber, 
-        content, 
-        example, 
-        lawName,
-        timestamp: new Date().toISOString()
-      };
-    } else {
-      delete favorites[key];
+    try {
+      const newStatus = !isFavorite;
+      setIsFavorite(newStatus);
+      
+      // Save to localStorage
+      const favoritedArticles = localStorage.getItem('favoritedArticles');
+      const favorites = favoritedArticles ? JSON.parse(favoritedArticles) : {};
+      const key = `${lawName}-${articleNumber}`;
+      
+      if (newStatus) {
+        favorites[key] = { 
+          articleNumber, 
+          content, 
+          example, 
+          lawName,
+          timestamp: new Date().toISOString()
+        };
+        
+        if (userId) {
+          logUserActivity('favorite', lawName, articleNumber);
+        }
+      } else {
+        delete favorites[key];
+      }
+      
+      localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
+    } catch (error) {
+      console.error("Erro ao gerenciar favoritos:", error);
     }
-    
-    localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
   };
 
   const handleExplain = (type: 'technical' | 'formal') => {
     if (onExplainRequest) {
       onExplainRequest(type);
+      
+      if (userId) {
+        logUserActivity('explain', lawName, articleNumber);
+      }
     }
   };
 
   const handleComment = () => {
     setShowNotes(true);
+    
+    if (userId) {
+      logUserActivity('note_view', lawName, articleNumber);
+    }
   };
   
   const handleNarration = (contentType: 'article' | 'example') => {
@@ -121,6 +191,10 @@ const ArticleCard = ({
         text: content,
         title: 'Artigo'
       });
+      
+      if (userId) {
+        logUserActivity('narrate', lawName, articleNumber);
+      }
     } else if (contentType === 'example' && example) {
       setReadingContent({
         text: example,
@@ -130,6 +204,13 @@ const ArticleCard = ({
     
     setIsReading(true);
   };
+
+  useEffect(() => {
+    // Registrar leitura do artigo quando o componente é montado
+    if (userId) {
+      logUserActivity('read', lawName, articleNumber);
+    }
+  }, [userId, lawName, articleNumber, logUserActivity]);
 
   return (
     <div className="card-article mb-6">
