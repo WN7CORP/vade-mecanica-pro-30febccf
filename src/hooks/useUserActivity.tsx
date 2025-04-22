@@ -33,16 +33,31 @@ export function useUserActivity(userId: string | undefined) {
       });
       
       // Atualizar os pontos do usuário (+10 por ação)
+      // Primeiro, obtemos os pontos atuais
+      const { data: userData, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('points, activity_points')
+        .eq('id', userId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // Atualizamos com os novos valores
       const { error: pointsError } = await supabase
         .from('user_profiles')
-        .update({ points: supabase.rpc('increment', { x: 10 }) })
+        .update({ 
+          points: (userData?.points || 0) + 10 
+        })
         .eq('id', userId);
       
       if (pointsError) throw pointsError;
       
+      // Atualizamos os pontos de atividade também
       const { error: activityError } = await supabase
         .from('user_profiles')
-        .update({ activity_points: supabase.rpc('increment', { x: 10 }) })
+        .update({ 
+          activity_points: (userData?.activity_points || 0) + 10 
+        })
         .eq('id', userId);
       
       if (activityError) throw activityError;
