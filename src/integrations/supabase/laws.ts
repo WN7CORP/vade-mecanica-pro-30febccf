@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -82,12 +81,12 @@ function mapRawArticle(dbRow: any): Article {
   return {
     id: dbRow.id,
     numero: dbRow.numero,
-    titulo: dbRow.titulo ?? undefined,
-    conteudo: dbRow.artigo ?? dbRow.conteudo ?? "", // usa 'artigo' se existir, senão 'conteudo'
-    explicacao_tecnica: dbRow["explicacao tecnica"] ?? dbRow.explicacao_tecnica ?? undefined,
-    explicacao_formal: dbRow["explicacao formal"] ?? dbRow.explicacao_formal ?? undefined,
-    exemplo1: dbRow.exemplo1 ?? undefined,
-    exemplo2: dbRow.exemplo2 ?? undefined,
+    titulo: dbRow.titulo || undefined,
+    conteudo: dbRow.artigo || dbRow.conteudo || "", // usa 'artigo' se existir, senão 'conteudo'
+    explicacao_tecnica: dbRow["explicacao tecnica"] || undefined,
+    explicacao_formal: dbRow["explicacao formal"] || undefined,
+    exemplo1: dbRow.exemplo1 || undefined,
+    exemplo2: dbRow.exemplo2 || undefined,
     created_at: dbRow.created_at
   };
 }
@@ -104,29 +103,30 @@ export const fetchLawArticles = async (
   // Define as colunas a serem retornadas
   // Para Constituição Federal, traz todos os campos que possam interessar à tipagem nova
   let selectCols = "*";
-  if (tableName === "constituicao_federal") {
-    selectCols = "id,numero,titulo,artigo,\"explicacao tecnica\",\"explicacao formal\",exemplo1,exemplo2,created_at";
-  }
-
+  
   console.log(`Buscando artigos da tabela: ${tableName}`);
   await logUserAction('search', lawDisplayName);
 
-  const { data, error } = await supabase
-    .from(tableName as any)
-    .select(selectCols)
-    .order("numero", { ascending: true });
+  try {
+    const { data, error } = await supabase
+      .from(tableName as any)
+      .select(selectCols);
 
-  if (error) {
+    if (error) {
+      console.error("Erro ao buscar artigos:", error);
+      throw new Error("Falha ao carregar artigos");
+    }
+    
+    if (!data) {
+      return [];
+    }
+
+    // Faz o mapeamento para o tipo Article
+    return (data as any[]).map(mapRawArticle);
+  } catch (error) {
     console.error("Erro ao buscar artigos:", error);
     throw new Error("Falha ao carregar artigos");
   }
-  
-  if (!data) {
-    return [];
-  }
-
-  // Faz o mapeamento para o tipo Article
-  return (data as any[]).map(mapRawArticle);
 };
 
 export const searchArticle = async (

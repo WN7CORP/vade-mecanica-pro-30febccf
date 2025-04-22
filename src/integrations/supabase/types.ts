@@ -246,7 +246,6 @@ export type Database = {
         Row: {
           artigo: string | null
           conteudo: string | null
-          created_at: string
           exemplo1: string | null
           exemplo2: string | null
           "explicacao formal": string | null
@@ -257,7 +256,6 @@ export type Database = {
         Insert: {
           artigo?: string | null
           conteudo?: string | null
-          created_at?: string
           exemplo1?: string | null
           exemplo2?: string | null
           "explicacao formal"?: string | null
@@ -268,7 +266,6 @@ export type Database = {
         Update: {
           artigo?: string | null
           conteudo?: string | null
-          created_at?: string
           exemplo1?: string | null
           exemplo2?: string | null
           "explicacao formal"?: string | null
