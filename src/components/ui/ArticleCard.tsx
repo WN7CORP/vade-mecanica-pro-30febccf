@@ -225,37 +225,25 @@ const ArticleCard = ({
     }
   };
 
-  // VERIFICAR SE EXISTE "artigo" (content).
+  // VERIFICAR SE EXISTE "artigo" (content). Card só com "conteudo" = content === undefined ou vazio.
   const hasArtigo = !!content && content.trim().length > 0;
 
   return (
-    <div className={`mb-6 ${!hasArtigo ? "bg-background border-none shadow-none" : ""}`}>
-      {/* Toast de cópia ainda aparece só se houver artigo */}
-      {hasArtigo && <CopyToast show={showCopyToast} />}
+    <div className={`card-article mb-6 ${!hasArtigo ? "bg-background border-none shadow-none" : ""}`}>
+      <CopyToast show={showCopyToast} />
 
-      {/* Título extra, se houver */}
       {titulo && (
         <div className="mb-2 text-primary-400 font-semibold text-lg">{titulo}</div>
       )}
 
-      {/* Texto da coluna "conteudo", centralizado, negrito, sem card/fundo extra */}
+      {/* Texto da coluna "conteudo", centralizado e negrito, antes do artigo */}
       {conteudo && (
         <div className="mb-3 text-center font-bold text-white" style={{ fontSize: fontSize + 2 }}>
           {conteudo}
         </div>
       )}
 
-      {/* Texto da coluna "artigo" (content), alinhado à esquerda, fonte normal */}
-      {hasArtigo && (
-        <div
-          className="whitespace-pre-line text-left text-white mb-6"
-          style={{ fontSize: fontSize + 2 }}
-        >
-          {content}
-        </div>
-      )}
-
-      {/* Botões, ferramentas e demais interações SÓ aparecem se houver artigo */}
+      {/* Apenas exiba o header, ferramentas e artigo se houver "artigo" */}
       {hasArtigo && (
         <>
           <ArticleHeader
@@ -277,124 +265,124 @@ const ArticleCard = ({
             />
           )}
 
-          {/* Font size controls (mantido para usabilidade) */}
-          <div className="fixed left-4 bottom-24 flex flex-col space-y-2 z-10">
-            <button
-              onClick={() => setFontSize(prev => Math.min(prev + 2, 24))}
-              className="p-2 neomorph-sm text-primary-300 hover:text-primary hover:scale-105 transition-all"
-              aria-label="Aumentar fonte"
-            >
-              <span style={{ fontSize: 18, fontWeight: "bold" }}>A+</span>
-            </button>
-            <button
-              onClick={() => setFontSize(prev => Math.max(prev - 2, 14))}
-              className="p-2 neomorph-sm text-primary-300 hover:text-primary hover:scale-105 transition-all"
-              aria-label="Diminuir fonte"
-            >
-              <span style={{ fontSize: 18, fontWeight: "bold" }}>A-</span>
-            </button>
-          </div>
-
-          {(explicacao_tecnica || explicacao_formal) && (
-            <div className="flex gap-2 mb-4">
-              {explicacao_tecnica && (
-                <button
-                  className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition ${showExplicacao === 'tecnica' ? 'bg-primary/40' : ''}`}
-                  onClick={() => handleShowExplicacao('tecnica')}
-                >
-                  Ver Explicação Técnica
-                </button>
-              )}
-              {explicacao_formal && (
-                <button
-                  className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition ${showExplicacao === 'formal' ? 'bg-primary/40' : ''}`}
-                  onClick={() => handleShowExplicacao('formal')}
-                >
-                  Ver Explicação Formal
-                </button>
-              )}
-            </div>
-          )}
-
-          {showExplicacao === 'tecnica' && explicacao_tecnica && (
-            <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
-              <h4 className="font-medium text-primary-200 mb-1">Explicação Técnica</h4>
-              <p>{explicacao_tecnica}</p>
-            </div>
-          )}
-          {showExplicacao === 'formal' && explicacao_formal && (
-            <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
-              <h4 className="font-medium text-primary-200 mb-1">Explicação Formal</h4>
-              <p>{explicacao_formal}</p>
-            </div>
-          )}
-
-          {/* Exemplos ainda aparecem independente de ter artigo */}
-          {(exemplo1 || exemplo2) && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {exemplo1 && (
-                <>
-                  <button
-                    className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition`}
-                    onClick={() => setShowExemplo1((v) => !v)}
-                  >
-                    {showExemplo1 ? "Ocultar Exemplo 1" : "Ver Exemplo 1"}
-                  </button>
-                  {showExemplo1 && (
-                    <div className="w-full mt-2 p-3 bg-primary-50/10 border-l-4 border-primary-200 rounded animate-fade-in">
-                      <h4 className="text-primary-300 mb-2 font-medium">Exemplo 1:</h4>
-                      <p className="text-gray-400 whitespace-pre-wrap">{exemplo1}</p>
-                    </div>
-                  )}
-                </>
-              )}
-              {exemplo2 && (
-                <>
-                  <button
-                    className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition`}
-                    onClick={() => setShowExemplo2((v) => !v)}
-                  >
-                    {showExemplo2 ? "Ocultar Exemplo 2" : "Ver Exemplo 2"}
-                  </button>
-                  {showExemplo2 && (
-                    <div className="w-full mt-2 p-3 bg-primary-50/10 border-l-4 border-primary-200 rounded animate-fade-in">
-                      <h4 className="text-primary-300 mb-2 font-medium">Exemplo 2:</h4>
-                      <p className="text-gray-400 whitespace-pre-wrap">{exemplo2}</p>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Botões de interação final só quando há artigo */}
-          <ArticleInteractions
-            articleNumber={articleNumber}
+          {/* Texto da coluna "artigo" (content), alinhado à esquerda */}
+          <ArticleContent
             content={content ?? ""}
             example={undefined}
-            onExplain={() => {}}
-            onAddComment={handleComment}
-            onStartNarration={handleNarration}
-            isFavorite={isFavorite}
-            onToggleFavorite={toggleFavorite}
-          />
-
-          <VoiceNarration
-            text={readingContent.text}
-            title={readingContent.title}
-            isActive={isReading}
-            onComplete={() => setIsReading(false)}
-            onStop={() => setIsReading(false)}
-          />
-
-          <ArticleNotes
-            isOpen={showNotes}
-            onClose={() => setShowNotes(false)}
+            fontSize={fontSize}
+            onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
+            onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
             articleNumber={articleNumber}
-            articleContent={content ?? ""}
-            lawName={lawName}
           />
         </>
+      )}
+
+      {/* Botões e interações só aparecem se houver artigo */}
+      {hasArtigo && (explicacao_tecnica || explicacao_formal) && (
+        <div className="flex gap-2 mb-4">
+          {explicacao_tecnica && (
+            <button
+              className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition ${showExplicacao === 'tecnica' ? 'bg-primary/40' : ''}`}
+              onClick={() => handleShowExplicacao('tecnica')}
+            >
+              Ver Explicação Técnica
+            </button>
+          )}
+          {explicacao_formal && (
+            <button
+              className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition ${showExplicacao === 'formal' ? 'bg-primary/40' : ''}`}
+              onClick={() => handleShowExplicacao('formal')}
+            >
+              Ver Explicação Formal
+            </button>
+          )}
+        </div>
+      )}
+      {hasArtigo && showExplicacao === 'tecnica' && explicacao_tecnica && (
+        <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
+          <h4 className="font-medium text-primary-200 mb-1">Explicação Técnica</h4>
+          <p>{explicacao_tecnica}</p>
+        </div>
+      )}
+      {hasArtigo && showExplicacao === 'formal' && explicacao_formal && (
+        <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
+          <h4 className="font-medium text-primary-200 mb-1">Explicação Formal</h4>
+          <p>{explicacao_formal}</p>
+        </div>
+      )}
+
+      {/* Exemplos, ainda aparecem independente de ter artigo */}
+      {(exemplo1 || exemplo2) && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {exemplo1 && (
+            <>
+              <button
+                className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition`}
+                onClick={() => setShowExemplo1((v) => !v)}
+              >
+                {showExemplo1 ? "Ocultar Exemplo 1" : "Ver Exemplo 1"}
+              </button>
+              {showExemplo1 && (
+                <div className="w-full mt-2 p-3 bg-primary-50/10 border-l-4 border-primary-200 rounded animate-fade-in">
+                  <h4 className="text-primary-300 mb-2 font-medium">Exemplo 1:</h4>
+                  <p className="text-gray-400 whitespace-pre-wrap">{exemplo1}</p>
+                </div>
+              )}
+            </>
+          )}
+          {exemplo2 && (
+            <>
+              <button
+                className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition`}
+                onClick={() => setShowExemplo2((v) => !v)}
+              >
+                {showExemplo2 ? "Ocultar Exemplo 2" : "Ver Exemplo 2"}
+              </button>
+              {showExemplo2 && (
+                <div className="w-full mt-2 p-3 bg-primary-50/10 border-l-4 border-primary-200 rounded animate-fade-in">
+                  <h4 className="text-primary-300 mb-2 font-medium">Exemplo 2:</h4>
+                  <p className="text-gray-400 whitespace-pre-wrap">{exemplo2}</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Botões só aparecem se houver artigo */}
+      {hasArtigo && (
+        <ArticleInteractions
+          articleNumber={articleNumber}
+          content={content ?? ""}
+          example={undefined}
+          onExplain={() => {}}
+          onAddComment={handleComment}
+          onStartNarration={handleNarration}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
+        />
+      )}
+
+      {/* Narração só do artigo se existir, senão, narração só aparece para exemplos */}
+      {hasArtigo && (
+        <VoiceNarration
+          text={readingContent.text}
+          title={readingContent.title}
+          isActive={isReading}
+          onComplete={() => setIsReading(false)}
+          onStop={() => setIsReading(false)}
+        />
+      )}
+
+      {/* Notas só aparecem se houver artigo */}
+      {hasArtigo && (
+        <ArticleNotes
+          isOpen={showNotes}
+          onClose={() => setShowNotes(false)}
+          articleNumber={articleNumber}
+          articleContent={content ?? ""}
+          lawName={lawName}
+        />
       )}
     </div>
   );
