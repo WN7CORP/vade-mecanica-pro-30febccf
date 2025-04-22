@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -68,7 +69,7 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				lawapp: {
-					dark: '#1A1F2C',
+					dark: '#131129', // Darker purple background from image
 					neutral: '#8E9196',
 					highlight: '#D6BCFA'
 				}
@@ -129,6 +130,27 @@ export default {
 					'100%': {
 						backgroundPosition: '200% 0'
 					}
+				},
+				'magic-sparkle': {
+					'0%': {
+						transform: 'scale(0) rotate(0deg)',
+						opacity: '0'
+					},
+					'50%': {
+						opacity: '1'
+					},
+					'100%': {
+						transform: 'scale(1) rotate(45deg)',
+						opacity: '0'
+					}
+				},
+				'float': {
+					'0%, 100%': {
+						transform: 'translateY(0)'
+					},
+					'50%': {
+						transform: 'translateY(-10px)'
+					}
 				}
 			},
 			animation: {
@@ -136,7 +158,9 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.3s ease-out',
 				'pulse-light': 'pulse-light 2s ease-in-out infinite',
-				'shimmer': 'shimmer 2s linear infinite'
+				'shimmer': 'shimmer 2s linear infinite',
+				'magic-sparkle': 'magic-sparkle 1.2s ease-in-out infinite',
+				'float': 'float 3s ease-in-out infinite'
 			}
 		}
 	},

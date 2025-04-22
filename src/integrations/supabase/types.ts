@@ -21,14 +21,14 @@ export type Database = {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Update: {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Relationships: []
@@ -45,14 +45,14 @@ export type Database = {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Update: {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Relationships: []
@@ -69,14 +69,14 @@ export type Database = {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Update: {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Relationships: []
@@ -93,14 +93,14 @@ export type Database = {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Update: {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Relationships: []
@@ -117,14 +117,38 @@ export type Database = {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Update: {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      codigo_transito: {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          exemplo: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: number
           numero?: string | null
         }
         Relationships: []
@@ -141,39 +165,60 @@ export type Database = {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
           numero?: string | null
         }
         Update: {
           conteudo?: string | null
           created_at?: string
           exemplo?: string | null
-          id?: never
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      consolidacao_leis_trabalho: {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          exemplo: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          exemplo?: string | null
+          id?: number
           numero?: string | null
         }
         Relationships: []
       }
       constituicao_federal: {
         Row: {
-          conteudo: string
+          conteudo: string | null
           created_at: string
-          exemplo: string | null
           id: number
-          numero: string
+          numero: string | null
         }
         Insert: {
-          conteudo: string
+          conteudo?: string | null
           created_at?: string
-          exemplo?: string | null
           id?: number
-          numero: string
+          numero?: string | null
         }
         Update: {
-          conteudo?: string
+          conteudo?: string | null
           created_at?: string
-          exemplo?: string | null
           id?: number
-          numero?: string
+          numero?: string | null
         }
         Relationships: []
       }

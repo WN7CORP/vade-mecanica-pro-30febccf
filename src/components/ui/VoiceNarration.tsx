@@ -6,7 +6,8 @@ import {
   Pause, 
   Play, 
   Volume1, 
-  Loader2 
+  Loader2,
+  Sparkles
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -15,19 +16,23 @@ interface VoiceNarrationProps {
   isActive: boolean;
   onComplete: () => void;
   onStop: () => void;
+  type?: 'article' | 'example' | 'explanation';
 }
 
 const VoiceNarration = ({
   text,
   isActive,
   onComplete,
-  onStop
+  onStop,
+  type = 'article'
 }: VoiceNarrationProps) => {
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [highlightedText, setHighlightedText] = useState<string[]>([]);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [sparkles, setSparkles] = useState<{left: string, top: string, delay: string}[]>([]);
+  const narrationRef = useRef<HTMLDivElement>(null);
   
   // Referências para o objeto de áudio
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -35,7 +40,10 @@ const VoiceNarration = ({
   // Preparar e iniciar a narração quando isActive mudar
   useEffect(() => {
     if (isActive && text) {
+      // Parar qualquer narração em andamento antes de iniciar nova
+      stopAllAudios();
       startNarration();
+      generateSparkles();
     } else {
       stopNarration();
     }
@@ -48,6 +56,14 @@ const VoiceNarration = ({
       }
     };
   }, [isActive, text]);
+
+  // Stop all playing audio elements on the page
+  const stopAllAudios = () => {
+    document.querySelectorAll('audio').forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+  };
   
   // Tratar a quebra de texto em parágrafos para destacamento
   useEffect(() => {
@@ -56,6 +72,24 @@ const VoiceNarration = ({
       setHighlightedText(paragraphs);
     }
   }, [text]);
+
+  // Generate magic sparkle effects
+  const generateSparkles = () => {
+    if (!narrationRef.current) return;
+    
+    const newSparkles = [];
+    const count = 10;
+    
+    for (let i = 0; i < count; i++) {
+      newSparkles.push({
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        delay: `${Math.random() * 2}s`
+      });
+    }
+    
+    setSparkles(newSparkles);
+  };
   
   const startNarration = async () => {
     setIsLoading(true);
@@ -65,16 +99,27 @@ const VoiceNarration = ({
       const apiKey = 'AIzaSyCX26cgIpSd-BvtOLDdEQFa28_wh_HX1uk';
       const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
+      // Ajustar a voz conforme o tipo de conteúdo
+      let voiceName = 'pt-BR-Wavenet-B'; // Voz padrão para artigos (masculina)
+      
+      if (type === 'example') {
+        voiceName = 'pt-BR-Wavenet-A'; // Voz feminina para exemplos
+      } else if (type === 'explanation') {
+        voiceName = 'pt-BR-Wavenet-C'; // Outra voz para explicações
+      }
+
       const requestBody = {
         input: {
           text: text
         },
         voice: {
           languageCode: 'pt-BR',
-          name: 'pt-BR-Wavenet-E'
+          name: voiceName
         },
         audioConfig: {
-          audioEncoding: 'MP3'
+          audioEncoding: 'MP3',
+          pitch: type === 'example' ? 1.2 : 1.0,
+          speakingRate: type === 'explanation' ? 1.1 : 1.0
         }
       };
 
@@ -189,12 +234,27 @@ const VoiceNarration = ({
   if (!isActive) return null;
   
   return (
-    <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
+    <div className="fixed bottom-20 left-0 right-0 z-40 px-4" ref={narrationRef}>
       <div className="max-w-screen-md mx-auto">
-        <div className="neomorph p-4 flex flex-col">
+        <div className="neomorph p-4 flex flex-col narration-active">
+          {/* Magic sparkles effect */}
+          {sparkles.map((sparkle, index) => (
+            <span 
+              key={index} 
+              className="magic-sparkle" 
+              style={{ 
+                left: sparkle.left, 
+                top: sparkle.top, 
+                animationDelay: sparkle.delay 
+              }}
+            />
+          ))}
+
           <div className="flex justify-between items-center mb-3">
-            <div className="text-sm font-medium text-primary-200">
-              Narração em andamento
+            <div className="text-sm font-medium text-primary flex items-center gap-2">
+              <Sparkles size={16} className="animate-pulse text-secondary" />
+              {type === 'article' ? 'Narração do artigo' : 
+               type === 'example' ? 'Narração do exemplo' : 'Narração da explicação'}
             </div>
             
             <div className="flex items-center space-x-2">
@@ -250,7 +310,7 @@ const VoiceNarration = ({
             {highlightedText.map((paragraph, index) => (
               <p 
                 key={index} 
-                className="mb-2 text-primary-300"
+                className="mb-3 narration-highlight text-white"
               >
                 {paragraph}
               </p>
