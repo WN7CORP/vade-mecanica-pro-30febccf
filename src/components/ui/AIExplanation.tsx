@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
-import { LightbulbIcon, BookOpen, MessagesSquare, ClipboardCheck, X, Volume2 } from "lucide-react";
+import { BookOpen, MessagesSquare, ClipboardCheck, X, Volume2 } from "lucide-react";
 
 interface AIExplanationProps {
   explanation: AIExplanationType | null;
@@ -10,6 +10,8 @@ interface AIExplanationProps {
   lawName: string;
   onClose: () => void;
   onNarrateExplanation?: (content: string, title: string) => void;
+  technicalExplanation?: string;
+  formalExplanation?: string;
 }
 
 const AIExplanation = ({
@@ -18,21 +20,25 @@ const AIExplanation = ({
   articleNumber,
   lawName,
   onClose,
-  onNarrateExplanation
+  onNarrateExplanation,
+  technicalExplanation,
+  formalExplanation,
 }: AIExplanationProps) => {
-  const [activeTab, setActiveTab] = useState<'summary' | 'detailed' | 'examples'>('summary');
-  
+  const [activeTab, setActiveTab] = useState<'technical' | 'formal' | 'examples'>('technical');
+
   if (isLoading) {
     return (
-      <div className="card-article animate-pulse">
+      <div className="card-article animate-fade-in">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
-            <LightbulbIcon size={18} className="text-primary-300" />
-            <h3 className="text-primary-100 font-heading">
+            <span className="animate-pulse text-primary-300">
+              <BookOpen size={18} />
+            </span>
+            <h3 className="text-primary-100 font-heading animate-pulse">
               Gerando explicação...
             </h3>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-1.5 neomorph-sm text-gray-400"
             aria-label="Fechar"
@@ -40,37 +46,32 @@ const AIExplanation = ({
             <X size={16} />
           </button>
         </div>
-        
         <div className="space-y-3">
-          <div className="h-4 bg-muted rounded w-3/4"></div>
-          <div className="h-4 bg-muted rounded"></div>
-          <div className="h-4 bg-muted rounded"></div>
-          <div className="h-4 bg-muted rounded w-1/2"></div>
+          <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
+          <div className="h-4 bg-muted rounded animate-pulse"></div>
+          <div className="h-4 bg-muted rounded animate-pulse"></div>
+          <div className="h-4 bg-muted rounded w-1/2 animate-pulse"></div>
         </div>
       </div>
     );
   }
-  
+
   if (!explanation) {
     return null;
   }
-  
-  const handleNarrate = (content: string, title: string) => {
-    if (onNarrateExplanation) {
-      onNarrateExplanation(content, title);
-    }
-  };
-  
+
+  // Explicação técnica e formal customizadas, se vierem de props
+  const technical = technicalExplanation || explanation.summary || "";
+  const formal = formalExplanation || explanation.detailed || "";
+
   return (
     <div className="card-article">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
-          <LightbulbIcon size={18} className="text-primary-300" />
-          <h3 className="text-primary-100 font-heading">
-            Explicação IA - Art. {articleNumber}
-          </h3>
+          <BookOpen size={18} className="text-primary-300" />
+          <h3 className="text-primary-100 font-heading">Explicação IA - Art. {articleNumber}</h3>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="p-1.5 neomorph-sm text-gray-400 hover:text-gray-300"
           aria-label="Fechar"
@@ -78,101 +79,90 @@ const AIExplanation = ({
           <X size={16} />
         </button>
       </div>
-      
-      {/* Abas de navegação */}
+
       <div className="flex border-b border-gray-800/30 mb-4">
         <button
           className={`px-3 py-2 text-sm font-medium flex items-center ${
-            activeTab === 'summary' 
-              ? 'text-primary-300 border-b-2 border-primary-300' 
-              : 'text-gray-400 hover:text-gray-300'
+            activeTab === "technical"
+              ? "text-primary-300 border-b-2 border-primary-300"
+              : "text-gray-400 hover:text-gray-300"
           }`}
-          onClick={() => setActiveTab('summary')}
+          onClick={() => setActiveTab("technical")}
         >
           <BookOpen size={16} className="mr-1" />
-          Resumo
+          Técnica
         </button>
         <button
           className={`px-3 py-2 text-sm font-medium flex items-center ${
-            activeTab === 'detailed' 
-              ? 'text-primary-300 border-b-2 border-primary-300' 
-              : 'text-gray-400 hover:text-gray-300'
+            activeTab === "formal"
+              ? "text-primary-300 border-b-2 border-primary-300"
+              : "text-gray-400 hover:text-gray-300"
           }`}
-          onClick={() => setActiveTab('detailed')}
+          onClick={() => setActiveTab("formal")}
         >
           <MessagesSquare size={16} className="mr-1" />
-          Detalhado
+          Formal
         </button>
         <button
           className={`px-3 py-2 text-sm font-medium flex items-center ${
-            activeTab === 'examples' 
-              ? 'text-primary-300 border-b-2 border-primary-300' 
-              : 'text-gray-400 hover:text-gray-300'
+            activeTab === "examples"
+              ? "text-primary-300 border-b-2 border-primary-300"
+              : "text-gray-400 hover:text-gray-300"
           }`}
-          onClick={() => setActiveTab('examples')}
+          onClick={() => setActiveTab("examples")}
         >
           <ClipboardCheck size={16} className="mr-1" />
           Exemplos
         </button>
       </div>
-      
+
       {/* Conteúdo da aba selecionada */}
       <div className="py-2">
-        {activeTab === 'summary' && (
+        {activeTab === "technical" && (
           <div className="animate-fade-in">
             <div className="flex justify-between mb-2">
-              <h4 className="text-primary-200 font-medium">Resumo</h4>
+              <h4 className="text-primary-200 font-medium">Explicação Técnica</h4>
               {onNarrateExplanation && (
-                <button 
-                  onClick={() => handleNarrate(explanation.summary, "Resumo do artigo")}
+                <button
+                  onClick={() => onNarrateExplanation(technical, "Explicação técnica do artigo")}
                   className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-300"
-                  aria-label="Narrar resumo"
-                  title="Narrar resumo"
+                  aria-label="Narrar técnica"
+                  title="Narrar técnica"
                 >
                   <Volume2 size={16} />
                 </button>
               )}
             </div>
-            <p className="mb-3 text-white">{explanation.summary}</p>
+            <p className="mb-3 text-white whitespace-pre-line">{technical}</p>
             <p className="text-xs text-muted-foreground mt-4">
               Fonte: {lawName}, Art. {articleNumber}
             </p>
           </div>
         )}
-        
-        {activeTab === 'detailed' && (
+
+        {activeTab === "formal" && (
           <div className="animate-fade-in">
             <div className="flex justify-between mb-2">
-              <h4 className="text-primary-200 font-medium">Explicação Detalhada</h4>
+              <h4 className="text-primary-200 font-medium">Explicação Formal</h4>
               {onNarrateExplanation && (
-                <button 
-                  onClick={() => handleNarrate(explanation.detailed, "Explicação detalhada do artigo")}
+                <button
+                  onClick={() => onNarrateExplanation(formal, "Explicação formal do artigo")}
                   className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-300"
-                  aria-label="Narrar explicação detalhada"
-                  title="Narrar explicação detalhada"
+                  aria-label="Narrar formal"
+                  title="Narrar formal"
                 >
                   <Volume2 size={16} />
                 </button>
               )}
             </div>
-            <p className="mb-3 text-white whitespace-pre-line">{explanation.detailed}</p>
+            <p className="mb-3 text-white whitespace-pre-line">{formal}</p>
           </div>
         )}
-        
-        {activeTab === 'examples' && (
+
+        {activeTab === "examples" && (
           <div className="animate-fade-in">
             <div className="flex justify-between mb-2">
               <h4 className="text-primary-200 font-medium">Exemplos Práticos</h4>
-              {onNarrateExplanation && (
-                <button 
-                  onClick={() => handleNarrate(explanation.examples.join(". Próximo exemplo. "), "Exemplos práticos")}
-                  className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-300"
-                  aria-label="Narrar exemplos"
-                  title="Narrar exemplos"
-                >
-                  <Volume2 size={16} />
-                </button>
-              )}
             </div>
             <ul className="space-y-4">
               {explanation.examples.map((example, index) => (
