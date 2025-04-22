@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +25,7 @@ const Profile = () => {
   const [userId, setUserId] = useState<string>();
   const { recordLogin, calculateStreakLoss } = useLoginStreak(userId);
   const { data: userRank } = useUserRank(userId);
+  const [hasShownWelcomeToast, setHasShownWelcomeToast] = useState(false);
 
   const { data: stats = {
     totalSearches: 0,
@@ -66,7 +66,7 @@ const Profile = () => {
 
   // Registrar login ao carregar a página
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || hasShownWelcomeToast) return;
     
     const registerLoginAndCheckStreak = async () => {
       await recordLogin();
@@ -76,17 +76,19 @@ const Profile = () => {
       queryClient.invalidateQueries({ queryKey: ['user-stats', userId] });
       queryClient.invalidateQueries({ queryKey: ['rankings'] });
       queryClient.invalidateQueries({ queryKey: ['user-rank', userId] });
+      
+      // Mostrar toast de boas-vindas - apenas uma vez por sessão
+      toast({
+        title: "Bem-vindo(a) de volta!",
+        description: "Você ganhou +20 pontos por acessar hoje!",
+      });
+      
+      setHasShownWelcomeToast(true);
     };
     
     registerLoginAndCheckStreak();
     
-    // Mostrar toast de boas-vindas
-    toast({
-      title: "Bem-vindo(a) de volta!",
-      description: "Você ganhou +20 pontos por acessar hoje!",
-    });
-    
-  }, [userId, recordLogin, calculateStreakLoss, queryClient]);
+  }, [userId, recordLogin, calculateStreakLoss, queryClient, hasShownWelcomeToast]);
 
   // Configurar um ouvinte de mudanças em tempo real para atualizações
   useEffect(() => {
@@ -180,15 +182,19 @@ const Profile = () => {
         )}
 
         <div className="grid gap-6 md:grid-cols-2">
-          <ActivityChart />
-          {rankings && <RankingList 
-            rankings={rankings} 
-            currentUserId={userId} 
-            userRank={userRank || undefined}
-          />}
+          <div className="order-2 md:order-1">
+            <ActivityChart />
+          </div>
+          <div className="order-1 md:order-2">
+            {rankings && <RankingList 
+              rankings={rankings} 
+              currentUserId={userId} 
+              userRank={userRank || undefined}
+            />}
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">

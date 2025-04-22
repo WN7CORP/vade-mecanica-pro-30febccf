@@ -17,37 +17,13 @@ const generateGeminiExplanation = async (prompt: string) => {
   try {
     console.log("Enviando requisição para API do Gemini...");
     
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0",
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }]
-        })
-      }
-    );
-
-    if (!response.ok) {
-      console.error("Erro na resposta da API:", response.status);
-      const errorText = await response.text();
-      console.error("Detalhes do erro:", errorText);
-      throw new Error(`Erro API (${response.status}): ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log("Resposta completa da API:", data);
+    // Use the SDK method instead of fetch
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
     
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
-      console.error("Resposta da API do Gemini em formato inesperado:", data);
-      throw new Error("Resposta da API em formato inválido");
-    }
-    
-    return data.candidates[0].content.parts[0].text;
+    console.log("Resposta recebida do Gemini:", text.substring(0, 150) + "...");
+    return text;
   } catch (error) {
     console.error("Erro ao gerar explicação com Gemini:", error);
     throw error;

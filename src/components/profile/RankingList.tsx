@@ -4,6 +4,7 @@ import { Star, TrendingUp, Medal, ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface RankingListProps {
   rankings: Array<{
@@ -22,6 +23,7 @@ interface RankingListProps {
 
 export function RankingList({ rankings, currentUserId, userRank }: RankingListProps) {
   const [showAllRankings, setShowAllRankings] = useState(false);
+  const isMobile = useIsMobile();
   
   // Função para determinar a cor com base na posição
   const getPositionColor = (position: number) => {
@@ -49,12 +51,12 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
       </CardHeader>
       <CardContent>
         <div className="overflow-auto max-h-[350px]">
-          <Table>
+          <Table className="min-w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-16">Pos.</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead className="text-right">Pontos</TableHead>
+                <TableHead className={isMobile ? "w-12 text-xs" : "w-16"}>Pos.</TableHead>
+                <TableHead className={isMobile ? "text-xs" : ""}>Nome</TableHead>
+                <TableHead className={`text-right ${isMobile ? "text-xs" : ""}`}>Pontos</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -63,26 +65,30 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
                   key={index} 
                   className={rank.id === currentUserId ? "bg-primary-50/10" : ""}
                 >
-                  <TableCell className="font-semibold">
+                  <TableCell className={`font-semibold ${isMobile ? "py-2 px-1" : ""}`}>
                     <span className={`flex items-center ${getPositionColor(index + 1)}`}>
                       {index < 3 && <Medal className="h-4 w-4 mr-1" />}
                       {rank.position || index + 1}
                     </span>
                   </TableCell>
-                  <TableCell className="font-medium">
-                    {rank.full_name}
-                    {rank.id === currentUserId && (
-                      <span className="ml-2 px-1.5 py-0.5 text-xs rounded bg-primary-300/20 text-primary-300">
-                        Você
+                  <TableCell className={`font-medium ${isMobile ? "py-2 px-1 max-w-[120px] truncate" : ""}`}>
+                    <div className={`flex items-center ${isMobile ? "flex-wrap" : ""}`}>
+                      <span className={isMobile ? "truncate max-w-[80px]" : ""}>
+                        {rank.full_name}
                       </span>
-                    )}
-                    {rank.streak_change && rank.streak_change < 0 && (
-                      <span className="ml-2 px-1.5 py-0.5 text-xs rounded bg-red-500/20 text-red-500">
-                        {rank.streak_change} pts
-                      </span>
-                    )}
+                      {rank.id === currentUserId && (
+                        <span className={`${isMobile ? "ml-1" : "ml-2"} px-1.5 py-0.5 text-xs rounded bg-primary-300/20 text-primary-300`}>
+                          Você
+                        </span>
+                      )}
+                      {rank.streak_change && rank.streak_change < 0 && (
+                        <span className={`${isMobile ? "ml-1" : "ml-2"} px-1.5 py-0.5 text-xs rounded bg-red-500/20 text-red-500`}>
+                          {rank.streak_change} pts
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className={`text-right ${isMobile ? "py-2 px-1" : ""}`}>
                     <div className="flex items-center justify-end gap-1">
                       <TrendingUp className="h-4 w-4 text-primary-300" />
                       <span>{rank.total_points || 0}</span>
@@ -91,8 +97,8 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
                 </TableRow>
               ))}
               
-              {/* Mostrar o usuário atual mesmo que não esteja nos 100 primeiros */}
-              {!isUserInRankings && currentUser && userRank && userRank > 100 && showAllRankings && (
+              {/* Mostrar o usuário atual mesmo que não esteja nos primeiros colocados */}
+              {!isUserInRankings && currentUser && userRank && userRank > (showAllRankings ? 100 : 20) && (
                 <>
                   <TableRow className="border-t-2 border-dashed border-gray-700/20">
                     <TableCell colSpan={3} className="text-center text-xs text-muted-foreground py-1">
@@ -100,23 +106,27 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
                     </TableCell>
                   </TableRow>
                   <TableRow className="bg-primary-50/10">
-                    <TableCell className="font-semibold">
+                    <TableCell className={`font-semibold ${isMobile ? "py-2 px-1" : ""}`}>
                       <span className="flex items-center text-primary-300">
                         {userRank}
                       </span>
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {currentUser.full_name}
-                      <span className="ml-2 px-1.5 py-0.5 text-xs rounded bg-primary-300/20 text-primary-300">
-                        Você
-                      </span>
-                      {currentUser.streak_change && currentUser.streak_change < 0 && (
-                        <span className="ml-2 px-1.5 py-0.5 text-xs rounded bg-red-500/20 text-red-500">
-                          {currentUser.streak_change} pts
+                    <TableCell className={`font-medium ${isMobile ? "py-2 px-1" : ""}`}>
+                      <div className={`flex items-center ${isMobile ? "flex-wrap" : ""}`}>
+                        <span className={isMobile ? "truncate max-w-[80px]" : ""}>
+                          {currentUser.full_name}
                         </span>
-                      )}
+                        <span className={`${isMobile ? "ml-1" : "ml-2"} px-1.5 py-0.5 text-xs rounded bg-primary-300/20 text-primary-300`}>
+                          Você
+                        </span>
+                        {currentUser.streak_change && currentUser.streak_change < 0 && (
+                          <span className={`${isMobile ? "ml-1" : "ml-2"} px-1.5 py-0.5 text-xs rounded bg-red-500/20 text-red-500`}>
+                            {currentUser.streak_change} pts
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className={`text-right ${isMobile ? "py-2 px-1" : ""}`}>
                       <div className="flex items-center justify-end gap-1">
                         <TrendingUp className="h-4 w-4 text-primary-300" />
                         <span>{currentUser.total_points || 0}</span>
