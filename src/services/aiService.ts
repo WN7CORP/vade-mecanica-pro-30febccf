@@ -17,10 +17,8 @@ const generateGeminiExplanation = async (prompt: string) => {
   try {
     console.log("Enviando requisição para API do Gemini...");
     
-    // Formato correto conforme documentação da API
-    const result = await model.generateContent({
-      contents: [{ parts: [{ text: prompt }] }]
-    });
+    // Formato correto conforme documentação da SDK
+    const result = await model.generateContent(prompt);
     
     const text = result.response.text();
     
@@ -155,10 +153,8 @@ export const askAIQuestion = async (
       Responda de forma clara, precisa e com base na legislação citada.
     `;
 
-    // Usando o formato correto para a API
-    const result = await model.generateContent({
-      contents: [{ parts: [{ text: prompt }] }]
-    });
+    // Formato correto para a SDK
+    const result = await model.generateContent(prompt);
     
     return result.response.text();
   } catch (error) {
@@ -183,10 +179,8 @@ export const generateArticleNotes = async (
       Resumo: [resumo conciso]
     `;
 
-    // Usando o formato correto para a API
-    const result = await model.generateContent({
-      contents: [{ parts: [{ text: prompt }] }]
-    });
+    // Formato correto para a SDK
+    const result = await model.generateContent(prompt);
     
     const response = result.response.text();
     
