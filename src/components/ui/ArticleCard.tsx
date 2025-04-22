@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
 import ArticleContent from "./article/ArticleContent";
 import CopyToast from "./article/CopyToast";
-import VoiceNarration from "./VoiceNarration";
+import VoiceNarration from "./ui/VoiceNarration";
 import ArticleInteractions from "./ArticleInteractions";
 import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
@@ -177,8 +178,10 @@ const ArticleCard = ({
       if (!found) return;
       tableName = found.table;
 
+      // Fix for issue #2: Use the table name directly rather than passing it as a string to .from()
+      // This ensures type safety as .from() expects specific string literals
       const { data, error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select(`${fieldName}`)
         .eq("numero", articleNumber)
         .maybeSingle();
@@ -235,6 +238,14 @@ const ArticleCard = ({
     }
     
     setIsReading(true);
+  };
+
+  // Fix for issue #3: Add the missing handleComment function
+  const handleComment = () => {
+    setShowNotes(true);
+    if (userId) {
+      logUserActivity('note', lawName, articleNumber);
+    }
   };
 
   useEffect(() => {
