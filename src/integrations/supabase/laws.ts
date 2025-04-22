@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -50,7 +51,7 @@ export const fetchLawArticles = async (
   console.log(`Buscando artigos da tabela: ${tableName}`);
   
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .order("numero", { ascending: true }) as { data: Article[] | null, error: any };
 
@@ -73,7 +74,7 @@ export const searchArticle = async (
   }
 
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .eq("numero", articleNumber)
     .maybeSingle() as { data: Article | null, error: any };
@@ -98,7 +99,7 @@ export const searchByTerm = async (
 
   const term = searchTerm.toLowerCase();
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`) as { data: Article[] | null, error: any };
 

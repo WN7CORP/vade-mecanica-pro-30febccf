@@ -15,7 +15,15 @@ export const recordUserAction = async (
   lawName?: string,
   articleNumber?: string
 ) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    console.warn('No authenticated user found when recording action');
+    return;
+  }
+  
   const { error } = await supabase.from('user_statistics').insert({
+    user_id: user.id,
     action_type: actionType,
     law_name: lawName,
     article_number: articleNumber
@@ -27,10 +35,17 @@ export const recordUserAction = async (
 };
 
 export const getUserStats = async (): Promise<UserStats | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    console.warn('No authenticated user found when getting stats');
+    return null;
+  }
+
   const { data: stats, error: statsError } = await supabase
     .from('user_statistics')
     .select('action_type')
-    .eq('user_id', supabase.auth.getUser());
+    .eq('user_id', user.id);
 
   if (statsError) {
     console.error('Error fetching user stats:', statsError);
@@ -48,7 +63,7 @@ export const getUserStats = async (): Promise<UserStats | null> => {
 
   // Get user rank
   const { data: ranking } = await supabase
-    .rpc('get_user_ranking')
+    .rpc('get_user_ranking', { user_id: user.id })
     .single();
 
   return {
