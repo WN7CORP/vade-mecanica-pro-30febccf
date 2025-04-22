@@ -55,7 +55,7 @@ export const useLawArticles = (lawName: string | undefined) => {
     
     const filtered = articles.filter(article => 
       (article.numero && article.numero.toLowerCase().includes(term.toLowerCase())) ||
-      (article.artigo && article.artigo.toLowerCase().includes(term.toLowerCase()))
+      (article.conteudo && article.conteudo.toLowerCase().includes(term.toLowerCase()))
     );
     
     setFilteredArticles(filtered);

@@ -21,7 +21,7 @@ export const useAIExplanation = (lawName: string | undefined) => {
       return;
     }
 
-    if (!article.numero || !article.artigo) {
+    if (!article.numero || !article.conteudo) {
       console.error("Artigo sem número ou conteúdo", article);
       toast({
         title: "Erro",
@@ -46,7 +46,7 @@ export const useAIExplanation = (lawName: string | undefined) => {
     setLoadingExplanation(true);
     
     console.log(`Solicitando explicação ${type} para artigo ${article.numero}`);
-    console.log(`Lei: ${lawName}, Artigo: ${article.artigo.substring(0, 100)}...`);
+    console.log(`Lei: ${lawName}, Artigo: ${article.conteudo.substring(0, 100)}...`);
     
     try {
       // Utilizar o nome da lei decodificado para evitar problemas com caracteres especiais
@@ -55,7 +55,7 @@ export const useAIExplanation = (lawName: string | undefined) => {
       
       const aiExplanation = await generateArticleExplanation(
         article.numero,
-        article.artigo,
+        article.conteudo,
         decodedLawName,
         type
       );
@@ -79,6 +79,7 @@ export const useAIExplanation = (lawName: string | undefined) => {
         description: "Não foi possível gerar a explicação. Tente novamente mais tarde.",
         variant: "destructive",
       });
+      // Fechar o modal de explicação em caso de erro
       setShowExplanation(false);
     } finally {
       setLoadingExplanation(false);

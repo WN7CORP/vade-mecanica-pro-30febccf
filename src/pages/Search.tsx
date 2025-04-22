@@ -34,19 +34,23 @@ const Search = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
   
+  // Estados para explicação da IA
   const [showExplanation, setShowExplanation] = useState(false);
   const [explanation, setExplanation] = useState<AIExplanationType | null>(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<SearchResult | null>(null);
   
+  // Estado para o chat de IA
   const [showChat, setShowChat] = useState(false);
 
+  // Carregar leis disponíveis
   useEffect(() => {
     const loadLaws = async () => {
       try {
         const laws = fetchAvailableLaws();
         setAvailableLaws(laws);
         
+        // Se não houver lei selecionada, usar a primeira
         if (!selectedLaw && laws.length > 0) {
           setSelectedLaw(laws[0]);
         }
@@ -58,6 +62,7 @@ const Search = () => {
     loadLaws();
   }, [selectedLaw]);
 
+  // Realizar pesquisa quando a query ou lei selecionada muda
   useEffect(() => {
     const performSearch = async () => {
       if (!query || !selectedLaw) return;
@@ -66,22 +71,24 @@ const Search = () => {
       setNoResults(false);
       
       try {
+        // Primeira tentativa: buscar artigo exato
         const article = await searchArticle(selectedLaw, query);
         
         if (article && article.numero) {
           setSearchResults([{
             article: article.numero,
-            content: article.artigo,
+            content: article.conteudo,
             lawName: selectedLaw
           }]);
         } else {
+          // Segunda tentativa: buscar por termo
           const results = await searchByTerm(selectedLaw, query);
           
           if (results.length > 0) {
             setSearchResults(
               results.map(result => ({
                 article: result.numero,
-                content: result.artigo,
+                content: result.conteudo,
                 lawName: selectedLaw
               }))
             );
@@ -155,6 +162,7 @@ const Search = () => {
           />
         </div>
         
+        {/* Seletor de lei */}
         <div className="mb-6 overflow-x-auto scrollbar-thin pb-2">
           <div className="flex space-x-2">
             {LAW_OPTIONS.map((law) => (
@@ -173,6 +181,7 @@ const Search = () => {
           </div>
         </div>
         
+        {/* Resultados da pesquisa */}
         <div>
           {isLoading ? (
             <div className="text-center py-8">
@@ -212,6 +221,7 @@ const Search = () => {
                 />
               )}
               
+              {/* Exibir o chat quando solicitado */}
               {showChat && selectedArticle && (
                 <AIChat
                   articleNumber={selectedArticle.article}
@@ -221,6 +231,7 @@ const Search = () => {
                 />
               )}
               
+              {/* Botão de exportar PDF */}
               {showExplanation && !loadingExplanation && selectedArticle && explanation && (
                 <div className="mt-4 flex justify-end">
                   <PDFExporter

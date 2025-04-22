@@ -19,11 +19,6 @@ const ArticleContent = ({
   example
 }: ArticleContentProps) => {
   const renderContent = () => {
-    // Add a null/undefined check before calling split
-    if (!content) {
-      return <p className="mb-4 text-gray-400">Conteúdo não disponível</p>;
-    }
-    
     return content.split('\n').map((line, i) => {
       // For articles with numbers, align text left; otherwise center and make bold
       const shouldCenter = !articleNumber && i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.');
