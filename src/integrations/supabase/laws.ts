@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -50,23 +49,17 @@ export const fetchLawArticles = async (
 
   console.log(`Buscando artigos da tabela: ${tableName}`);
   
-  // Use type assertion to bypass TypeScript's type checking
-  // since we've already validated the table name exists
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select("*")
-    .order("numero", { ascending: true });
+    .order("numero", { ascending: true }) as { data: Article[] | null, error: any };
 
   if (error) {
     console.error("Erro ao buscar artigos:", error);
     throw new Error("Falha ao carregar artigos");
   }
   
-  if (!data) {
-    return [];
-  }
-
-  return data as Article[];
+  return data || [];
 };
 
 export const searchArticle = async (
@@ -80,17 +73,17 @@ export const searchArticle = async (
   }
 
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select("*")
     .eq("numero", articleNumber)
-    .maybeSingle();
+    .maybeSingle() as { data: Article | null, error: any };
 
   if (error) {
     console.error("Erro ao buscar artigo:", error);
     return null;
   }
   
-  return data as Article | null;
+  return data;
 };
 
 export const searchByTerm = async (
@@ -105,18 +98,14 @@ export const searchByTerm = async (
 
   const term = searchTerm.toLowerCase();
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select("*")
-    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
+    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`) as { data: Article[] | null, error: any };
 
   if (error) {
     console.error("Erro na busca por termo:", error);
     return [];
   }
   
-  if (!data) {
-    return [];
-  }
-
-  return data as Article[];
+  return data || [];
 };

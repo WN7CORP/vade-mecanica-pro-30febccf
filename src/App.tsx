@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import Favorites from "./pages/Favorites";
 import Notes from "./pages/Notes";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/duvidas" element={<AIChat />} />
           <Route path="/favoritos" element={<Favorites />} />
           <Route path="/anotacoes" element={<Notes />} />
+          <Route path="/perfil" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

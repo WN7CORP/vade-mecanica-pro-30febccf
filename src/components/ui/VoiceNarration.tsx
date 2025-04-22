@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Volume2, VolumeX, Pause, Play, Volume1 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -23,13 +22,10 @@ const VoiceNarration = ({
   const [volume, setVolume] = useState(0.8);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   
-  // Referências para o objeto de áudio
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  // Preparar e iniciar a narração quando isActive mudar
   useEffect(() => {
     if (isActive && text) {
-      // Parar qualquer áudio em reprodução atual
       if (window.currentAudio && window.currentAudio !== audioRef.current) {
         window.currentAudio.pause();
         window.currentAudio.currentTime = 0;
@@ -42,7 +38,6 @@ const VoiceNarration = ({
     
     return () => {
       stopNarration();
-      // Limpar URL do objeto se existir
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);
       }
@@ -53,7 +48,6 @@ const VoiceNarration = ({
     setIsLoading(true);
     
     try {
-      // Usar a API Google Text-to-Speech
       const apiKey = 'AIzaSyCX26cgIpSd-BvtOLDdEQFa28_wh_HX1uk';
       const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
@@ -84,7 +78,6 @@ const VoiceNarration = ({
 
       const data = await response.json();
       
-      // Converter base64 para áudio
       const audioContent = data.audioContent;
       const byteCharacters = atob(audioContent);
       const byteNumbers = new Array(byteCharacters.length);
@@ -96,7 +89,6 @@ const VoiceNarration = ({
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'audio/mp3' });
       
-      // Criar URL e reproduzir áudio
       const audioUrlObject = URL.createObjectURL(blob);
       setAudioUrl(audioUrlObject);
       
@@ -104,7 +96,6 @@ const VoiceNarration = ({
         audioRef.current.src = audioUrlObject;
         audioRef.current.volume = volume;
         
-        // Guardar referência global para este áudio para poder interromper outros quando necessário
         window.currentAudio = audioRef.current;
         
         audioRef.current.play().catch(e => {
@@ -119,7 +110,6 @@ const VoiceNarration = ({
         audio.volume = volume;
         audioRef.current = audio;
         
-        // Guardar referência global para este áudio para poder interromper outros quando necessário
         window.currentAudio = audio;
         
         audio.addEventListener('ended', onComplete);
@@ -187,13 +177,12 @@ const VoiceNarration = ({
     }
   };
   
-  // Renderizar a UI da narração
   if (!isActive) return null;
   
   return (
     <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
       <div className="max-w-screen-md mx-auto">
-        <div className="neomorph p-4 flex flex-col backdrop-blur-md bg-background/90">
+        <div className="neomorph p-4 flex flex-col backdrop-blur-md bg-background/90 animate-pulse">
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center">
               <div className="text-sm font-medium text-primary-200 mr-2">
@@ -248,7 +237,6 @@ const VoiceNarration = ({
             </div>
           </div>
           
-          {/* Controle de volume */}
           <div className="flex items-center space-x-2">
             <Volume1 size={14} className="text-gray-400" />
             
