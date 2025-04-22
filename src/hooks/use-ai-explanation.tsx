@@ -11,10 +11,19 @@ export const useAIExplanation = (lawName: string | undefined) => {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
   const handleExplainArticle = async (article: Article, type: 'technical' | 'formal') => {
-    if (!article.numero || !lawName) {
+    if (!article || !article.numero || !article.conteudo) {
       toast({
         title: "Erro",
-        description: "Não foi possível identificar o artigo ou a lei para explicação.",
+        description: "Não foi possível identificar o artigo para explicação.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!lawName) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível identificar a lei para explicação.",
         variant: "destructive",
       });
       return;
@@ -25,12 +34,14 @@ export const useAIExplanation = (lawName: string | undefined) => {
     setLoadingExplanation(true);
     
     console.log(`Solicitando explicação ${type} para artigo ${article.numero}`);
+    console.log(`Lei: ${lawName}, Artigo: ${article.conteudo.substring(0, 100)}...`);
     
     try {
+      const decodedLawName = decodeURIComponent(lawName);
       const aiExplanation = await generateArticleExplanation(
         article.numero,
         article.conteudo,
-        decodeURIComponent(lawName),
+        decodedLawName,
         type
       );
       

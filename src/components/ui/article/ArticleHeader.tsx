@@ -1,5 +1,5 @@
 
-import { Copy, PenLine, BookOpen, Bookmark } from "lucide-react";
+import { Copy, PenLine, BookOpen, MessagesSquare, Bookmark } from "lucide-react";
 
 interface ArticleHeaderProps {
   articleNumber: string;
@@ -44,8 +44,18 @@ const ArticleHeader = ({
           onClick={() => onExplainRequest('technical')} 
           className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-200" 
           aria-label="Explicação técnica"
+          title="Explicação técnica"
         >
           <BookOpen size={16} />
+        </button>
+        
+        <button 
+          onClick={() => onExplainRequest('formal')} 
+          className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-200" 
+          aria-label="Explicação formal"
+          title="Explicação formal"
+        >
+          <MessagesSquare size={16} />
         </button>
         
         <button 
