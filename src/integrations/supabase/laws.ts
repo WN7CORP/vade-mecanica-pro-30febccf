@@ -1,11 +1,14 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
   id: number;
   numero: string;
-  conteudo: string;
-  exemplo?: string;
+  artigo: string;
+  titulo?: string;
+  explicacao_tecnica?: string;
+  explicacao_formal?: string;
+  exemplo1?: string;
+  exemplo2?: string;
   created_at: string;
 }
 
@@ -14,7 +17,6 @@ export interface LawOption {
   table: string;
 }
 
-// Use literal string type instead of a type alias to ensure compatibility with Supabase's client
 export const LAW_OPTIONS: LawOption[] = [
   { display: "Constituição Federal",         table: "constituicao_federal"      },
   { display: "Código Civil",                 table: "codigo_civil"              },
@@ -27,11 +29,6 @@ export const LAW_OPTIONS: LawOption[] = [
   { display: "Código de Trânsito Brasileiro", table: "codigo_transito"          }
 ];
 
-/** Retorna apenas os nomes para popular um dropdown/menu */
-export const fetchAvailableLaws = (): string[] =>
-  LAW_OPTIONS.map((opt) => opt.display);
-
-/** Busca o nome da tabela a partir do texto exibido */
 function getTableName(displayName: string): string | null {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
@@ -39,18 +36,15 @@ function getTableName(displayName: string): string | null {
   return found?.table ?? null;
 }
 
-/** Logs a user action in the statistics table */
 async function logUserAction(
   actionType: 'search' | 'explain' | 'favorite' | 'note',
   lawName?: string,
   articleNumber?: string
 ) {
   try {
-    // Get the current user's ID from the auth session
     const { data: { session } } = await supabase.auth.getSession();
     const userId = session?.user?.id;
     
-    // Only proceed if we have a user ID
     if (userId) {
       const { error } = await supabase.from('user_statistics').insert({
         user_id: userId,
@@ -79,29 +73,43 @@ export const fetchLawArticles = async (
     throw new Error(`Lei inválida: "${lawDisplayName}"`);
   }
 
-  console.log(`Buscando artigos da tabela: ${tableName}`);
-  
-  // Log the search action
   await logUserAction('search', lawDisplayName);
-  
-  // Use type assertion to bypass TypeScript's type checking
-  // since we've already validated the table name exists
-  const { data, error } = await supabase
-    .from(tableName as any)
-    .select("*")
-    .order("numero", { ascending: true });
 
-  if (error) {
-    console.error("Erro ao buscar artigos:", error);
-    throw new Error("Falha ao carregar artigos");
-  }
-  
-  if (!data) {
-    return [];
-  }
+  if (tableName === "constituicao_federal") {
+    const { data, error } = await supabase
+      .from("constituicao_federal")
+      .select("id, numero, artigo, titulo, explicacao tecnica, explicacao formal, exemplo1, exemplo2, created_at")
+      .order("numero", { ascending: true });
 
-  // Use type assertion to ensure we return the expected type
-  return data as unknown as Article[];
+    if (error) {
+      console.error("Erro ao buscar artigos da constituição:", error);
+      throw new Error("Falha ao carregar artigos");
+    }
+    return (
+      data?.map((row) => ({
+        id: row.id,
+        numero: row.numero,
+        artigo: row.artigo,
+        titulo: row.titulo,
+        explicacao_tecnica: row["explicacao tecnica"],
+        explicacao_formal: row["explicacao formal"],
+        exemplo1: row.exemplo1,
+        exemplo2: row.exemplo2,
+        created_at: row.created_at,
+      })) || []
+    );
+  } else {
+    const { data, error } = await supabase
+      .from(tableName as any)
+      .select("*")
+      .order("numero", { ascending: true });
+
+    if (error) {
+      console.error("Erro ao buscar artigos:", error);
+      throw new Error("Falha ao carregar artigos");
+    }
+    return data as unknown as Article[];
+  }
 };
 
 export const searchArticle = async (
@@ -114,7 +122,6 @@ export const searchArticle = async (
     return null;
   }
 
-  // Log the search action
   await logUserAction('search', lawDisplayName, articleNumber);
 
   const { data, error } = await supabase
@@ -128,7 +135,6 @@ export const searchArticle = async (
     return null;
   }
   
-  // Use type assertion to ensure we return the expected type
   return data as unknown as Article | null;
 };
 
@@ -142,14 +148,13 @@ export const searchByTerm = async (
     return [];
   }
 
-  // Log the search action
   await logUserAction('search', lawDisplayName);
 
   const term = searchTerm.toLowerCase();
   const { data, error } = await supabase
     .from(tableName as any)
     .select("*")
-    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
+    .or(`numero.ilike.%${term}%,artigo.ilike.%${term}%`);
 
   if (error) {
     console.error("Erro na busca por termo:", error);
@@ -160,6 +165,8 @@ export const searchByTerm = async (
     return [];
   }
 
-  // Use type assertion to ensure we return the expected type
   return data as unknown as Article[];
 };
+
+export const fetchAvailableLaws = (): string[] =>
+  LAW_OPTIONS.map((opt) => opt.display);
