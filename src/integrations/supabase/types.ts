@@ -1421,6 +1421,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_favorites: {
+        Row: {
+          article_content: string
+          article_number: string
+          created_at: string
+          example: string | null
+          id: string
+          law_name: string
+          user_id: string
+        }
+        Insert: {
+          article_content: string
+          article_number: string
+          created_at?: string
+          example?: string | null
+          id?: string
+          law_name: string
+          user_id: string
+        }
+        Update: {
+          article_content?: string
+          article_number?: string
+          created_at?: string
+          example?: string | null
+          id?: string
+          law_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_flashcard_progress: {
         Row: {
           correct_count: number | null
@@ -1451,6 +1481,69 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notes: {
+        Row: {
+          article_number: string
+          content: string
+          created_at: string
+          id: string
+          law_name: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          article_number: string
+          content: string
+          created_at?: string
+          id?: string
+          law_name: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          article_number?: string
+          content?: string
+          created_at?: string
+          id?: string
+          law_name?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          points: number | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          points?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          points?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string | null
@@ -1469,6 +1562,33 @@ export type Database = {
           id?: string
           profile_type?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_statistics: {
+        Row: {
+          action_type: string
+          article_number: string | null
+          created_at: string
+          id: string
+          law_name: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          article_number?: string | null
+          created_at?: string
+          id?: string
+          law_name?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          article_number?: string | null
+          created_at?: string
+          id?: string
+          law_name?: string | null
+          user_id?: string
         }
         Relationships: []
       }

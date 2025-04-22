@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -39,6 +38,27 @@ function getTableName(displayName: string): string | null {
   return found?.table ?? null;
 }
 
+/** Logs a user action in the statistics table */
+async function logUserAction(
+  actionType: 'search' | 'explain' | 'favorite' | 'note',
+  lawName?: string,
+  articleNumber?: string
+) {
+  try {
+    const { error } = await supabase.from('user_statistics').insert({
+      action_type: actionType,
+      law_name: lawName,
+      article_number: articleNumber
+    });
+
+    if (error) {
+      console.error('Error logging user action:', error);
+    }
+  } catch (err) {
+    console.error('Failed to log user action:', err);
+  }
+}
+
 export const fetchLawArticles = async (
   lawDisplayName: string
 ): Promise<Article[]> => {
@@ -49,6 +69,9 @@ export const fetchLawArticles = async (
   }
 
   console.log(`Buscando artigos da tabela: ${tableName}`);
+  
+  // Log the search action
+  await logUserAction('search', lawDisplayName);
   
   // Use type assertion to bypass TypeScript's type checking
   // since we've already validated the table name exists
@@ -79,6 +102,9 @@ export const searchArticle = async (
     return null;
   }
 
+  // Log the search action
+  await logUserAction('search', lawDisplayName, articleNumber);
+
   const { data, error } = await supabase
     .from(tableName as any)
     .select("*")
@@ -102,6 +128,9 @@ export const searchByTerm = async (
     console.error(`Lei inválida: "${lawDisplayName}"`);
     return [];
   }
+
+  // Log the search action
+  await logUserAction('search', lawDisplayName);
 
   const term = searchTerm.toLowerCase();
   const { data, error } = await supabase
