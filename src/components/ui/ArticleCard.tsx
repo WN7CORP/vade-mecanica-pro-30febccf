@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -50,11 +51,14 @@ const ArticleCard = ({
   const [showExample, setShowExample] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
 
+  // Ensure articleNumber is never null
+  const safeArticleNumber = articleNumber || '';
+
   // === NOVA LÓGICA DE ALINHAMENTO E ESTILO ===
   // Detecta se o número do artigo está vazio ou zerado
-  const isNumberEmptyOrZero = !articleNumber || articleNumber.trim() === '0';
+  const isNumberEmptyOrZero = !safeArticleNumber || safeArticleNumber.trim() === '0';
   // Detecta se o conteúdo é 'esquerdo'
-  const isNumberLeft = articleNumber.trim().toLowerCase() === 'esquerdo';
+  const isNumberLeft = safeArticleNumber.trim().toLowerCase() === 'esquerdo';
 
   // Classes condicionais Tailwind para a coluna de conteúdo
   const contentWrapperClasses = isNumberEmptyOrZero
@@ -82,48 +86,82 @@ const ArticleCard = ({
       const favoritedArticles = localStorage.getItem('favoritedArticles');
       if (favoritedArticles) {
         const favorites = JSON.parse(favoritedArticles);
-        setIsFavorite(!!favorites[`${lawName}-${articleNumber}`]);
+        setIsFavorite(!!favorites[`${lawName}-${safeArticleNumber}`]);
       }
     } catch (error) {
       console.error("Erro ao carregar status de favorito:", error);
     }
-  }, [lawName, articleNumber]);
+  }, [lawName, safeArticleNumber]);
 
   const copyArticle = () => {
-    const textToCopy = `Art. ${articleNumber}. ${content}`;
+    const textToCopy = `Art. ${safeArticleNumber}. ${content}`;
     navigator.clipboard.writeText(textToCopy)
       .then(() => {
         setShowCopyToast(true);
         setTimeout(() => setShowCopyToast(false), 2000);
-        if (userId) logUserActivity('copy', lawName, articleNumber);
+        if (userId) logUserActivity('copy', lawName, safeArticleNumber);
       })
       .catch(err => console.error("Erro ao copiar: ", err));
   };
 
   const handleColorSelect = (colorClass: string) => {
-    // lógica existente...
+    setSelectedColor(colorClass);
   };
 
   const toggleFavorite = () => {
-    // lógica existente...
+    try {
+      const favoritedArticles = localStorage.getItem('favoritedArticles') || '{}';
+      const favorites = JSON.parse(favoritedArticles);
+      const key = `${lawName}-${safeArticleNumber}`;
+      
+      if (favorites[key]) {
+        delete favorites[key];
+      } else {
+        favorites[key] = true;
+      }
+      
+      localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
+      setIsFavorite(!isFavorite);
+      
+      if (userId) {
+        logUserActivity(isFavorite ? 'unfavorite' : 'favorite', lawName, safeArticleNumber);
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar favoritos:", error);
+    }
   };
 
   const handleExplain = async (type: 'technical' | 'formal') => {
-    // lógica existente...
+    if (onExplainRequest) {
+      onExplainRequest(type);
+    }
   };
 
   const handleNarration = (contentType: 'article' | 'example') => {
-    // lógica existente...
+    const contentToRead = contentType === 'article' ? content : example || '';
+    const titleToRead = contentType === 'article' 
+      ? `Artigo ${safeArticleNumber} - ${lawName}`
+      : `Exemplo do Artigo ${safeArticleNumber}`;
+    
+    setReadingContent({
+      text: contentToRead,
+      title: titleToRead
+    });
+    setIsReading(true);
+    
+    if (userId) {
+      logUserActivity('narration', lawName, safeArticleNumber);
+    }
   };
 
   const handleComment = () => {
     setShowNotes(true);
-    if (userId) logUserActivity('note', lawName, articleNumber);
+    if (userId) logUserActivity('note', lawName, safeArticleNumber);
   };
 
   useEffect(() => {
-    if (userId) logUserActivity('read', lawName, articleNumber);
-  }, [userId, lawName, articleNumber, logUserActivity]);
+    if (userId) logUserActivity('read', lawName, safeArticleNumber);
+  }, [userId, lawName, safeArticleNumber, logUserActivity]);
 
   return (
     <div className="card-article mb-6">
@@ -132,7 +170,7 @@ const ArticleCard = ({
       {/* Coluna de artigos: centralizado verticalmente e alinhado à esquerda, sem negrito */}
       <div className={headerWrapperClasses}>
         <ArticleHeader
-          articleNumber={articleNumber}
+          articleNumber={safeArticleNumber}
           lawName={lawName}
           onCopy={copyArticle}
           onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
@@ -161,7 +199,7 @@ const ArticleCard = ({
           fontSize={fontSize}
           onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
           onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
-          articleNumber={articleNumber}
+          articleNumber={safeArticleNumber}
         />
       </div>
 
@@ -173,7 +211,7 @@ const ArticleCard = ({
       )}
 
       <ArticleInteractions
-        articleNumber={articleNumber}
+        articleNumber={safeArticleNumber}
         content={content}
         example={example}
         onExplain={handleExplain}
@@ -194,7 +232,7 @@ const ArticleCard = ({
       <ArticleNotes
         isOpen={showNotes}
         onClose={() => setShowNotes(false)}
-        articleNumber={articleNumber}
+        articleNumber={safeArticleNumber}
         articleContent={content}
         lawName={lawName}
       />
