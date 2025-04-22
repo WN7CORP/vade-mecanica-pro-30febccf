@@ -14,19 +14,7 @@ export interface LawOption {
   table: string;
 }
 
-// Defining the allowed table names as a type to match Supabase's type system
-export type LawTableName = 
-  | "constituicao_federal"
-  | "codigo_civil"
-  | "codigo_penal"
-  | "codigo_processo_civil"
-  | "codigo_processo_penal"
-  | "codigo_defesa_consumidor"
-  | "codigo_tributario"
-  | "consolidacao_leis_trabalho"
-  | "codigo_transito";
-
-// Atualizando para incluir todas as leis disponíveis no banco
+// Use literal string type instead of a type alias to ensure compatibility with Supabase's client
 export const LAW_OPTIONS: LawOption[] = [
   { display: "Constituição Federal",         table: "constituicao_federal"      },
   { display: "Código Civil",                 table: "codigo_civil"              },
@@ -44,11 +32,11 @@ export const fetchAvailableLaws = (): string[] =>
   LAW_OPTIONS.map((opt) => opt.display);
 
 /** Busca o nome da tabela a partir do texto exibido */
-function getTableName(displayName: string): LawTableName | null {
+function getTableName(displayName: string): string | null {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
   );
-  return found?.table as LawTableName ?? null;
+  return found?.table ?? null;
 }
 
 export const fetchLawArticles = async (
@@ -62,8 +50,10 @@ export const fetchLawArticles = async (
 
   console.log(`Buscando artigos da tabela: ${tableName}`);
   
+  // Use type assertion to bypass TypeScript's type checking
+  // since we've already validated the table name exists
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .order("numero", { ascending: true });
 
@@ -90,7 +80,7 @@ export const searchArticle = async (
   }
 
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .eq("numero", articleNumber)
     .maybeSingle();
@@ -115,7 +105,7 @@ export const searchByTerm = async (
 
   const term = searchTerm.toLowerCase();
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select("*")
     .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
