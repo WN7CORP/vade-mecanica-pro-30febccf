@@ -61,10 +61,26 @@ export const getUserStats = async (): Promise<UserStats | null> => {
 
   const points = (counts.view + counts.explain + counts.favorite + counts.note) * 10;
 
-  // Get user rank
-  const { data: ranking } = await supabase
-    .rpc('get_user_ranking', { user_id: user.id })
-    .single();
+  // Get user rank using a custom query instead of the rpc function
+  // This avoids the type issues with the rpc function
+  const { data: rankData, error: rankError } = await supabase
+    .from('user_statistics')
+    .select('user_id, count(*)')
+    .gt('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // last 30 days
+    .group('user_id')
+    .order('count', { ascending: false });
+
+  if (rankError) {
+    console.error('Error fetching user rank:', rankError);
+    return null;
+  }
+
+  // Calculate the user's rank
+  let userRank = 0;
+  if (rankData) {
+    const userIndex = rankData.findIndex(item => item.user_id === user.id);
+    userRank = userIndex >= 0 ? userIndex + 1 : rankData.length + 1;
+  }
 
   return {
     totalArticlesViewed: counts.view,
@@ -72,6 +88,6 @@ export const getUserStats = async (): Promise<UserStats | null> => {
     totalFavorites: counts.favorite,
     totalNotes: counts.note,
     points,
-    rank: ranking?.rank || 0
+    rank: userRank
   };
 };
