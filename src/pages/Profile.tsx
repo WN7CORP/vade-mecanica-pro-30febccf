@@ -5,15 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Search, BookOpen } from "lucide-react";
+import { Search, BookOpen, Calendar } from "lucide-react";
 import { RankingList } from "@/components/profile/RankingList";
 import { ActivityChart } from "@/components/profile/ActivityChart";
-import { useRankings } from "@/hooks/useRankings";
+import { useRankings, useLoginStreak, useUserRank } from "@/hooks/useRankings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
 
 interface UserStats {
   totalSearches: number;
   totalReads: number;
+  lastLogin?: Date | null;
 }
 
 const Profile = () => {
@@ -22,10 +24,13 @@ const Profile = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const { data: rankings } = useRankings();
   const [userId, setUserId] = useState<string>();
+  const { recordLogin, calculateStreakLoss } = useLoginStreak(userId);
+  const { data: userRank } = useUserRank(userId);
 
   const { data: stats = {
     totalSearches: 0,
-    totalReads: 0
+    totalReads: 0,
+    lastLogin: null
   } } = useQuery({
     queryKey: ['user-stats', userId],
     queryFn: async (): Promise<UserStats> => {
@@ -33,22 +38,55 @@ const Profile = () => {
 
       const { data: statsData } = await supabase
         .from('user_statistics')
-        .select('action_type')
+        .select('action_type, created_at')
         .eq('user_id', userId);
 
       if (!statsData) return {
         totalSearches: 0,
-        totalReads: 0
+        totalReads: 0,
+        lastLogin: null
       };
+      
+      // Encontrar o último login
+      const loginData = statsData
+        .filter(s => s.action_type === 'login')
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      const lastLogin = loginData.length > 0 ? new Date(loginData[0].created_at) : null;
 
       return {
         totalSearches: statsData.filter(s => s.action_type === 'search').length,
-        totalReads: statsData.filter(s => s.action_type === 'read').length
+        totalReads: statsData.filter(s => s.action_type === 'read').length,
+        lastLogin
       };
     },
     enabled: !!userId,
     refetchInterval: 15000 // Atualiza a cada 15 segundos
   });
+
+  // Registrar login ao carregar a página
+  useEffect(() => {
+    if (!userId) return;
+    
+    const registerLoginAndCheckStreak = async () => {
+      await recordLogin();
+      await calculateStreakLoss();
+      
+      // Invalidar as queries para atualizar os dados
+      queryClient.invalidateQueries({ queryKey: ['user-stats', userId] });
+      queryClient.invalidateQueries({ queryKey: ['rankings'] });
+      queryClient.invalidateQueries({ queryKey: ['user-rank', userId] });
+    };
+    
+    registerLoginAndCheckStreak();
+    
+    // Mostrar toast de boas-vindas
+    toast({
+      title: "Bem-vindo(a) de volta!",
+      description: "Você ganhou +20 pontos por acessar hoje!",
+    });
+    
+  }, [userId, recordLogin, calculateStreakLoss, queryClient]);
 
   // Configurar um ouvinte de mudanças em tempo real para atualizações
   useEffect(() => {
@@ -69,6 +107,7 @@ const Profile = () => {
           queryClient.invalidateQueries({ queryKey: ['user-stats', userId] });
           queryClient.invalidateQueries({ queryKey: ['user-activity', userId] });
           queryClient.invalidateQueries({ queryKey: ['rankings'] });
+          queryClient.invalidateQueries({ queryKey: ['user-rank', userId] });
         }
       )
       .subscribe();
@@ -101,6 +140,19 @@ const Profile = () => {
     loadUserData();
   }, [navigate]);
 
+  // Formatar a data do último login
+  const formatLastLogin = (date: Date | null) => {
+    if (!date) return "Não disponível";
+    
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
   return (
     <div className="flex flex-col min-h-screen pb-16">
       <Header />
@@ -120,6 +172,8 @@ const Profile = () => {
                 <p><strong>Nome:</strong> {userProfile.full_name}</p>
                 <p><strong>Email:</strong> {userProfile.username}</p>
                 <p><strong>Pontos Totais:</strong> {userProfile.points || 0}</p>
+                <p><strong>Ranking Global:</strong> {userRank ? `${userRank}º lugar` : "Calculando..."}</p>
+                <p><strong>Último acesso:</strong> {formatLastLogin(stats.lastLogin)}</p>
               </div>
             </CardContent>
           </Card>
@@ -127,10 +181,14 @@ const Profile = () => {
 
         <div className="grid gap-6 md:grid-cols-2">
           <ActivityChart />
-          {rankings && <RankingList rankings={rankings} currentUserId={userId} />}
+          {rankings && <RankingList 
+            rankings={rankings} 
+            currentUserId={userId} 
+            userRank={userRank || undefined}
+          />}
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mt-6">
+        <div className="grid grid-cols-3 gap-4 mt-6">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -151,6 +209,18 @@ const Profile = () => {
                   <p className="text-2xl font-bold">{stats.totalReads}</p>
                 </div>
                 <BookOpen className="h-6 w-6 text-primary-300" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Acessos</p>
+                  <p className="text-2xl font-bold">{userProfile?.activity_points || 0}</p>
+                </div>
+                <Calendar className="h-6 w-6 text-primary-300" />
               </div>
             </CardContent>
           </Card>

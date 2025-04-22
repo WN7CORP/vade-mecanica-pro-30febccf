@@ -11,7 +11,8 @@ export const useAIExplanation = (lawName: string | undefined) => {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
   const handleExplainArticle = async (article: Article, type: 'technical' | 'formal') => {
-    if (!article || !article.numero || !article.conteudo) {
+    if (!article) {
+      console.error("Artigo não fornecido para explicação");
       toast({
         title: "Erro",
         description: "Não foi possível identificar o artigo para explicação.",
@@ -20,10 +21,21 @@ export const useAIExplanation = (lawName: string | undefined) => {
       return;
     }
 
-    if (!lawName) {
+    if (!article.numero || !article.conteudo) {
+      console.error("Artigo sem número ou conteúdo", article);
       toast({
         title: "Erro",
-        description: "Não foi possível identificar a lei para explicação.",
+        description: "Artigo sem número ou conteúdo válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!lawName) {
+      console.error("Nome da lei não fornecido para explicação");
+      toast({
+        title: "Erro",
+        description: "Nome da lei não identificado.",
         variant: "destructive",
       });
       return;
@@ -55,6 +67,7 @@ export const useAIExplanation = (lawName: string | undefined) => {
           !aiExplanation.detailed || 
           !aiExplanation.examples || 
           aiExplanation.examples.length === 0) {
+        console.error("Explicação incompleta recebida:", aiExplanation);
         throw new Error("Explicação incompleta ou inválida");
       }
       

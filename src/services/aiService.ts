@@ -1,9 +1,9 @@
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = "AIzaSyDvJ23IolKwjdxAnTv7l8DwLuwGRZ_tIR8";
+// API key for Gemini
+const API_KEY = "AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0";
 
-// Inicializa a API do Gemini
+// Initialize the Gemini API
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
@@ -36,21 +36,21 @@ const generateGeminiExplanation = async (prompt: string) => {
       console.error("Erro na resposta da API:", response.status);
       const errorText = await response.text();
       console.error("Detalhes do erro:", errorText);
-      return "Não foi possível processar a requisição na API Gemini.";
+      throw new Error(`Erro API (${response.status}): ${errorText}`);
     }
 
     const data = await response.json();
-    console.log("Resposta da API recebida:", JSON.stringify(data).substring(0, 200) + "...");
+    console.log("Resposta completa da API:", data);
     
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
       console.error("Resposta da API do Gemini em formato inesperado:", data);
-      return "Não foi possível processar a resposta da IA no momento.";
+      throw new Error("Resposta da API em formato inválido");
     }
     
     return data.candidates[0].content.parts[0].text;
   } catch (error) {
     console.error("Erro ao gerar explicação com Gemini:", error);
-    return "Não foi possível gerar a explicação no momento.";
+    throw error;
   }
 }
 
@@ -62,6 +62,11 @@ export const generateArticleExplanation = async (
 ): Promise<AIExplanation> => {
   try {
     console.log(`Gerando explicação ${type} para artigo ${articleNumber} da lei ${lawName}`);
+    
+    if (!articleNumber || !articleContent || !lawName) {
+      console.error("Argumentos inválidos:", { articleNumber, articleContent: articleContent?.substring(0, 20), lawName });
+      throw new Error("Argumentos inválidos para gerar explicação");
+    }
     
     const prompt = `
       ${type === 'technical' 
@@ -76,8 +81,8 @@ export const generateArticleExplanation = async (
     const response = await generateGeminiExplanation(prompt);
     console.log("Resposta bruta recebida do Gemini:", response.substring(0, 150) + "...");
     
-    // Split the response into sections based on numerical markers or paragraphs
-    const sections = response.split(/\n\n|\n(?=\d\.)|(?:Resumo:)|(?:Explicação detalhada:)|(?:Exemplos prático)/i);
+    // Split the response into sections based on patterns
+    const sections = response.split(/\n\n|\n(?=\d\.)|(?:Resumo:)|(?:Explicação detalhada:)|(?:Exemplos práticos)/i);
     console.log(`Processando ${sections.length} seções da resposta`);
     
     // Filter out empty sections
@@ -89,35 +94,56 @@ export const generateArticleExplanation = async (
     let detailed = "";
     let examples: string[] = [];
     
-    // Try to extract the summary (should be the first meaningful section)
-    if (filteredSections.length > 0) {
+    if (filteredSections.length >= 3) {
+      // Try to extract the summary (should be the first meaningful section)
       summary = filteredSections[0].replace(/^.*?resumo:?\s*/i, "").trim();
-      console.log("Resumo extraído:", summary.substring(0, 50) + "...");
-    }
-    
-    // Try to extract the detailed explanation (should be the second meaningful section)
-    if (filteredSections.length > 1) {
+      
+      // Try to extract the detailed explanation (should be the second meaningful section)
       detailed = filteredSections[1].replace(/^.*?explicação:?\s*/i, "").trim();
-      console.log("Explicação detalhada extraída:", detailed.substring(0, 50) + "...");
-    }
-    
-    // Try to extract examples (everything after that, or split by numbers)
-    if (filteredSections.length > 2) {
-      // Join all remaining sections and then split by numerical patterns
+      
+      // Try to extract examples (everything after that, or split by numbers)
       const examplesText = filteredSections.slice(2).join("\n\n");
-      const exampleMatches = examplesText.split(/\n(?=\d\.)|(?=\d\.)/);
+      const exampleMatches = examplesText.match(/\d+\..*?(?=\d+\.|$)/gs) || [];
       
-      examples = exampleMatches
-        .map(e => e.replace(/^\d\.\s*/, "").trim())
-        .filter(e => e.length > 0);
+      examples = exampleMatches.length > 0 
+        ? exampleMatches.map(e => e.replace(/^\d+\.\s*/, "").trim())
+        : [examplesText.trim()];
       
-      console.log(`${examples.length} exemplos extraídos`);
+      // Ensure we have at least 3 examples
+      while (examples.length < 3) {
+        examples.push("Exemplo prático não disponível");
+      }
+    } else if (filteredSections.length === 2) {
+      summary = filteredSections[0].trim();
+      detailed = filteredSections[1].trim();
+      examples = ["Exemplo prático não disponível", "Exemplo prático não disponível", "Exemplo prático não disponível"];
+    } else if (filteredSections.length === 1) {
+      // Try to split the single section into meaningful parts
+      const text = filteredSections[0].trim();
+      const parts = text.split(/\n\n/); 
+      
+      if (parts.length >= 3) {
+        summary = parts[0];
+        detailed = parts[1];
+        examples = [parts[2], parts[3] || "Exemplo adicional não disponível", parts[4] || "Exemplo adicional não disponível"];
+      } else {
+        // If all else fails, use the entire text as an explanation
+        summary = "Resumo da explicação";
+        detailed = text;
+        examples = ["Exemplo prático não disponível", "Exemplo prático não disponível", "Exemplo prático não disponível"];
+      }
     }
     
     // Ensure we have at least something for each section
-    if (!summary) summary = "Não foi possível extrair um resumo claro da explicação.";
-    if (!detailed) detailed = "Não foi possível extrair uma explicação detalhada.";
+    if (!summary || summary.length < 10) summary = "Não foi possível extrair um resumo claro da explicação.";
+    if (!detailed || detailed.length < 10) detailed = "Não foi possível extrair uma explicação detalhada.";
     if (examples.length === 0) examples = ["Não foi possível extrair exemplos claros."];
+    
+    console.log("Extração concluída:", {
+      summaryLength: summary.length,
+      detailedLength: detailed.length,
+      examplesCount: examples.length
+    });
     
     const result = {
       summary,
@@ -129,11 +155,7 @@ export const generateArticleExplanation = async (
     return result;
   } catch (error) {
     console.error("Erro ao gerar explicação:", error);
-    return {
-      summary: "Não foi possível gerar um resumo no momento.",
-      detailed: "Ocorreu um erro ao processar a explicação detalhada.",
-      examples: ["Exemplos não disponíveis no momento."]
-    };
+    throw error;
   }
 };
 
