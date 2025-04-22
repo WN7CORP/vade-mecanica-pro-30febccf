@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 interface RankingListProps {
   rankings: Array<{
+    id?: string;
     full_name: string | null;
     total_points: number | null;
     global_rank: number | null;
