@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +5,9 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { FileText, Star, Search, BookOpen } from "lucide-react";
+import { RankingList } from "@/components/profile/RankingList";
+import { ActivityChart } from "@/components/profile/ActivityChart";
+import { useRankings } from "@/hooks/useRankings";
 
 interface UserStats {
   totalSearches: number;
@@ -23,6 +25,7 @@ const Profile = () => {
     totalReads: 0
   });
   const [userProfile, setUserProfile] = useState<any>(null);
+  const { data: rankings } = useRankings();
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -70,7 +73,7 @@ const Profile = () => {
     <div className="flex flex-col min-h-screen pb-16">
       <Header />
       
-      <main className="flex-1 container max-w-screen-md mx-auto px-4 py-8">
+      <main className="flex-1 container max-w-screen-lg mx-auto px-4 py-8">
         <h1 className="text-2xl font-heading font-bold mb-6 text-primary-300">
           Perfil e Estatísticas
         </h1>
@@ -89,7 +92,12 @@ const Profile = () => {
           </Card>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-6 md:grid-cols-2">
+          <ActivityChart />
+          {rankings && <RankingList rankings={rankings} />}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mt-6">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">

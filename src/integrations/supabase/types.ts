@@ -1516,29 +1516,35 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          activity_points: number | null
           avatar_url: string | null
           created_at: string
           full_name: string | null
           id: string
           points: number | null
+          rank_score: number | null
           updated_at: string
           username: string | null
         }
         Insert: {
+          activity_points?: number | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
           id: string
           points?: number | null
+          rank_score?: number | null
           updated_at?: string
           username?: string | null
         }
         Update: {
+          activity_points?: number | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
           points?: number | null
+          rank_score?: number | null
           updated_at?: string
           username?: string | null
         }
@@ -1594,7 +1600,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_rankings: {
+        Row: {
+          activity_points: number | null
+          full_name: string | null
+          global_rank: number | null
+          id: string | null
+          rank_score: number | null
+          total_points: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_unique_themes: {
