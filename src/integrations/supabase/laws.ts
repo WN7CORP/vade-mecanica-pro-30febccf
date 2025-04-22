@@ -100,22 +100,25 @@ export const fetchLawArticles = async (
     throw new Error("Falha ao carregar artigos");
   }
 
+  // Se não há dados, retornamos um array vazio
+  if (!data) {
+    return [];
+  }
+
   // Padroniza para Article independentemente de campos ausentes
-  return (
-    data?.map((row: any) => ({
-      id: row.id,
-      numero: row.numero,
-      artigo: row.artigo,
-      conteudo: row.conteudo,
-      titulo: row.titulo,
-      explicacao_tecnica: row.explicacao_tecnica,
-      explicacao_formal: row.explicacao_formal,
-      exemplo1: row.exemplo1,
-      exemplo2: row.exemplo2,
-      exemplo: row.exemplo,
-      created_at: row.created_at,
-    })) || []
-  );
+  return data.map((row: any) => ({
+    id: row.id,
+    numero: row.numero || "",
+    artigo: row.artigo || null,
+    conteudo: row.conteudo || null,
+    titulo: row.titulo || null,
+    explicacao_tecnica: row.explicacao_tecnica || null,
+    explicacao_formal: row.explicacao_formal || null,
+    exemplo1: row.exemplo1 || null,
+    exemplo2: row.exemplo2 || null,
+    exemplo: row.exemplo || null,
+    created_at: row.created_at || new Date().toISOString(),
+  }));
 };
 
 export const searchArticle = async (
@@ -148,21 +151,23 @@ export const searchArticle = async (
     return null;
   }
 
-  return data
-    ? {
-        id: data.id,
-        numero: data.numero,
-        artigo: data.artigo,
-        conteudo: data.conteudo,
-        titulo: data.titulo,
-        explicacao_tecnica: data.explicacao_tecnica,
-        explicacao_formal: data.explicacao_formal,
-        exemplo1: data.exemplo1,
-        exemplo2: data.exemplo2,
-        exemplo: data.exemplo,
-        created_at: data.created_at,
-      }
-    : null;
+  if (!data) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    numero: data.numero || "",
+    artigo: data.artigo || null,
+    conteudo: data.conteudo || null,
+    titulo: data.titulo || null,
+    explicacao_tecnica: data.explicacao_tecnica || null,
+    explicacao_formal: data.explicacao_formal || null,
+    exemplo1: data.exemplo1 || null,
+    exemplo2: data.exemplo2 || null,
+    exemplo: data.exemplo || null,
+    created_at: data.created_at || new Date().toISOString(),
+  };
 };
 
 export const searchByTerm = async (
@@ -195,23 +200,25 @@ export const searchByTerm = async (
     return [];
   }
 
-  return (
-    data?.map((row: any) => ({
-      id: row.id,
-      numero: row.numero,
-      artigo: row.artigo,
-      conteudo: row.conteudo,
-      titulo: row.titulo,
-      explicacao_tecnica: row.explicacao_tecnica,
-      explicacao_formal: row.explicacao_formal,
-      exemplo1: row.exemplo1,
-      exemplo2: row.exemplo2,
-      exemplo: row.exemplo,
-      created_at: row.created_at,
-    })) || []
-  );
+  // Se não há dados, retornamos um array vazio
+  if (!data) {
+    return [];
+  }
+
+  return data.map((row: any) => ({
+    id: row.id,
+    numero: row.numero || "",
+    artigo: row.artigo || null,
+    conteudo: row.conteudo || null,
+    titulo: row.titulo || null,
+    explicacao_tecnica: row.explicacao_tecnica || null,
+    explicacao_formal: row.explicacao_formal || null,
+    exemplo1: row.exemplo1 || null,
+    exemplo2: row.exemplo2 || null,
+    exemplo: row.exemplo || null,
+    created_at: row.created_at || new Date().toISOString(),
+  }));
 };
 
 export const fetchAvailableLaws = (): string[] =>
   LAW_OPTIONS.map((opt) => opt.display);
-
