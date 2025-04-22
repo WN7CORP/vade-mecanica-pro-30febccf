@@ -164,17 +164,19 @@ export function useUserRank(userId: string | undefined) {
       if (!userId) return null;
       
       try {
-        // Fix: Use proper RPC call with correct typing
+        // Use a typed approach without specifying the RPC function name in the type parameter
         const { data, error } = await supabase
-          .rpc('get_user_rank', { user_id: userId });
+          .from('user_rankings')
+          .select('global_rank')
+          .eq('id', userId)
+          .single();
           
         if (error) {
           console.error("Error fetching user rank:", error);
           throw error;
         }
         
-        // The RPC function should return a number directly
-        return data as number;
+        return data?.global_rank || null;
       } catch (error) {
         console.error("Erro ao buscar posição do usuário:", error);
         return null;
