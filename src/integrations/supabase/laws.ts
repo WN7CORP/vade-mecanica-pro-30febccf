@@ -140,34 +140,39 @@ export const searchArticle = async (
       "id, numero, artigo, titulo, \"explicacao tecnica\" as explicacao_tecnica, \"explicacao formal\" as explicacao_formal, exemplo1, exemplo2, created_at";
   }
 
-  const { data, error } = await supabase
-    .from(tableName as any)
-    .select(selectFields)
-    .eq("numero", articleNumber)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from(tableName as any)
+      .select(selectFields)
+      .eq("numero", articleNumber)
+      .maybeSingle();
 
-  if (error) {
-    console.error("Erro ao buscar artigo:", error);
+    if (error) {
+      console.error("Erro ao buscar artigo:", error);
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return {
+      id: data.id,
+      numero: data.numero || "",
+      artigo: data.artigo || null,
+      conteudo: data.conteudo || null,
+      titulo: data.titulo || null,
+      explicacao_tecnica: data.explicacao_tecnica || null,
+      explicacao_formal: data.explicacao_formal || null,
+      exemplo1: data.exemplo1 || null,
+      exemplo2: data.exemplo2 || null,
+      exemplo: data.exemplo || null,
+      created_at: data.created_at || new Date().toISOString(),
+    };
+  } catch (err) {
+    console.error("Erro inesperado ao buscar artigo:", err);
     return null;
   }
-
-  if (!data) {
-    return null;
-  }
-
-  return {
-    id: data.id,
-    numero: data.numero || "",
-    artigo: data.artigo || null,
-    conteudo: data.conteudo || null,
-    titulo: data.titulo || null,
-    explicacao_tecnica: data.explicacao_tecnica || null,
-    explicacao_formal: data.explicacao_formal || null,
-    exemplo1: data.exemplo1 || null,
-    exemplo2: data.exemplo2 || null,
-    exemplo: data.exemplo || null,
-    created_at: data.created_at || new Date().toISOString(),
-  };
 };
 
 export const searchByTerm = async (
@@ -190,34 +195,39 @@ export const searchByTerm = async (
       "id, numero, artigo, titulo, \"explicacao tecnica\" as explicacao_tecnica, \"explicacao formal\" as explicacao_formal, exemplo1, exemplo2, created_at";
   }
 
-  const { data, error } = await supabase
-    .from(tableName as any)
-    .select(selectFields)
-    .or(`numero.ilike.%${term}%,artigo.ilike.%${term}%,conteudo.ilike.%${term}%`);
+  try {
+    const { data, error } = await supabase
+      .from(tableName as any)
+      .select(selectFields)
+      .or(`numero.ilike.%${term}%,artigo.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
-  if (error) {
-    console.error("Erro na busca por termo:", error);
+    if (error) {
+      console.error("Erro na busca por termo:", error);
+      return [];
+    }
+
+    // Se não há dados, retornamos um array vazio
+    if (!data) {
+      return [];
+    }
+
+    return data.map((row: any) => ({
+      id: row.id,
+      numero: row.numero || "",
+      artigo: row.artigo || null,
+      conteudo: row.conteudo || null,
+      titulo: row.titulo || null,
+      explicacao_tecnica: row.explicacao_tecnica || null,
+      explicacao_formal: row.explicacao_formal || null,
+      exemplo1: row.exemplo1 || null,
+      exemplo2: row.exemplo2 || null,
+      exemplo: row.exemplo || null,
+      created_at: row.created_at || new Date().toISOString(),
+    }));
+  } catch (err) {
+    console.error("Erro inesperado na busca por termo:", err);
     return [];
   }
-
-  // Se não há dados, retornamos um array vazio
-  if (!data) {
-    return [];
-  }
-
-  return data.map((row: any) => ({
-    id: row.id,
-    numero: row.numero || "",
-    artigo: row.artigo || null,
-    conteudo: row.conteudo || null,
-    titulo: row.titulo || null,
-    explicacao_tecnica: row.explicacao_tecnica || null,
-    explicacao_formal: row.explicacao_formal || null,
-    exemplo1: row.exemplo1 || null,
-    exemplo2: row.exemplo2 || null,
-    exemplo: row.exemplo || null,
-    created_at: row.created_at || new Date().toISOString(),
-  }));
 };
 
 export const fetchAvailableLaws = (): string[] =>
