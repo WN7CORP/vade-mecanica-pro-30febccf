@@ -20,17 +20,19 @@ const ArticleContent = ({
 }: ArticleContentProps) => {
   const renderContent = () => {
     return content.split('\n').map((line, i) => {
-      // For articles with numbers, align text left; otherwise center and make bold
-      const shouldCenter = !articleNumber && i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.');
-      const shouldBold = !articleNumber && line.trim().length > 0;
+      // Always left-align text, use normal font weight for all lines
+      const shouldShowAsHeader = !articleNumber && (i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.'));
       
       return (
         <p 
           key={i} 
-          className={`mb-4 whitespace-pre-wrap transition-all duration-200 ${
-            shouldCenter ? "text-center" : "text-left"
-          } ${shouldBold ? "font-semibold" : ""} ${!articleNumber && i === 0 ? "text-sm text-gray-400" : "text-white"}`}
-          style={{ fontSize: `${fontSize + 2}px` }}
+          className={`mb-4 whitespace-pre-wrap transition-all duration-200 text-left ${
+            shouldShowAsHeader ? "text-sm text-gray-400" : "text-white"
+          }`}
+          style={{ 
+            fontSize: `${fontSize + 2}px`,
+            fontWeight: 'normal' // Use normal font weight
+          }}
         >
           {line}
         </p>
@@ -45,7 +47,13 @@ const ArticleContent = ({
       {example && (
         <div className="mt-6 p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded">
           <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
-          <p className="text-gray-400 whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
+          <p 
+            className="text-gray-400 whitespace-pre-wrap text-left" 
+            style={{ 
+              fontSize: `${fontSize}px`,
+              fontWeight: 'normal' // Use normal font weight for example text
+            }}
+          >
             {example}
           </p>
         </div>
@@ -73,3 +81,4 @@ const ArticleContent = ({
 };
 
 export default ArticleContent;
+
