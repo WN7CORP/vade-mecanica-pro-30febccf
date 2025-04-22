@@ -19,12 +19,14 @@ interface ArticleCardProps {
   onAskQuestion?: () => void;
 }
 
+// Create a global variable to track current audio
 declare global {
   interface Window {
     currentAudio: HTMLAudioElement | null;
   }
 }
 
+// Initialize if not already present
 if (typeof window !== 'undefined' && !window.currentAudio) {
   window.currentAudio = null;
 }
@@ -46,9 +48,9 @@ const ArticleCard = ({
   const [showNotes, setShowNotes] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
-  const [showExample, setShowExample] = useState(false);
   const { logUserActivity } = useUserActivity(userId);
   
+  // Verificar autenticação
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -60,6 +62,7 @@ const ArticleCard = ({
     checkAuth();
   }, []);
   
+  // Load favorite status from localStorage on mount
   useEffect(() => {
     try {
       const favoritedArticles = localStorage.getItem('favoritedArticles');
@@ -89,12 +92,17 @@ const ArticleCard = ({
   const handleColorSelect = (colorClass: string) => {
     setSelectedColor(colorClass);
     
+    // Handle text selection
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
+      // Criar um range para o texto selecionado
       const range = selection.getRangeAt(0);
+      
+      // Criar um span para envolver o texto selecionado
       const span = document.createElement('span');
       span.className = colorClass;
       
+      // Aplicar o span ao texto selecionado
       try {
         range.surroundContents(span);
         
@@ -103,11 +111,13 @@ const ArticleCard = ({
         }
       } catch (e) {
         console.error("Erro ao destacar texto: ", e);
+        // Alternativa se o range contiver elementos parciais
         const fragment = range.extractContents();
         span.appendChild(fragment);
         range.insertNode(span);
       }
       
+      // Limpar a seleção
       selection.removeAllRanges();
     }
   };
@@ -117,6 +127,7 @@ const ArticleCard = ({
       const newStatus = !isFavorite;
       setIsFavorite(newStatus);
       
+      // Save to localStorage
       const favoritedArticles = localStorage.getItem('favoritedArticles');
       const favorites = favoritedArticles ? JSON.parse(favoritedArticles) : {};
       const key = `${lawName}-${articleNumber}`;
@@ -163,15 +174,18 @@ const ArticleCard = ({
   
   const handleNarration = (contentType: 'article' | 'example') => {
     if (isReading && contentType === 'article' && readingContent.title === 'Artigo') {
+      // If already narrating this content, stop it
       setIsReading(false);
       return;
     }
     
     if (isReading && contentType === 'example' && readingContent.title === 'Exemplo') {
+      // If already narrating this content, stop it
       setIsReading(false);
       return;
     }
     
+    // Start narration of the requested content
     if (contentType === 'article') {
       setReadingContent({
         text: content,
@@ -191,26 +205,17 @@ const ArticleCard = ({
     setIsReading(true);
   };
 
-  const handleShowExample = () => {
-    setShowExample(!showExample);
-    
-    if (userId && !showExample) {
-      logUserActivity('view_example', lawName, articleNumber);
-    }
-  };
-
   useEffect(() => {
+    // Registrar leitura do artigo quando o componente é montado
     if (userId) {
       logUserActivity('read', lawName, articleNumber);
     }
   }, [userId, lawName, articleNumber, logUserActivity]);
 
-  const isContentOnly = !articleNumber || articleNumber === "0";
-
   return (
-    <div className="mb-6">
+    <div className="card-article mb-6">
       <CopyToast show={showCopyToast} />
-
+      
       <ArticleHeader
         articleNumber={articleNumber}
         lawName={lawName}
@@ -221,7 +226,7 @@ const ArticleCard = ({
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
       />
-
+      
       {showHighlightTools && (
         <HighlightTools
           selectedColor={selectedColor}
@@ -229,52 +234,17 @@ const ArticleCard = ({
           onClose={() => setShowHighlightTools(false)}
         />
       )}
-
-      <div
-        className={
-          isContentOnly
-            ? "flex flex-col items-center justify-center my-8"
-            : ""
-        }
-      >
-        <ArticleContent
-          content={content}
-          example={undefined}
-          fontSize={fontSize}
-          onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
-          onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
-          articleNumber={articleNumber}
-          isContentOnly={isContentOnly}
-        />
-
-        {example && (
-          <button
-            onClick={() => handleShowExample()}
-            className="mt-3 mb-2 text-primary-300 hover:underline transition-all px-4 py-2 rounded"
-          >
-            {showExample ? "Ocultar Exemplo" : "Ver Exemplo"}
-          </button>
-        )}
-
-        {showExample && example && (
-          <div className="mt-4 w-full max-w-xl mx-auto">
-            <div className="p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded">
-              <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
-              <p
-                className="text-gray-400 whitespace-pre-wrap text-left"
-                style={{
-                  fontSize: `${fontSize}px`,
-                  fontWeight: "normal",
-                }}
-              >
-                {example}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <ArticleInteractions
+      
+      <ArticleContent
+        content={content}
+        example={example}
+        fontSize={fontSize}
+        onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
+        onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
+        articleNumber={articleNumber}
+      />
+      
+      <ArticleInteractions 
         articleNumber={articleNumber}
         content={content}
         example={example}
@@ -284,7 +254,7 @@ const ArticleCard = ({
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
       />
-
+      
       <VoiceNarration
         text={readingContent.text}
         title={readingContent.title}

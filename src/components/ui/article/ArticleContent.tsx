@@ -8,7 +8,6 @@ interface ArticleContentProps {
   onDecreaseFontSize: () => void;
   articleNumber?: string;
   example?: string;
-  isContentOnly?: boolean; // Novo prop opcional para controle de centralização/bold
 }
 
 const ArticleContent = ({
@@ -17,53 +16,56 @@ const ArticleContent = ({
   onIncreaseFontSize,
   onDecreaseFontSize,
   articleNumber,
-  isContentOnly = false,
+  example
 }: ArticleContentProps) => {
+  // Render the main content (contem o artigo em si)
   const renderContent = () => {
-    if (isContentOnly) {
-      // Centralizar e negrito se não houver número de artigo
-      return (
+    return (
+      <div
+        className="w-full flex flex-col items-center"
+        style={{
+          background: "transparent", // sem fundo extra
+        }}
+      >
         <div
-          className="w-full flex justify-center items-center"
-          style={{ minHeight: "80px" }}
+          className="w-full"
         >
-          <span
-            className="text-center font-bold text-white whitespace-pre-wrap"
-            style={{
-              fontSize: `${fontSize + 4}px`,
-              wordBreak: "break-word",
-              margin: "auto",
-            }}
-          >
-            {content}
-          </span>
+          {
+            content.split('\n').map((line, i) => (
+              <p
+                key={i}
+                className="mb-4 whitespace-pre-wrap text-center font-bold text-white transition-all duration-200"
+                style={{
+                  fontSize: `${fontSize + 2}px`,
+                }}
+              >
+                {line}
+              </p>
+            ))
+          }
         </div>
-      );
-    }
-    // Caso normal, exibir cada linha separada
-    return content.split("\n").map((line, i) => {
-      const shouldShowAsHeader = !articleNumber && (i === 0 || line.trim().startsWith("§") || line.trim().startsWith("Art."));
-
-      return (
-        <p
-          key={i}
-          className={`mb-4 whitespace-pre-wrap transition-all duration-200 text-left ${
-            shouldShowAsHeader ? "text-sm text-gray-400" : "text-white"
-          }`}
-          style={{
-            fontSize: `${fontSize + 2}px`,
-            fontWeight: "normal",
-          }}
-        >
-          {line}
-        </p>
-      );
-    });
+      </div>
+    );
   };
 
   return (
     <div className="relative mt-8 mb-12 animate-fade-in">
       {renderContent()}
+
+      {example && (
+        <div className="mt-6 p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded">
+          <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
+          <p
+            className="text-gray-400 whitespace-pre-wrap text-left"
+            style={{
+              fontSize: `${fontSize}px`,
+              fontWeight: 'normal'
+            }}
+          >
+            {example}
+          </p>
+        </div>
+      )}
 
       <div className="fixed left-4 bottom-24 flex flex-col space-y-2 z-10">
         <button
