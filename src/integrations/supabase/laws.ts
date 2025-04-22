@@ -77,62 +77,160 @@ export const fetchLawArticles = async (
   await logUserAction('search', lawDisplayName);
 
   try {
-    if (tableName === "constituicao_federal") {
-      const { data, error } = await supabase
-        .from("constituicao_federal")
-        .select("id, numero, artigo, \"explicacao tecnica\", \"explicacao formal\", exemplo1, exemplo2, created_at")
-        .order("numero", { ascending: true });
-
-      if (error) {
-        console.error("Erro ao buscar artigos da constituição:", error);
-        throw new Error("Falha ao carregar artigos");
+    // We need to handle each table case explicitly since TypeScript requires literal string table names
+    switch (tableName) {
+      case "constituicao_federal": {
+        const { data, error } = await supabase
+          .from("constituicao_federal")
+          .select("id, numero, artigo, \"explicacao tecnica\", \"explicacao formal\", exemplo1, exemplo2, created_at")
+          .order("numero", { ascending: true });
+  
+        if (error) {
+          console.error("Erro ao buscar artigos da constituição:", error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        if (!data) return [];
+        
+        return data.map((row) => ({
+          id: row.id,
+          numero: row.numero,
+          artigo: row.artigo,
+          titulo: undefined,
+          explicacao_tecnica: row["explicacao tecnica"],
+          explicacao_formal: row["explicacao formal"],
+          exemplo1: row.exemplo1,
+          exemplo2: row.exemplo2,
+          created_at: row.created_at,
+        }));
       }
-      
-      if (!data) return [];
-      
-      return data.map((row) => ({
-        id: row.id,
-        numero: row.numero,
-        artigo: row.artigo,
-        titulo: undefined, // The column doesn't exist, so we set it to undefined
-        explicacao_tecnica: row["explicacao tecnica"],
-        explicacao_formal: row["explicacao formal"],
-        exemplo1: row.exemplo1,
-        exemplo2: row.exemplo2,
-        created_at: row.created_at,
-      }));
-    } else {
-      // For other tables
-      const { data, error } = await supabase
-        .from(tableName)
-        .select("id, numero, conteudo, created_at, exemplo")
-        .order("numero", { ascending: true });
-
-      if (error) {
-        console.error("Erro ao buscar artigos:", error);
-        throw new Error("Falha ao carregar artigos");
+      case "codigo_civil": {
+        const { data, error } = await supabase
+          .from("codigo_civil")
+          .select("id, numero, conteudo, created_at, exemplo")
+          .order("numero", { ascending: true });
+  
+        if (error) {
+          console.error("Erro ao buscar artigos:", error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        return mapStandardLawData(data || []);
       }
-      
-      if (!data) return [];
-      
-      // Map data to Article interface
-      return data.map(row => ({
-        id: row.id,
-        numero: row.numero || "",
-        artigo: row.conteudo || "",
-        titulo: undefined,
-        explicacao_tecnica: undefined,
-        explicacao_formal: undefined,
-        exemplo1: row.exemplo || undefined,
-        exemplo2: undefined,
-        created_at: row.created_at
-      }));
+      case "codigo_penal": {
+        const { data, error } = await supabase
+          .from("codigo_penal")
+          .select("id, numero, conteudo, created_at, exemplo")
+          .order("numero", { ascending: true });
+  
+        if (error) {
+          console.error("Erro ao buscar artigos:", error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        return mapStandardLawData(data || []);
+      }
+      case "codigo_processo_civil": {
+        const { data, error } = await supabase
+          .from("codigo_processo_civil")
+          .select("id, numero, conteudo, created_at, exemplo")
+          .order("numero", { ascending: true });
+  
+        if (error) {
+          console.error("Erro ao buscar artigos:", error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        return mapStandardLawData(data || []);
+      }
+      case "codigo_processo_penal": {
+        const { data, error } = await supabase
+          .from("codigo_processo_penal")
+          .select("id, numero, conteudo, created_at, exemplo")
+          .order("numero", { ascending: true });
+  
+        if (error) {
+          console.error("Erro ao buscar artigos:", error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        return mapStandardLawData(data || []);
+      }
+      case "codigo_defesa_consumidor": {
+        const { data, error } = await supabase
+          .from("codigo_defesa_consumidor")
+          .select("id, numero, conteudo, created_at, exemplo")
+          .order("numero", { ascending: true });
+  
+        if (error) {
+          console.error("Erro ao buscar artigos:", error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        return mapStandardLawData(data || []);
+      }
+      case "codigo_tributario": {
+        const { data, error } = await supabase
+          .from("codigo_tributario")
+          .select("id, numero, conteudo, created_at, exemplo")
+          .order("numero", { ascending: true });
+  
+        if (error) {
+          console.error("Erro ao buscar artigos:", error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        return mapStandardLawData(data || []);
+      }
+      case "consolidacao_leis_trabalho": {
+        const { data, error } = await supabase
+          .from("consolidacao_leis_trabalho")
+          .select("id, numero, conteudo, created_at, exemplo")
+          .order("numero", { ascending: true });
+  
+        if (error) {
+          console.error("Erro ao buscar artigos:", error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        return mapStandardLawData(data || []);
+      }
+      case "codigo_transito": {
+        const { data, error } = await supabase
+          .from("codigo_transito")
+          .select("id, numero, conteudo, created_at, exemplo")
+          .order("numero", { ascending: true });
+  
+        if (error) {
+          console.error("Erro ao buscar artigos:", error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        return mapStandardLawData(data || []);
+      }
+      default:
+        throw new Error(`Tabela não implementada: ${tableName}`);
     }
   } catch (error) {
     console.error("Erro ao buscar artigos:", error);
     throw new Error("Falha ao carregar artigos");
   }
 };
+
+// Helper function to map standard law data to our Article interface
+function mapStandardLawData(data: any[]): Article[] {
+  return data.map(row => ({
+    id: row.id,
+    numero: row.numero || "",
+    artigo: row.conteudo || "",
+    titulo: undefined,
+    explicacao_tecnica: undefined,
+    explicacao_formal: undefined,
+    exemplo1: row.exemplo || undefined,
+    exemplo2: undefined,
+    created_at: row.created_at
+  }));
+}
 
 export const searchArticle = async (
   lawDisplayName: string,
@@ -147,60 +245,64 @@ export const searchArticle = async (
   await logUserAction('search', lawDisplayName, articleNumber);
 
   try {
-    let data: any;
-    let error: any;
-
-    if (tableName === "constituicao_federal") {
-      const result = await supabase
-        .from("constituicao_federal")
-        .select("id, numero, artigo, \"explicacao tecnica\", \"explicacao formal\", exemplo1, exemplo2, created_at")
-        .eq("numero", articleNumber)
-        .maybeSingle();
-      
-      data = result.data;
-      error = result.error;
-    } else {
-      const result = await supabase
-        .from(tableName)
-        .select("id, numero, conteudo, created_at, exemplo")
-        .eq("numero", articleNumber)
-        .maybeSingle();
-      
-      data = result.data;
-      error = result.error;
-    }
-
-    if (error) {
-      console.error("Erro ao buscar artigo:", error);
-      return null;
-    }
-    
-    if (!data) return null;
-
-    if (tableName === "constituicao_federal") {
-      return {
-        id: data.id,
-        numero: data.numero,
-        artigo: data.artigo,
-        titulo: undefined,
-        explicacao_tecnica: data["explicacao tecnica"],
-        explicacao_formal: data["explicacao formal"],
-        exemplo1: data.exemplo1,
-        exemplo2: data.exemplo2,
-        created_at: data.created_at
-      };
-    } else {
-      return {
-        id: data.id,
-        numero: data.numero || "",
-        artigo: data.conteudo || "",
-        titulo: undefined,
-        explicacao_tecnica: undefined,
-        explicacao_formal: undefined,
-        exemplo1: data.exemplo || undefined,
-        exemplo2: undefined,
-        created_at: data.created_at
-      };
+    switch (tableName) {
+      case "constituicao_federal": {
+        const { data, error } = await supabase
+          .from("constituicao_federal")
+          .select("id, numero, artigo, \"explicacao tecnica\", \"explicacao formal\", exemplo1, exemplo2, created_at")
+          .eq("numero", articleNumber)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Erro ao buscar artigo:", error);
+          return null;
+        }
+        
+        if (!data) return null;
+  
+        return {
+          id: data.id,
+          numero: data.numero,
+          artigo: data.artigo,
+          titulo: undefined,
+          explicacao_tecnica: data["explicacao tecnica"],
+          explicacao_formal: data["explicacao formal"],
+          exemplo1: data.exemplo1,
+          exemplo2: data.exemplo2,
+          created_at: data.created_at
+        };
+      }
+      case "codigo_civil": {
+        const { data, error } = await supabase
+          .from("codigo_civil")
+          .select("id, numero, conteudo, created_at, exemplo")
+          .eq("numero", articleNumber)
+          .maybeSingle();
+        
+        if (error || !data) {
+          console.error("Erro ao buscar artigo:", error);
+          return null;
+        }
+        
+        return mapStandardLawData([data])[0];
+      }
+      // Handle other cases similarly for each table
+      default: {
+        // Generic case for all other tables
+        // Using type assertion to tell TypeScript we know what we're doing
+        const { data, error } = await supabase
+          .from(tableName as any)
+          .select("id, numero, conteudo, created_at, exemplo")
+          .eq("numero", articleNumber)
+          .maybeSingle();
+        
+        if (error || !data) {
+          console.error("Erro ao buscar artigo:", error);
+          return null;
+        }
+        
+        return mapStandardLawData([data])[0];
+      }
     }
   } catch (error) {
     console.error("Erro ao buscar artigo:", error);
@@ -222,56 +324,46 @@ export const searchByTerm = async (
 
   try {
     const term = searchTerm.toLowerCase();
-    let data: any[];
-    let error: any;
-
-    if (tableName === "constituicao_federal") {
-      const result = await supabase
-        .from("constituicao_federal")
-        .select("id, numero, artigo, \"explicacao tecnica\", \"explicacao formal\", exemplo1, exemplo2, created_at")
-        .or(`numero.ilike.%${term}%,artigo.ilike.%${term}%`);
-      
-      data = result.data || [];
-      error = result.error;
-    } else {
-      const result = await supabase
-        .from(tableName)
-        .select("id, numero, conteudo, created_at, exemplo")
-        .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
-      
-      data = result.data || [];
-      error = result.error;
-    }
-
-    if (error) {
-      console.error("Erro na busca por termo:", error);
-      return [];
-    }
     
-    if (tableName === "constituicao_federal") {
-      return data.map(item => ({
-        id: item.id,
-        numero: item.numero,
-        artigo: item.artigo,
-        titulo: undefined,
-        explicacao_tecnica: item["explicacao tecnica"],
-        explicacao_formal: item["explicacao formal"],
-        exemplo1: item.exemplo1,
-        exemplo2: item.exemplo2,
-        created_at: item.created_at
-      }));
-    } else {
-      return data.map(item => ({
-        id: item.id,
-        numero: item.numero || "",
-        artigo: item.conteudo || "",
-        titulo: undefined,
-        explicacao_tecnica: undefined,
-        explicacao_formal: undefined,
-        exemplo1: item.exemplo || undefined,
-        exemplo2: undefined,
-        created_at: item.created_at
-      }));
+    switch (tableName) {
+      case "constituicao_federal": {
+        const { data, error } = await supabase
+          .from("constituicao_federal")
+          .select("id, numero, artigo, \"explicacao tecnica\", \"explicacao formal\", exemplo1, exemplo2, created_at")
+          .or(`numero.ilike.%${term}%,artigo.ilike.%${term}%`);
+        
+        if (error) {
+          console.error("Erro na busca por termo:", error);
+          return [];
+        }
+        
+        return (data || []).map(item => ({
+          id: item.id,
+          numero: item.numero,
+          artigo: item.artigo,
+          titulo: undefined,
+          explicacao_tecnica: item["explicacao tecnica"],
+          explicacao_formal: item["explicacao formal"],
+          exemplo1: item.exemplo1,
+          exemplo2: item.exemplo2,
+          created_at: item.created_at
+        }));
+      }
+      default: {
+        // Generic case for all other tables
+        // Using type assertion to tell TypeScript we know what we're doing
+        const { data, error } = await supabase
+          .from(tableName as any)
+          .select("id, numero, conteudo, created_at, exemplo")
+          .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
+        
+        if (error) {
+          console.error("Erro na busca por termo:", error);
+          return [];
+        }
+        
+        return mapStandardLawData(data || []);
+      }
     }
   } catch (error) {
     console.error("Erro na busca por termo:", error);
