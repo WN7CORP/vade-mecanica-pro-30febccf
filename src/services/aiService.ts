@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // API key for Gemini
-const API_KEY = "AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0";
+const API_KEY = "AIzaSyCkcVGFIytBLnzQh1PhIB6q20ZOXMfLX2I";
 
 // Initialize the Gemini API
 const genAI = new GoogleGenerativeAI(API_KEY);
