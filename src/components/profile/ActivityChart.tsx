@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, TooltipProps } from "recharts";
 import { ChartLine } from "lucide-react";
 
 interface ActivityData {
@@ -18,6 +18,11 @@ const mockData: ActivityData[] = [
   { name: "Sex", points: 239 },
   { name: "Sab", points: 349 },
 ];
+
+// Define a custom tooltip component with proper typing
+const CustomTooltip = (props: TooltipProps<number, string>) => {
+  return <ChartTooltipContent {...props} />;
+};
 
 export function ActivityChart() {
   return (
@@ -44,7 +49,7 @@ export function ActivityChart() {
               <BarChart data={mockData}>
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip content={(props) => <ChartTooltipContent {...props} />} />
+                <Tooltip content={<CustomTooltip />} />
                 <Bar
                   dataKey="points"
                   fill="currentColor"
