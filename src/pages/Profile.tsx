@@ -9,7 +9,7 @@ import { FileText, Star, Search, BookOpen } from "lucide-react";
 import { RankingList } from "@/components/profile/RankingList";
 import { ActivityChart } from "@/components/profile/ActivityChart";
 import { useRankings } from "@/hooks/useRankings";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface UserStats {
   totalSearches: number;
@@ -20,6 +20,7 @@ interface UserStats {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [userProfile, setUserProfile] = useState<any>(null);
   const { data: rankings } = useRankings();
   const [userId, setUserId] = useState<string>();
@@ -34,29 +35,56 @@ const Profile = () => {
     queryFn: async (): Promise<UserStats> => {
       if (!userId) throw new Error('No user ID');
 
-      const counts = {
+      const { data: statsData } = await supabase
+        .from('user_statistics')
+        .select('action_type')
+        .eq('user_id', userId);
+
+      if (!statsData) return {
         totalSearches: 0,
         totalFavorites: 0,
         totalNotes: 0,
         totalReads: 0
       };
 
-      const { data: statsData } = await supabase
-        .from('user_statistics')
-        .select('action_type')
-        .eq('user_id', userId);
-
-      if (statsData) {
-        counts.totalSearches = statsData.filter(s => s.action_type === 'search').length;
-        counts.totalFavorites = statsData.filter(s => s.action_type === 'favorite').length;
-        counts.totalNotes = statsData.filter(s => s.action_type === 'note').length;
-        counts.totalReads = statsData.filter(s => s.action_type === 'read').length;
-      }
-
-      return counts;
+      return {
+        totalSearches: statsData.filter(s => s.action_type === 'search').length,
+        totalFavorites: statsData.filter(s => s.action_type === 'favorite').length,
+        totalNotes: statsData.filter(s => s.action_type === 'note').length,
+        totalReads: statsData.filter(s => s.action_type === 'read').length
+      };
     },
-    enabled: !!userId
+    enabled: !!userId,
+    refetchInterval: 15000 // Atualiza a cada 15 segundos
   });
+
+  // Configurar um ouvinte de mudanças em tempo real para atualizações
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel('stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_statistics',
+          filter: `user_id=eq.${userId}`
+        },
+        () => {
+          // Atualizar os dados quando houver alterações
+          queryClient.invalidateQueries({ queryKey: ['user-stats', userId] });
+          queryClient.invalidateQueries({ queryKey: ['user-activity', userId] });
+          queryClient.invalidateQueries({ queryKey: ['rankings'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, queryClient]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -85,7 +113,7 @@ const Profile = () => {
     <div className="flex flex-col min-h-screen pb-16">
       <Header />
       
-      <main className="flex-1 container max-w-screen-lg mx-auto px-4 py-8">
+      <main className="flex-1 container max-w-screen-lg mx-auto px-4 py-8 mt-16">
         <h1 className="text-2xl font-heading font-bold mb-6 text-primary-300">
           Perfil e Estatísticas
         </h1>
@@ -99,6 +127,7 @@ const Profile = () => {
               <div className="space-y-2">
                 <p><strong>Nome:</strong> {userProfile.full_name}</p>
                 <p><strong>Email:</strong> {userProfile.username}</p>
+                <p><strong>Pontos Totais:</strong> {userProfile.points || 0}</p>
               </div>
             </CardContent>
           </Card>
@@ -106,7 +135,7 @@ const Profile = () => {
 
         <div className="grid gap-6 md:grid-cols-2">
           <ActivityChart />
-          {rankings && <RankingList rankings={rankings} />}
+          {rankings && <RankingList rankings={rankings} currentUserId={userId} />}
         </div>
 
         <div className="grid grid-cols-2 gap-4 mt-6">

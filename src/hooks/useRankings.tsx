@@ -9,6 +9,7 @@ interface Ranking {
   rank_score: number | null;
   activity_points: number | null;
   global_rank: number | null;
+  position?: number;
 }
 
 export function useRankings() {
@@ -19,10 +20,16 @@ export function useRankings() {
         .from('user_rankings')
         .select('*')
         .order('global_rank', { ascending: true })
-        .limit(10);
+        .limit(20);
 
       if (error) throw error;
-      return data;
-    }
+      
+      // Adicionar posição formatada ao ranking
+      return data.map((user, index) => ({
+        ...user,
+        position: index + 1
+      }));
+    },
+    refetchInterval: 30000 // Recarregar a cada 30 segundos para manter atualizado
   });
 }

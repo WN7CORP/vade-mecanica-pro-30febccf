@@ -32,7 +32,7 @@ export function ActivityChart() {
     });
   }, []);
 
-  const { data: activityData = [] } = useUserActivity(userId);
+  const { activityData: { data: activityData = [] } } = useUserActivity(userId);
 
   return (
     <Card>

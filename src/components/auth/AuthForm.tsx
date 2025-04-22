@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Key } from "lucide-react";
+import { Mail, Key, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 const AuthForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
@@ -30,9 +31,19 @@ const AuthForm = () => {
 
         navigate("/");
       } else {
+        // Verificar se o nome foi fornecido
+        if (!fullName.trim()) {
+          throw new Error("Por favor, informe seu nome completo");
+        }
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              full_name: fullName,
+            },
+          },
         });
 
         if (error) throw error;
@@ -68,6 +79,22 @@ const AuthForm = () => {
 
       <form onSubmit={handleAuth} className="mt-8 space-y-6">
         <div className="space-y-4">
+          {!isLogin && (
+            <div>
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  required={!isLogin}
+                  placeholder="Seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          )}
+
           <div>
             <div className="relative">
               <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
