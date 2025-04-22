@@ -244,35 +244,20 @@ export type Database = {
       }
       constituicao_federal: {
         Row: {
-          artigo: string | null
           conteudo: string | null
           created_at: string
-          exemplo1: string | null
-          exemplo2: string | null
-          "explicacao formal": string | null
-          "explicacao tecnica": string | null
           id: number
           numero: string | null
         }
         Insert: {
-          artigo?: string | null
           conteudo?: string | null
           created_at?: string
-          exemplo1?: string | null
-          exemplo2?: string | null
-          "explicacao formal"?: string | null
-          "explicacao tecnica"?: string | null
           id?: number
           numero?: string | null
         }
         Update: {
-          artigo?: string | null
           conteudo?: string | null
           created_at?: string
-          exemplo1?: string | null
-          exemplo2?: string | null
-          "explicacao formal"?: string | null
-          "explicacao tecnica"?: string | null
           id?: number
           numero?: string | null
         }
