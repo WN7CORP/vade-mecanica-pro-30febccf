@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Volume2, VolumeX, Pause, Play, Volume1 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { recordUserAction } from "@/services/statsService";
 
 interface VoiceNarrationProps {
   text: string;
@@ -11,25 +10,6 @@ interface VoiceNarrationProps {
   onComplete: () => void;
   onStop: () => void;
 }
-
-// Common legal abbreviations and their full versions
-const legalAbbreviations: Record<string, string> = {
-  "art.": "artigo",
-  "Arts.": "artigos",
-  "art": "artigo",
-  "inc.": "inciso",
-  "§": "parágrafo",
-  "cf.": "conforme",
-  "CF": "Constituição Federal",
-  "CC": "Código Civil",
-  "CP": "Código Penal",
-  "CPP": "Código de Processo Penal",
-  "CPC": "Código de Processo Civil",
-  "CDC": "Código de Defesa do Consumidor",
-  "CTN": "Código Tributário Nacional",
-  "CLT": "Consolidação das Leis do Trabalho",
-  "CTB": "Código de Trânsito Brasileiro"
-};
 
 const VoiceNarration = ({
   text,
@@ -43,57 +23,43 @@ const VoiceNarration = ({
   const [volume, setVolume] = useState(0.8);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   
+  // Referências para o objeto de áudio
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
+  // Preparar e iniciar a narração quando isActive mudar
   useEffect(() => {
     if (isActive && text) {
+      // Parar qualquer áudio em reprodução atual
       if (window.currentAudio && window.currentAudio !== audioRef.current) {
         window.currentAudio.pause();
         window.currentAudio.currentTime = 0;
       }
       
       startNarration();
-      
-      // Record the narration action
-      recordUserAction('narration');
     } else {
       stopNarration();
     }
     
     return () => {
       stopNarration();
+      // Limpar URL do objeto se existir
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);
       }
     };
   }, [isActive, text]);
   
-  // Replace legal abbreviations with their full form
-  const processText = (inputText: string) => {
-    let processedText = inputText;
-    
-    // Replace all abbreviations
-    Object.entries(legalAbbreviations).forEach(([abbr, full]) => {
-      const regex = new RegExp(`\\b${abbr}\\b`, 'g');
-      processedText = processedText.replace(regex, full);
-    });
-    
-    return processedText;
-  };
-  
   const startNarration = async () => {
     setIsLoading(true);
     
     try {
+      // Usar a API Google Text-to-Speech
       const apiKey = 'AIzaSyCX26cgIpSd-BvtOLDdEQFa28_wh_HX1uk';
       const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
-      // Process the text to replace abbreviations
-      const processedText = processText(text);
-
       const requestBody = {
         input: {
-          text: processedText
+          text: text
         },
         voice: {
           languageCode: 'pt-BR',
@@ -118,6 +84,7 @@ const VoiceNarration = ({
 
       const data = await response.json();
       
+      // Converter base64 para áudio
       const audioContent = data.audioContent;
       const byteCharacters = atob(audioContent);
       const byteNumbers = new Array(byteCharacters.length);
@@ -129,6 +96,7 @@ const VoiceNarration = ({
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'audio/mp3' });
       
+      // Criar URL e reproduzir áudio
       const audioUrlObject = URL.createObjectURL(blob);
       setAudioUrl(audioUrlObject);
       
@@ -136,6 +104,7 @@ const VoiceNarration = ({
         audioRef.current.src = audioUrlObject;
         audioRef.current.volume = volume;
         
+        // Guardar referência global para este áudio para poder interromper outros quando necessário
         window.currentAudio = audioRef.current;
         
         audioRef.current.play().catch(e => {
@@ -150,6 +119,7 @@ const VoiceNarration = ({
         audio.volume = volume;
         audioRef.current = audio;
         
+        // Guardar referência global para este áudio para poder interromper outros quando necessário
         window.currentAudio = audio;
         
         audio.addEventListener('ended', onComplete);
@@ -217,12 +187,13 @@ const VoiceNarration = ({
     }
   };
   
+  // Renderizar a UI da narração
   if (!isActive) return null;
   
   return (
     <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
       <div className="max-w-screen-md mx-auto">
-        <div className="neomorph p-4 flex flex-col backdrop-blur-md bg-background/90 animate-fade-in">
+        <div className="neomorph p-4 flex flex-col backdrop-blur-md bg-background/90">
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center">
               <div className="text-sm font-medium text-primary-200 mr-2">
@@ -230,7 +201,7 @@ const VoiceNarration = ({
               </div>
               
               {isLoading ? (
-                <div className="audio-wave animate-pulse">
+                <div className="audio-wave">
                   <span></span>
                   <span></span>
                   <span></span>
@@ -239,11 +210,11 @@ const VoiceNarration = ({
                 </div>
               ) : isPaused ? null : (
                 <div className="audio-wave">
-                  <span className="animate-[bounce_1.2s_ease-in-out_infinite]"></span>
-                  <span className="animate-[bounce_1.1s_ease-in-out_infinite_0.1s]"></span>
-                  <span className="animate-[bounce_1.3s_ease-in-out_infinite_0.2s]"></span>
-                  <span className="animate-[bounce_1.0s_ease-in-out_infinite_0.1s]"></span>
-                  <span className="animate-[bounce_1.4s_ease-in-out_infinite_0.3s]"></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
                 </div>
               )}
             </div>
@@ -252,7 +223,7 @@ const VoiceNarration = ({
               {isPaused ? (
                 <button 
                   onClick={resumeNarration}
-                  className="p-1.5 neomorph-sm text-primary-300 hover:scale-105 transition-transform"
+                  className="p-1.5 neomorph-sm text-primary-300"
                   aria-label="Continuar narração"
                 >
                   <Play size={16} />
@@ -260,7 +231,7 @@ const VoiceNarration = ({
               ) : (
                 <button 
                   onClick={pauseNarration}
-                  className="p-1.5 neomorph-sm text-primary-300 hover:scale-105 transition-transform"
+                  className="p-1.5 neomorph-sm text-primary-300"
                   aria-label="Pausar narração"
                 >
                   <Pause size={16} />
@@ -269,7 +240,7 @@ const VoiceNarration = ({
               
               <button 
                 onClick={stopNarration}
-                className="p-1.5 neomorph-sm text-gray-400 hover:text-gray-300 hover:scale-105 transition-all"
+                className="p-1.5 neomorph-sm text-gray-400 hover:text-gray-300"
                 aria-label="Parar narração"
               >
                 <VolumeX size={16} />
@@ -277,6 +248,7 @@ const VoiceNarration = ({
             </div>
           </div>
           
+          {/* Controle de volume */}
           <div className="flex items-center space-x-2">
             <Volume1 size={14} className="text-gray-400" />
             

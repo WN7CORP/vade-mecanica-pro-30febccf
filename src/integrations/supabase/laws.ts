@@ -50,17 +50,23 @@ export const fetchLawArticles = async (
 
   console.log(`Buscando artigos da tabela: ${tableName}`);
   
+  // Use type assertion to bypass TypeScript's type checking
+  // since we've already validated the table name exists
   const { data, error } = await supabase
     .from(tableName as any)
     .select("*")
-    .order("numero", { ascending: true }) as { data: Article[] | null, error: any };
+    .order("numero", { ascending: true });
 
   if (error) {
     console.error("Erro ao buscar artigos:", error);
     throw new Error("Falha ao carregar artigos");
   }
   
-  return data || [];
+  if (!data) {
+    return [];
+  }
+
+  return data as Article[];
 };
 
 export const searchArticle = async (
@@ -77,14 +83,14 @@ export const searchArticle = async (
     .from(tableName as any)
     .select("*")
     .eq("numero", articleNumber)
-    .maybeSingle() as { data: Article | null, error: any };
+    .maybeSingle();
 
   if (error) {
     console.error("Erro ao buscar artigo:", error);
     return null;
   }
   
-  return data;
+  return data as Article | null;
 };
 
 export const searchByTerm = async (
@@ -101,12 +107,16 @@ export const searchByTerm = async (
   const { data, error } = await supabase
     .from(tableName as any)
     .select("*")
-    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`) as { data: Article[] | null, error: any };
+    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
   if (error) {
     console.error("Erro na busca por termo:", error);
     return [];
   }
   
-  return data || [];
+  if (!data) {
+    return [];
+  }
+
+  return data as Article[];
 };
