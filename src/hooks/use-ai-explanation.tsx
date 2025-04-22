@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { generateArticleExplanation, AIExplanation as AIExplanationType } from "@/services/aiService";
 import { Article } from "@/services/lawService";
