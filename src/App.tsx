@@ -11,6 +11,7 @@ import AIChat from "./pages/AIChat";
 import NotFound from "./pages/NotFound";
 import Favorites from "./pages/Favorites";
 import Notes from "./pages/Notes";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<Index />} />
           <Route path="/pesquisa" element={<Search />} />
           <Route path="/leis" element={<AllLaws />} />
