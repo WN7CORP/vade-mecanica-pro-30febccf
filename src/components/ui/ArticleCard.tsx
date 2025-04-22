@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -9,9 +10,11 @@ import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
 
+// PROPS ATUALIZADAS PARA RECEBER "conteudo" (texto antes do artigo) E "artigo" (texto do artigo)
 interface ArticleCardProps {
   articleNumber: string;
-  content: string;
+  content?: string; // coluna artigo
+  conteudo?: string; // coluna conteudo
   example?: string;
   lawName: string;
   onExplainRequest?: (type: 'technical' | 'formal') => void;
@@ -35,7 +38,8 @@ if (typeof window !== 'undefined' && !window.currentAudio) {
 
 const ArticleCard = ({
   articleNumber,
-  content,
+  content, // coluna artigo (padrão anterior)
+  conteudo, // novo campo para textos antes do artigo
   example,
   lawName,
   onExplainRequest,
@@ -64,7 +68,6 @@ const ArticleCard = ({
         setUserId(session.user.id);
       }
     };
-    
     checkAuth();
   }, []);
 
@@ -81,31 +84,36 @@ const ArticleCard = ({
   }, [lawName, articleNumber]);
 
   const copyArticle = () => {
-    const textToCopy = `Art. ${articleNumber}. ${content}`;
-    navigator.clipboard.writeText(textToCopy)
-      .then(() => {
-        setShowCopyToast(true);
-        setTimeout(() => setShowCopyToast(false), 2000);
-        
-        if (userId) {
-          logUserActivity('copy', lawName, articleNumber);
-        }
-      })
-      .catch(err => console.error("Erro ao copiar: ", err));
+    const textToCopy = content
+      ? `Art. ${articleNumber}. ${content}`
+      : conteudo
+        ? conteudo
+        : "";
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          setShowCopyToast(true);
+          setTimeout(() => setShowCopyToast(false), 2000);
+          if (userId) {
+            logUserActivity('copy', lawName, articleNumber);
+          }
+        })
+        .catch(err => console.error("Erro ao copiar: ", err));
+    }
   };
 
   const handleColorSelect = (colorClass: string) => {
     setSelectedColor(colorClass);
-    
+
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
       const range = selection.getRangeAt(0);
       const span = document.createElement('span');
       span.className = colorClass;
-      
+
       try {
         range.surroundContents(span);
-        
+
         if (userId) {
           logUserActivity('highlight', lawName, articleNumber);
         }
@@ -115,7 +123,7 @@ const ArticleCard = ({
         span.appendChild(fragment);
         range.insertNode(span);
       }
-      
+
       selection.removeAllRanges();
     }
   };
@@ -124,27 +132,27 @@ const ArticleCard = ({
     try {
       const newStatus = !isFavorite;
       setIsFavorite(newStatus);
-      
+
       const favoritedArticles = localStorage.getItem('favoritedArticles');
       const favorites = favoritedArticles ? JSON.parse(favoritedArticles) : {};
       const key = `${lawName}-${articleNumber}`;
-      
+
       if (newStatus) {
-        favorites[key] = { 
-          articleNumber, 
-          content, 
-          example, 
+        favorites[key] = {
+          articleNumber,
+          content,
+          example,
           lawName,
           timestamp: new Date().toISOString()
         };
-        
+
         if (userId) {
           logUserActivity('favorite', lawName, articleNumber);
         }
       } else {
         delete favorites[key];
       }
-      
+
       localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
     } catch (error) {
       console.error("Erro ao gerenciar favoritos:", error);
@@ -154,7 +162,7 @@ const ArticleCard = ({
   const handleExplain = (type: 'technical' | 'formal') => {
     if (onExplainRequest) {
       onExplainRequest(type);
-      
+
       if (userId) {
         logUserActivity('explain', lawName, articleNumber);
       }
@@ -163,7 +171,7 @@ const ArticleCard = ({
 
   const handleComment = () => {
     setShowNotes(true);
-    
+
     if (userId) {
       logUserActivity('note_view', lawName, articleNumber);
     }
@@ -174,18 +182,18 @@ const ArticleCard = ({
       setIsReading(false);
       return;
     }
-    
+
     if (isReading && contentType === 'example' && readingContent.title === 'Exemplo') {
       setIsReading(false);
       return;
     }
-    
-    if (contentType === 'article') {
+
+    if (contentType === 'article' && content) {
       setReadingContent({
         text: content,
         title: 'Artigo'
       });
-      
+
       if (userId) {
         logUserActivity('narrate', lawName, articleNumber);
       }
@@ -195,7 +203,7 @@ const ArticleCard = ({
         title: 'Exemplo'
       });
     }
-    
+
     setIsReading(true);
   };
 
@@ -217,43 +225,60 @@ const ArticleCard = ({
     }
   };
 
+  // VERIFICAR SE EXISTE "artigo" (content). Card só com "conteudo" = content === undefined ou vazio.
+  const hasArtigo = !!content && content.trim().length > 0;
+
   return (
-    <div className="card-article mb-6">
+    <div className={`card-article mb-6 ${!hasArtigo ? "bg-background border-none shadow-none" : ""}`}>
       <CopyToast show={showCopyToast} />
 
       {titulo && (
         <div className="mb-2 text-primary-400 font-semibold text-lg">{titulo}</div>
       )}
 
-      <ArticleHeader
-        articleNumber={articleNumber}
-        lawName={lawName}
-        onCopy={copyArticle}
-        onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
-        onExplainRequest={undefined}
-        showHighlightTools={showHighlightTools}
-        isFavorite={isFavorite}
-        onToggleFavorite={toggleFavorite}
-      />
-
-      {showHighlightTools && (
-        <HighlightTools
-          selectedColor={selectedColor}
-          onColorSelect={handleColorSelect}
-          onClose={() => setShowHighlightTools(false)}
-        />
+      {/* Texto da coluna "conteudo", centralizado e negrito, antes do artigo */}
+      {conteudo && (
+        <div className="mb-3 text-center font-bold text-white" style={{ fontSize: fontSize + 2 }}>
+          {conteudo}
+        </div>
       )}
 
-      <ArticleContent
-        content={content}
-        example={undefined}
-        fontSize={fontSize}
-        onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
-        onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
-        articleNumber={articleNumber}
-      />
+      {/* Apenas exiba o header, ferramentas e artigo se houver "artigo" */}
+      {hasArtigo && (
+        <>
+          <ArticleHeader
+            articleNumber={articleNumber}
+            lawName={lawName}
+            onCopy={copyArticle}
+            onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
+            onExplainRequest={undefined}
+            showHighlightTools={showHighlightTools}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
+          />
 
-      {(explicacao_tecnica || explicacao_formal) && (
+          {showHighlightTools && (
+            <HighlightTools
+              selectedColor={selectedColor}
+              onColorSelect={handleColorSelect}
+              onClose={() => setShowHighlightTools(false)}
+            />
+          )}
+
+          {/* Texto da coluna "artigo" (content), alinhado à esquerda */}
+          <ArticleContent
+            content={content ?? ""}
+            example={undefined}
+            fontSize={fontSize}
+            onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
+            onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
+            articleNumber={articleNumber}
+          />
+        </>
+      )}
+
+      {/* Botões e interações só aparecem se houver artigo */}
+      {hasArtigo && (explicacao_tecnica || explicacao_formal) && (
         <div className="flex gap-2 mb-4">
           {explicacao_tecnica && (
             <button
@@ -273,19 +298,20 @@ const ArticleCard = ({
           )}
         </div>
       )}
-      {showExplicacao === 'tecnica' && explicacao_tecnica && (
+      {hasArtigo && showExplicacao === 'tecnica' && explicacao_tecnica && (
         <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
           <h4 className="font-medium text-primary-200 mb-1">Explicação Técnica</h4>
           <p>{explicacao_tecnica}</p>
         </div>
       )}
-      {showExplicacao === 'formal' && explicacao_formal && (
+      {hasArtigo && showExplicacao === 'formal' && explicacao_formal && (
         <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
           <h4 className="font-medium text-primary-200 mb-1">Explicação Formal</h4>
           <p>{explicacao_formal}</p>
         </div>
       )}
 
+      {/* Exemplos, ainda aparecem independente de ter artigo */}
       {(exemplo1 || exemplo2) && (
         <div className="flex flex-wrap gap-2 mb-4">
           {exemplo1 && (
@@ -323,32 +349,41 @@ const ArticleCard = ({
         </div>
       )}
 
-      <ArticleInteractions 
-        articleNumber={articleNumber}
-        content={content}
-        example={undefined}
-        onExplain={() => {}}
-        onAddComment={handleComment}
-        onStartNarration={handleNarration}
-        isFavorite={isFavorite}
-        onToggleFavorite={toggleFavorite}
-      />
+      {/* Botões só aparecem se houver artigo */}
+      {hasArtigo && (
+        <ArticleInteractions
+          articleNumber={articleNumber}
+          content={content ?? ""}
+          example={undefined}
+          onExplain={() => {}}
+          onAddComment={handleComment}
+          onStartNarration={handleNarration}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
+        />
+      )}
 
-      <VoiceNarration
-        text={readingContent.text}
-        title={readingContent.title}
-        isActive={isReading}
-        onComplete={() => setIsReading(false)}
-        onStop={() => setIsReading(false)}
-      />
+      {/* Narração só do artigo se existir, senão, narração só aparece para exemplos */}
+      {hasArtigo && (
+        <VoiceNarration
+          text={readingContent.text}
+          title={readingContent.title}
+          isActive={isReading}
+          onComplete={() => setIsReading(false)}
+          onStop={() => setIsReading(false)}
+        />
+      )}
 
-      <ArticleNotes
-        isOpen={showNotes}
-        onClose={() => setShowNotes(false)}
-        articleNumber={articleNumber}
-        articleContent={content}
-        lawName={lawName}
-      />
+      {/* Notas só aparecem se houver artigo */}
+      {hasArtigo && (
+        <ArticleNotes
+          isOpen={showNotes}
+          onClose={() => setShowNotes(false)}
+          articleNumber={articleNumber}
+          articleContent={content ?? ""}
+          lawName={lawName}
+        />
+      )}
     </div>
   );
 };
