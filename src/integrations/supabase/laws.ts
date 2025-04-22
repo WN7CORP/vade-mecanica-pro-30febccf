@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -45,14 +46,24 @@ async function logUserAction(
   articleNumber?: string
 ) {
   try {
-    const { error } = await supabase.from('user_statistics').insert({
-      action_type: actionType,
-      law_name: lawName,
-      article_number: articleNumber
-    });
+    // Get the current user's ID from the auth session
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    
+    // Only proceed if we have a user ID
+    if (userId) {
+      const { error } = await supabase.from('user_statistics').insert({
+        user_id: userId,
+        action_type: actionType,
+        law_name: lawName,
+        article_number: articleNumber
+      });
 
-    if (error) {
-      console.error('Error logging user action:', error);
+      if (error) {
+        console.error('Error logging user action:', error);
+      }
+    } else {
+      console.log('User not authenticated, skipping action logging');
     }
   } catch (err) {
     console.error('Failed to log user action:', err);
@@ -89,7 +100,8 @@ export const fetchLawArticles = async (
     return [];
   }
 
-  return data as Article[];
+  // Use type assertion to ensure we return the expected type
+  return data as unknown as Article[];
 };
 
 export const searchArticle = async (
@@ -116,7 +128,8 @@ export const searchArticle = async (
     return null;
   }
   
-  return data as Article | null;
+  // Use type assertion to ensure we return the expected type
+  return data as unknown as Article | null;
 };
 
 export const searchByTerm = async (
@@ -147,5 +160,6 @@ export const searchByTerm = async (
     return [];
   }
 
-  return data as Article[];
+  // Use type assertion to ensure we return the expected type
+  return data as unknown as Article[];
 };
