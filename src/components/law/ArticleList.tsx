@@ -80,11 +80,16 @@ const ArticleList = ({
         <ArticleCard
           key={index}
           articleNumber={article.numero}
-          content={article.conteudo}
-          example={article.exemplo}
+          content={article.artigo}
+          example={article.exemplo1}
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onExplainRequest={(type) => onExplainArticle(article, type)}
           onAskQuestion={() => onAskQuestion(article)}
+          titulo={article.titulo}
+          explicacao_tecnica={article.explicacao_tecnica}
+          explicacao_formal={article.explicacao_formal}
+          exemplo1={article.exemplo1}
+          exemplo2={article.exemplo2}
         />
       ))}
       
@@ -102,7 +107,7 @@ const ArticleList = ({
       {showChat && selectedArticle && lawName && (
         <AIChat
           articleNumber={selectedArticle.numero}
-          articleContent={selectedArticle.conteudo}
+          articleContent={selectedArticle.artigo}
           lawName={decodeURIComponent(lawName)}
           onClose={onCloseChat}
         />
