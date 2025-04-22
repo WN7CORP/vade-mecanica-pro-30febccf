@@ -1,5 +1,6 @@
 
 import { ZoomIn, ZoomOut } from "lucide-react";
+import { useState } from "react";
 
 interface ArticleContentProps {
   content: string;
@@ -8,6 +9,8 @@ interface ArticleContentProps {
   onDecreaseFontSize: () => void;
   articleNumber?: string;
   example?: string;
+  showExample?: boolean;
+  onToggleExample?: () => void;
 }
 
 const ArticleContent = ({
@@ -16,28 +19,38 @@ const ArticleContent = ({
   onIncreaseFontSize,
   onDecreaseFontSize,
   articleNumber,
-  example
+  example,
+  showExample = false,
+  onToggleExample
 }: ArticleContentProps) => {
-  // Render the main content (contem o artigo em si)
+  // Função para decidir estilo conforme o número
+  let alignClass = "text-center";
+  let textColor = "text-white";
+  if (!articleNumber || articleNumber === "0" || articleNumber === "") {
+    textColor = "";
+  }
+  if (articleNumber === "esquerda") {
+    alignClass = "text-left";
+    textColor = "";
+  }
+
+  const lineStyle = {
+    fontSize: `${fontSize + 2}px`,
+    color: (!articleNumber || articleNumber === "esquerda" || articleNumber === "0" || articleNumber === "")
+      ? "#F4F4F5"
+      : undefined
+  };
+
   const renderContent = () => {
     return (
-      <div
-        className="w-full flex flex-col items-center"
-        style={{
-          background: "transparent", // sem fundo extra
-        }}
-      >
-        <div
-          className="w-full"
-        >
+      <div className="w-full flex flex-col items-center" style={{ background: "transparent" }}>
+        <div className="w-full">
           {
             content.split('\n').map((line, i) => (
               <p
                 key={i}
-                className="mb-4 whitespace-pre-wrap text-center font-bold text-white transition-all duration-200"
-                style={{
-                  fontSize: `${fontSize + 2}px`,
-                }}
+                className={`mb-4 whitespace-pre-wrap font-bold transition-all duration-200 ${alignClass}`}
+                style={lineStyle}
               >
                 {line}
               </p>
@@ -53,17 +66,28 @@ const ArticleContent = ({
       {renderContent()}
 
       {example && (
-        <div className="mt-6 p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded">
-          <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
-          <p
-            className="text-gray-400 whitespace-pre-wrap text-left"
-            style={{
-              fontSize: `${fontSize}px`,
-              fontWeight: 'normal'
-            }}
+        <div className="mt-6 flex flex-col items-start">
+          <button
+            onClick={onToggleExample}
+            className="mb-2 px-4 py-2 rounded bg-primary-950/50 text-primary-50 hover:bg-primary-900/70 font-medium transition"
+            style={{ fontSize: `${fontSize - 1}px` }}
           >
-            {example}
-          </p>
+            {showExample ? "Ocultar Exemplo" : "Exibir Exemplo"}
+          </button>
+          {showExample && (
+            <div className="w-full p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded animate-fade-in">
+              <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
+              <p
+                className="text-gray-400 whitespace-pre-wrap text-left"
+                style={{
+                  fontSize: `${fontSize}px`,
+                  fontWeight: "normal"
+                }}
+              >
+                {example}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -88,3 +112,4 @@ const ArticleContent = ({
 };
 
 export default ArticleContent;
+

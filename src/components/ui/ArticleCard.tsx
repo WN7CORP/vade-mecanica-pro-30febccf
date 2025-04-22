@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -49,7 +48,9 @@ const ArticleCard = ({
   const [isFavorite, setIsFavorite] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
   const { logUserActivity } = useUserActivity(userId);
-  
+  const [showExample, setShowExample] = useState(false);
+  const [explanation, setExplanation] = useState<string | null>(null);
+
   // Verificar autenticação
   useEffect(() => {
     const checkAuth = async () => {
@@ -154,24 +155,55 @@ const ArticleCard = ({
     }
   };
 
-  const handleExplain = (type: 'technical' | 'formal') => {
+  // Buscar explicação apropriada no supabase conforme tipo
+  const handleExplain = async (type: 'technical' | 'formal') => {
+    if (!articleNumber || !lawName) return;
+    let fieldName = type === "technical" ? "explicacao tecnica" : "explicacao formal";
+    try {
+      // Buscar da tabela conforme lawName (mapeamento igual a fetchLawArticles)
+      let tableName = "";
+      const tables = [
+        { display: "Constituição Federal", table: "constituicao_federal" },
+        { display: "Código Civil", table: "codigo_civil" },
+        { display: "Código Penal", table: "codigo_penal" },
+        { display: "Código de Processo Civil", table: "codigo_processo_civil" },
+        { display: "Código de Processo Penal", table: "codigo_processo_penal" },
+        { display: "Código de Defesa do Consumidor", table: "codigo_defesa_consumidor" },
+        { display: "Código Tributário Nacional", table: "codigo_tributario" },
+        { display: "Consolidação das Leis do Trabalho", table: "consolidacao_leis_trabalho" },
+        { display: "Código de Trânsito Brasileiro", table: "codigo_transito" }
+      ];
+      const found = tables.find(opt => opt.display === lawName);
+      if (!found) return;
+      tableName = found.table;
+
+      const { data, error } = await supabase
+        .from(tableName)
+        .select(`${fieldName}`)
+        .eq("numero", articleNumber)
+        .maybeSingle();
+
+      if (error) {
+        setExplanation("Erro ao buscar explicação.");
+        return;
+      }
+      if (data && data[fieldName]) {
+        setExplanation(data[fieldName]);
+      } else {
+        setExplanation("Explicação não encontrada neste artigo.");
+      }
+    } catch (e) {
+      setExplanation("Erro ao buscar explicação.");
+    }
+
     if (onExplainRequest) {
       onExplainRequest(type);
-      
       if (userId) {
         logUserActivity('explain', lawName, articleNumber);
       }
     }
   };
 
-  const handleComment = () => {
-    setShowNotes(true);
-    
-    if (userId) {
-      logUserActivity('note_view', lawName, articleNumber);
-    }
-  };
-  
   const handleNarration = (contentType: 'article' | 'example') => {
     if (isReading && contentType === 'article' && readingContent.title === 'Artigo') {
       // If already narrating this content, stop it
@@ -238,12 +270,22 @@ const ArticleCard = ({
       <ArticleContent
         content={content}
         example={example}
+        showExample={showExample}
+        onToggleExample={() => setShowExample(s => !s)}
         fontSize={fontSize}
         onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
         onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
         articleNumber={articleNumber}
       />
-      
+
+      {/* Exibição da explicação, quando existe */}
+      {explanation && (
+        <div className="mt-4 mb-2 p-4 rounded-md bg-primary-900/80 border border-primary-300 shadow animate-fade-in">
+          <span className="font-bold text-primary-200">Explicação:</span>
+          <span className="block text-primary-50 mt-1">{explanation}</span>
+        </div>
+      )}
+
       <ArticleInteractions 
         articleNumber={articleNumber}
         content={content}
