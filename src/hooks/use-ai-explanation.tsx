@@ -37,7 +37,10 @@ export const useAIExplanation = (lawName: string | undefined) => {
     console.log(`Lei: ${lawName}, Artigo: ${article.conteudo.substring(0, 100)}...`);
     
     try {
+      // Utilizar o nome da lei decodificado para evitar problemas com caracteres especiais
       const decodedLawName = decodeURIComponent(lawName);
+      console.log(`Nome da lei decodificado: ${decodedLawName}`);
+      
       const aiExplanation = await generateArticleExplanation(
         article.numero,
         article.conteudo,
@@ -46,6 +49,15 @@ export const useAIExplanation = (lawName: string | undefined) => {
       );
       
       console.log("Explicação recebida:", aiExplanation);
+      
+      if (!aiExplanation || 
+          !aiExplanation.summary || 
+          !aiExplanation.detailed || 
+          !aiExplanation.examples || 
+          aiExplanation.examples.length === 0) {
+        throw new Error("Explicação incompleta ou inválida");
+      }
+      
       setExplanation(aiExplanation);
     } catch (error) {
       console.error("Erro ao gerar explicação:", error);
@@ -54,6 +66,8 @@ export const useAIExplanation = (lawName: string | undefined) => {
         description: "Não foi possível gerar a explicação. Tente novamente mais tarde.",
         variant: "destructive",
       });
+      // Fechar o modal de explicação em caso de erro
+      setShowExplanation(false);
     } finally {
       setLoadingExplanation(false);
     }
