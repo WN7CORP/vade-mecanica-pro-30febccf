@@ -10,6 +10,7 @@ import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
 
+// Novo: adicionar campos extras
 interface ArticleCardProps {
   articleNumber: string;
   content: string;
@@ -17,6 +18,9 @@ interface ArticleCardProps {
   lawName: string;
   onExplainRequest?: (type: 'technical' | 'formal') => void;
   onAskQuestion?: () => void;
+  artigo?: string; // novo campo
+  explicacaoTecnica?: string; // novo campo
+  explicacaoFormal?: string; // novo campo
 }
 
 declare global {
@@ -35,12 +39,14 @@ const ArticleCard = ({
   example,
   lawName,
   onExplainRequest,
-  onAskQuestion
+  onAskQuestion,
+  artigo,
+  explicacaoTecnica,
+  explicacaoFormal
 }: ArticleCardProps) => {
-  // Ensure articleNumber is never null or undefined
+  // Garante que articleNumber não seja null/undefined
   const safeArticleNumber = articleNumber || '';
-  
-  // Estados e hooks existentes...
+
   const [fontSize, setFontSize] = useState(16);
   const [isReading, setIsReading] = useState(false);
   const [readingContent, setReadingContent] = useState<{text: string, title: string}>({text: '', title: ''});
@@ -53,21 +59,19 @@ const ArticleCard = ({
   const { logUserActivity } = useUserActivity(userId);
   const [showExample, setShowExample] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
+  const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
 
   // === NOVA LÓGICA DE ALINHAMENTO E ESTILO ===
-  // Detecta se o número do artigo está vazio ou zerado
+  // Se número do artigo estiver zerado/ausente
   const isNumberEmptyOrZero = !safeArticleNumber || safeArticleNumber.trim() === '0';
-  // Detecta se o conteúdo é 'esquerdo'
   const isNumberLeft = safeArticleNumber.trim().toLowerCase() === 'esquerdo';
 
-  // Classes condicionais Tailwind para a coluna de conteúdo
   const contentWrapperClasses = isNumberEmptyOrZero
     ? 'flex items-center justify-center font-bold text-center'
     : isNumberLeft
     ? 'flex items-center justify-start font-normal text-left'
     : 'flex items-center justify-start font-normal text-left';
 
-  // Classe fixa para a coluna de artigos: centralizado verticalmente e alinhado à esquerda, sem negrito
   const headerWrapperClasses = 'flex items-center justify-start font-normal';
   // ==============================================
 
@@ -94,7 +98,9 @@ const ArticleCard = ({
   }, [lawName, safeArticleNumber]);
 
   const copyArticle = () => {
-    const textToCopy = `Art. ${safeArticleNumber}. ${content}`;
+    const textToCopy = isNumberEmptyOrZero && artigo
+      ? artigo
+      : `Art. ${safeArticleNumber}. ${content}`;
     navigator.clipboard.writeText(textToCopy)
       .then(() => {
         setShowCopyToast(true);
@@ -113,16 +119,14 @@ const ArticleCard = ({
       const favoritedArticles = localStorage.getItem('favoritedArticles') || '{}';
       const favorites = JSON.parse(favoritedArticles);
       const key = `${lawName}-${safeArticleNumber}`;
-      
       if (favorites[key]) {
         delete favorites[key];
       } else {
         favorites[key] = true;
       }
-      
       localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
       setIsFavorite(!isFavorite);
-      
+
       if (userId) {
         logUserActivity(isFavorite ? 'unfavorite' : 'favorite', lawName, safeArticleNumber);
       }
@@ -131,24 +135,38 @@ const ArticleCard = ({
     }
   };
 
+  // NOVO: buscar explicação estática das props, com loading animado
   const handleExplain = async (type: 'technical' | 'formal') => {
-    if (onExplainRequest) {
-      onExplainRequest(type);
-    }
+    setIsLoadingExplanation(true);
+    setExplanation(null);
+    setTimeout(() => {
+      if (type === 'technical' && explicacaoTecnica) {
+        setExplanation(explicacaoTecnica);
+      } else if (type === 'formal' && explicacaoFormal) {
+        setExplanation(explicacaoFormal);
+      } else {
+        setExplanation('Explicação não disponível para este artigo.');
+      }
+      setIsLoadingExplanation(false);
+    }, 1300); // Breve delay para animar "Gerando explicação..."
   };
 
   const handleNarration = (contentType: 'article' | 'example') => {
-    const contentToRead = contentType === 'article' ? content : example || '';
-    const titleToRead = contentType === 'article' 
-      ? `Artigo ${safeArticleNumber} - ${lawName}`
+    const contentToRead = contentType === 'article'
+      ? (isNumberEmptyOrZero && artigo ? artigo : content)
+      : example || '';
+    const titleToRead = contentType === 'article'
+      ? (isNumberEmptyOrZero && artigo
+        ? `Artigo Especial - ${lawName}`
+        : `Artigo ${safeArticleNumber} - ${lawName}`)
       : `Exemplo do Artigo ${safeArticleNumber}`;
-    
+
     setReadingContent({
       text: contentToRead,
       title: titleToRead
     });
     setIsReading(true);
-    
+
     if (userId) {
       logUserActivity('narration', lawName, safeArticleNumber);
     }
@@ -167,7 +185,7 @@ const ArticleCard = ({
     <div className="card-article mb-6">
       <CopyToast show={showCopyToast} />
 
-      {/* Coluna de artigos: centralizado verticalmente e alinhado à esquerda, sem negrito */}
+      {/* Header da coluna do artigo */}
       <div className={headerWrapperClasses}>
         <ArticleHeader
           articleNumber={safeArticleNumber}
@@ -189,31 +207,55 @@ const ArticleCard = ({
         />
       )}
 
-      {/* Coluna de conteúdo: classes condicionais para centralização e negrito */}
+      {/* Coluna de conteúdo ou artigo, centralizado se sem número */}
       <div className={contentWrapperClasses}>
-        <ArticleContent
-          content={content}
-          example={example}
-          showExample={showExample}
-          onToggleExample={() => setShowExample(s => !s)}
-          fontSize={fontSize}
-          onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
-          onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
-          articleNumber={safeArticleNumber}
-        />
+        {isNumberEmptyOrZero && artigo ? (
+          <div className="w-full flex flex-col items-center" style={{ background: "transparent" }}>
+            <div className="w-full">
+              <p
+                className="mb-4 whitespace-pre-wrap font-bold text-center"
+                style={{
+                  fontSize: `${fontSize + 2}px`,
+                  color: "#F4F4F5"
+                }}
+              >
+                {artigo}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <ArticleContent
+            content={content}
+            example={example}
+            showExample={showExample}
+            onToggleExample={() => setShowExample(s => !s)}
+            fontSize={fontSize}
+            onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
+            onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
+            articleNumber={safeArticleNumber}
+          />
+        )}
       </div>
 
-      {explanation && (
+      {/* Explicação exibida, com animação durante carregamento */}
+      {(isLoadingExplanation || explanation) && (
         <div className="mt-4 mb-2 p-4 rounded-md bg-primary-900/80 border border-primary-300 shadow animate-fade-in">
-          <span className="font-bold text-primary-200">Explicação:</span>
-          <span className="block text-primary-50 mt-1">{explanation}</span>
+          {isLoadingExplanation ? (
+            <span className="font-bold text-primary-200 animate-pulse">Gerando explicação...</span>
+          ) : (
+            <>
+              <span className="font-bold text-primary-200">Explicação:</span>
+              <span className="block text-primary-50 mt-1">{explanation}</span>
+            </>
+          )}
         </div>
       )}
 
+      {/* Atenção: se artigo sem número/nulo, não mostra exemplo */}
       <ArticleInteractions
         articleNumber={safeArticleNumber}
         content={content}
-        example={example}
+        example={!isNumberEmptyOrZero ? example : undefined}
         onExplain={handleExplain}
         onAddComment={handleComment}
         onStartNarration={handleNarration}
@@ -241,3 +283,4 @@ const ArticleCard = ({
 };
 
 export default ArticleCard;
+
