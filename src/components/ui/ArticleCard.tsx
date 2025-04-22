@@ -37,6 +37,9 @@ const ArticleCard = ({
   onExplainRequest,
   onAskQuestion
 }: ArticleCardProps) => {
+  // Ensure articleNumber is never null or undefined
+  const safeArticleNumber = articleNumber || '';
+  
   // Estados e hooks existentes...
   const [fontSize, setFontSize] = useState(16);
   const [isReading, setIsReading] = useState(false);
@@ -50,9 +53,6 @@ const ArticleCard = ({
   const { logUserActivity } = useUserActivity(userId);
   const [showExample, setShowExample] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
-
-  // Ensure articleNumber is never null
-  const safeArticleNumber = articleNumber || '';
 
   // === NOVA LÓGICA DE ALINHAMENTO E ESTILO ===
   // Detecta se o número do artigo está vazio ou zerado
