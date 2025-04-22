@@ -131,17 +131,19 @@ export const fetchLawArticles = async (
         return mapStandardLawData(data || []);
       }
       case "codigo_processo_civil": {
-        const { data, error } = await supabase
-          .from("codigo_processo_civil")
+        // This is where the error was occurring. Since TypeScript doesn't recognize this table,
+        // we need to handle it in a type-safe way using 'as any' to safely interact with it
+        const result = await supabase
+          .from(tableName as any)
           .select("id, numero, conteudo, created_at, exemplo")
           .order("numero", { ascending: true });
   
-        if (error) {
-          console.error("Erro ao buscar artigos:", error);
+        if (result.error) {
+          console.error("Erro ao buscar artigos:", result.error);
           throw new Error("Falha ao carregar artigos");
         }
         
-        return mapStandardLawData(data || []);
+        return mapStandardLawData(result.data || []);
       }
       case "codigo_processo_penal": {
         const { data, error } = await supabase
@@ -209,7 +211,18 @@ export const fetchLawArticles = async (
         return mapStandardLawData(data || []);
       }
       default:
-        throw new Error(`Tabela não implementada: ${tableName}`);
+        // For any other tables that might not be explicitly typed in Supabase
+        const result = await supabase
+          .from(tableName as any)
+          .select("id, numero, conteudo, created_at, exemplo")
+          .order("numero", { ascending: true });
+        
+        if (result.error) {
+          console.error("Erro ao buscar artigos:", result.error);
+          throw new Error("Falha ao carregar artigos");
+        }
+        
+        return mapStandardLawData(result.data || []);
     }
   } catch (error) {
     console.error("Erro ao buscar artigos:", error);
@@ -290,18 +303,18 @@ export const searchArticle = async (
       default: {
         // Generic case for all other tables
         // Using type assertion to tell TypeScript we know what we're doing
-        const { data, error } = await supabase
+        const result = await supabase
           .from(tableName as any)
           .select("id, numero, conteudo, created_at, exemplo")
           .eq("numero", articleNumber)
           .maybeSingle();
         
-        if (error || !data) {
-          console.error("Erro ao buscar artigo:", error);
+        if (result.error || !result.data) {
+          console.error("Erro ao buscar artigo:", result.error);
           return null;
         }
         
-        return mapStandardLawData([data])[0];
+        return mapStandardLawData([result.data])[0];
       }
     }
   } catch (error) {
@@ -352,17 +365,17 @@ export const searchByTerm = async (
       default: {
         // Generic case for all other tables
         // Using type assertion to tell TypeScript we know what we're doing
-        const { data, error } = await supabase
+        const result = await supabase
           .from(tableName as any)
           .select("id, numero, conteudo, created_at, exemplo")
           .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
         
-        if (error) {
-          console.error("Erro na busca por termo:", error);
+        if (result.error) {
+          console.error("Erro na busca por termo:", result.error);
           return [];
         }
         
-        return mapStandardLawData(data || []);
+        return mapStandardLawData(result.data || []);
       }
     }
   } catch (error) {
