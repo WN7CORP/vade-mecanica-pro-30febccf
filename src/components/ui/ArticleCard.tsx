@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -188,6 +189,15 @@ const ArticleCard = ({
     }
     
     setIsReading(true);
+  };
+
+  // Add the missing handleShowExample function
+  const handleShowExample = () => {
+    setShowExample(!showExample);
+    
+    if (userId && !showExample) {
+      logUserActivity('view_example', lawName, articleNumber);
+    }
   };
 
   useEffect(() => {
