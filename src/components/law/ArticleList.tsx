@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import ArticleCard from "@/components/ui/ArticleCard";
@@ -44,7 +43,6 @@ const ArticleList = ({
 
   const handleNarrateExplanation = (content: string, title: string) => {
     if (isNarratingExplanation && title === narratingContent.title) {
-      // If already narrating this content, stop it
       setIsNarratingExplanation(false);
       return;
     }

@@ -5,13 +5,11 @@ export interface Article {
   id: number;
   numero: string;
   artigo: string;
-  conteudo?: string; // Alias for artigo for backward compatibility
   titulo?: string;
   explicacao_tecnica?: string;
   explicacao_formal?: string;
   exemplo1?: string;
   exemplo2?: string;
-  exemplo?: string; // Alias for exemplo1 for backward compatibility
   created_at: string;
 }
 
@@ -94,20 +92,18 @@ export const fetchLawArticles = async (
         id: row.id,
         numero: row.numero,
         artigo: row.artigo,
-        conteudo: row.artigo, // Add alias for compatibility
         titulo: row.titulo,
         explicacao_tecnica: row["explicacao tecnica"],
         explicacao_formal: row["explicacao formal"],
         exemplo1: row.exemplo1,
         exemplo2: row.exemplo2,
-        exemplo: row.exemplo1, // Add alias for compatibility
         created_at: row.created_at,
       })) || []
     );
   } else {
     const { data, error } = await supabase
       .from(tableName as any)
-      .select("*")
+      .select("id, numero, artigo, titulo, explicacao_tecnica, explicacao_formal, exemplo1, exemplo2, created_at")
       .order("numero", { ascending: true });
 
     if (error) {
@@ -115,12 +111,8 @@ export const fetchLawArticles = async (
       throw new Error("Falha ao carregar artigos");
     }
     
-    // Process the data to ensure consistent structure
-    return data?.map(item => ({
-      ...item,
-      conteudo: item.artigo || item.conteudo,
-      exemplo: item.exemplo1 || item.exemplo
-    })) as unknown as Article[];
+    // Use columns as mapped above, no aliases.
+    return data as Article[];
   }
 };
 
@@ -138,7 +130,7 @@ export const searchArticle = async (
 
   const { data, error } = await supabase
     .from(tableName as any)
-    .select("*")
+    .select("id, numero, artigo, titulo, explicacao_tecnica, explicacao_formal, exemplo1, exemplo2, created_at")
     .eq("numero", articleNumber)
     .maybeSingle();
 
@@ -148,15 +140,8 @@ export const searchArticle = async (
   }
   
   if (!data) return null;
-  
-  // Ensure consistent structure
-  const article = {
-    ...data,
-    conteudo: data.artigo || data.conteudo,
-    exemplo: data.exemplo1 || data.exemplo
-  } as unknown as Article;
-  
-  return article;
+
+  return data as Article;
 };
 
 export const searchByTerm = async (
@@ -174,7 +159,7 @@ export const searchByTerm = async (
   const term = searchTerm.toLowerCase();
   const { data, error } = await supabase
     .from(tableName as any)
-    .select("*")
+    .select("id, numero, artigo, titulo, explicacao_tecnica, explicacao_formal, exemplo1, exemplo2, created_at")
     .or(`numero.ilike.%${term}%,artigo.ilike.%${term}%`);
 
   if (error) {
@@ -186,13 +171,9 @@ export const searchByTerm = async (
     return [];
   }
 
-  // Ensure consistent structure
-  return data.map(item => ({
-    ...item,
-    conteudo: item.artigo || item.conteudo,
-    exemplo: item.exemplo1 || item.exemplo
-  })) as unknown as Article[];
+  return data as Article[];
 };
 
 export const fetchAvailableLaws = (): string[] =>
   LAW_OPTIONS.map((opt) => opt.display);
+

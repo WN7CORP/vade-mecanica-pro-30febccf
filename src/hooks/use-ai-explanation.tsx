@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { generateArticleExplanation, AIExplanation as AIExplanationType } from "@/services/aiService";
 import { Article } from "@/services/lawService";
@@ -79,7 +78,6 @@ export const useAIExplanation = (lawName: string | undefined) => {
         description: "Não foi possível gerar a explicação. Tente novamente mais tarde.",
         variant: "destructive",
       });
-      // Fechar o modal de explicação em caso de erro
       setShowExplanation(false);
     } finally {
       setLoadingExplanation(false);
