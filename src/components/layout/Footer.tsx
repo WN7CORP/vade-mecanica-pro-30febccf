@@ -1,5 +1,5 @@
 
-import { Search, BookOpen, MessageCircle, Home } from "lucide-react";
+import { Search, BookOpen, MessageCircle, Home, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Footer = () => {
@@ -32,6 +32,12 @@ const Footer = () => {
       label: "Dúvidas", 
       path: "/duvidas",
       active: isActive("/duvidas") 
+    },
+    {
+      icon: <User size={20} />,
+      label: "Perfil",
+      path: "/perfil",
+      active: isActive("/perfil")
     }
   ];
   
