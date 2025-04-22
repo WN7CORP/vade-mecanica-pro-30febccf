@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { ChartLine } from "lucide-react";
 
@@ -44,7 +44,7 @@ export function ActivityChart() {
               <BarChart data={mockData}>
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip content={ChartTooltip} />
+                <Tooltip content={(props) => <ChartTooltipContent {...props} />} />
                 <Bar
                   dataKey="points"
                   fill="currentColor"
