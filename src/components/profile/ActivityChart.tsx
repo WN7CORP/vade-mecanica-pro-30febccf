@@ -20,8 +20,11 @@ const mockData: ActivityData[] = [
 ];
 
 // Define a custom tooltip component with proper typing
-const CustomTooltip = (props: TooltipProps<number, string>) => {
-  return <ChartTooltipContent {...props} />;
+const CustomTooltip = ({ active, payload, label, ...rest }: TooltipProps<number, string>) => {
+  if (active && payload && payload.length) {
+    return <ChartTooltipContent active={active} payload={payload} label={label} {...rest} />;
+  }
+  return null;
 };
 
 export function ActivityChart() {
@@ -49,7 +52,7 @@ export function ActivityChart() {
               <BarChart data={mockData}>
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={CustomTooltip} />
                 <Bar
                   dataKey="points"
                   fill="currentColor"
