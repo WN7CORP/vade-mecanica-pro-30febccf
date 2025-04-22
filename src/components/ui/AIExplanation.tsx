@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
-import { LightbulbIcon, BookOpen, MessagesSquare, ClipboardCheck, X } from "lucide-react";
+import { LightbulbIcon, BookOpen, MessagesSquare, ClipboardCheck, X, Volume2 } from "lucide-react";
 
 interface AIExplanationProps {
   explanation: AIExplanationType | null;
@@ -9,6 +9,7 @@ interface AIExplanationProps {
   articleNumber: string;
   lawName: string;
   onClose: () => void;
+  onNarrateExplanation?: (content: string, title: string) => void;
 }
 
 const AIExplanation = ({
@@ -16,7 +17,8 @@ const AIExplanation = ({
   isLoading,
   articleNumber,
   lawName,
-  onClose
+  onClose,
+  onNarrateExplanation
 }: AIExplanationProps) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'detailed' | 'examples'>('summary');
   
@@ -52,6 +54,12 @@ const AIExplanation = ({
   if (!explanation) {
     return null;
   }
+  
+  const handleNarrate = (content: string, title: string) => {
+    if (onNarrateExplanation) {
+      onNarrateExplanation(content, title);
+    }
+  };
   
   return (
     <div className="card-article">
@@ -112,7 +120,20 @@ const AIExplanation = ({
       <div className="py-2">
         {activeTab === 'summary' && (
           <div className="animate-fade-in">
-            <p className="mb-3 text-gray-300">{explanation.summary}</p>
+            <div className="flex justify-between mb-2">
+              <h4 className="text-primary-200 font-medium">Resumo</h4>
+              {onNarrateExplanation && (
+                <button 
+                  onClick={() => handleNarrate(explanation.summary, "Resumo do artigo")}
+                  className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-300"
+                  aria-label="Narrar resumo"
+                  title="Narrar resumo"
+                >
+                  <Volume2 size={16} />
+                </button>
+              )}
+            </div>
+            <p className="mb-3 text-white">{explanation.summary}</p>
             <p className="text-xs text-muted-foreground mt-4">
               Fonte: {lawName}, Art. {articleNumber}
             </p>
@@ -121,31 +142,50 @@ const AIExplanation = ({
         
         {activeTab === 'detailed' && (
           <div className="animate-fade-in">
-            <p className="mb-3 text-gray-300 whitespace-pre-line">{explanation.detailed}</p>
+            <div className="flex justify-between mb-2">
+              <h4 className="text-primary-200 font-medium">Explicação Detalhada</h4>
+              {onNarrateExplanation && (
+                <button 
+                  onClick={() => handleNarrate(explanation.detailed, "Explicação detalhada do artigo")}
+                  className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-300"
+                  aria-label="Narrar explicação detalhada"
+                  title="Narrar explicação detalhada"
+                >
+                  <Volume2 size={16} />
+                </button>
+              )}
+            </div>
+            <p className="mb-3 text-white whitespace-pre-line">{explanation.detailed}</p>
           </div>
         )}
         
         {activeTab === 'examples' && (
           <div className="animate-fade-in">
+            <div className="flex justify-between mb-2">
+              <h4 className="text-primary-200 font-medium">Exemplos Práticos</h4>
+              {onNarrateExplanation && (
+                <button 
+                  onClick={() => handleNarrate(explanation.examples.join(". Próximo exemplo. "), "Exemplos práticos")}
+                  className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-300"
+                  aria-label="Narrar exemplos"
+                  title="Narrar exemplos"
+                >
+                  <Volume2 size={16} />
+                </button>
+              )}
+            </div>
             <ul className="space-y-4">
               {explanation.examples.map((example, index) => (
                 <li key={index} className="neomorph-sm p-3">
                   <h4 className="text-primary-100 font-medium mb-1">
                     Exemplo {index + 1}
                   </h4>
-                  <p className="text-gray-300">{example}</p>
+                  <p className="text-white">{example}</p>
                 </li>
               ))}
             </ul>
           </div>
         )}
-      </div>
-      
-      {/* Botão para exportar PDF */}
-      <div className="mt-4 flex justify-end">
-        <button className="shadow-button text-gray-300 hover:text-primary-200">
-          Exportar explicação (PDF)
-        </button>
       </div>
     </div>
   );

@@ -1,13 +1,12 @@
 
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import ArticleCard from "@/components/ui/ArticleCard";
 import AIExplanation from "@/components/ui/AIExplanation";
 import AIChat from "@/components/ui/AIChat";
-import PDFExporter from "@/components/ui/PDFExporter";
 import VoiceNarration from "@/components/ui/VoiceNarration";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
 import { Article } from "@/services/lawService";
-import { useState } from "react";
 
 interface ArticleListProps {
   isLoading: boolean;
@@ -41,25 +40,20 @@ const ArticleList = ({
   onCloseExplanation
 }: ArticleListProps) => {
   const [isNarratingExplanation, setIsNarratingExplanation] = useState(false);
-  const [isNarratingExamples, setIsNarratingExamples] = useState(false);
+  const [narratingContent, setNarratingContent] = useState<{text: string, title: string}>({text: '', title: ''});
 
-  const handleNarrateExplanation = () => {
-    if (!explanation) return;
-    setIsNarratingExamples(false);
-    setIsNarratingExplanation(true);
-  };
-
-  const handleNarrateExamples = () => {
-    if (!explanation || !explanation.examples.length) return;
-    setIsNarratingExplanation(false);
-    setIsNarratingExamples(true);
-  };
-
-  const handleScrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
+  const handleNarrateExplanation = (content: string, title: string) => {
+    if (isNarratingExplanation && title === narratingContent.title) {
+      // If already narrating this content, stop it
+      setIsNarratingExplanation(false);
+      return;
+    }
+    
+    setNarratingContent({
+      text: content,
+      title: title
     });
+    setIsNarratingExplanation(true);
   };
 
   if (isLoading) {
@@ -82,14 +76,6 @@ const ArticleList = ({
 
   return (
     <div>
-      <button
-        onClick={handleScrollToTop}
-        className="fixed bottom-20 right-4 p-3 neomorph-sm text-primary-300 z-10 hover:scale-105 transition-all animate-fade-in"
-        aria-label="Voltar ao topo"
-      >
-        <Loader2 size={20} />
-      </button>
-
       {filteredArticles.map((article, index) => (
         <ArticleCard
           key={index}
@@ -110,7 +96,6 @@ const ArticleList = ({
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onClose={onCloseExplanation}
           onNarrateExplanation={handleNarrateExplanation}
-          onNarrateExamples={handleNarrateExamples}
         />
       )}
       
@@ -123,39 +108,13 @@ const ArticleList = ({
         />
       )}
       
-      {showExplanation && !loadingExplanation && selectedArticle && explanation && (
-        <div className="mt-4 flex justify-end">
-          <PDFExporter
-            articleNumber={selectedArticle.numero}
-            articleContent={selectedArticle.conteudo}
-            lawName={lawName ? decodeURIComponent(lawName) : ""}
-            explanation={explanation}
-            example={selectedArticle.exemplo}
-          />
-        </div>
-      )}
-
-      {/* Narration components for explanation */}
-      {explanation && isNarratingExplanation && (
-        <VoiceNarration
-          text={explanation.detailed}
-          isActive={isNarratingExplanation}
-          onComplete={() => setIsNarratingExplanation(false)}
-          onStop={() => setIsNarratingExplanation(false)}
-          type="explanation"
-        />
-      )}
-
-      {/* Narration components for examples */}
-      {explanation && explanation.examples.length > 0 && isNarratingExamples && (
-        <VoiceNarration
-          text={explanation.examples.join('\n\n')}
-          isActive={isNarratingExamples}
-          onComplete={() => setIsNarratingExamples(false)}
-          onStop={() => setIsNarratingExamples(false)}
-          type="example"
-        />
-      )}
+      <VoiceNarration
+        text={narratingContent.text}
+        title={narratingContent.title}
+        isActive={isNarratingExplanation}
+        onComplete={() => setIsNarratingExplanation(false)}
+        onStop={() => setIsNarratingExplanation(false)}
+      />
     </div>
   );
 };

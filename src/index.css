@@ -7,44 +7,44 @@
 
 @layer base {
   :root {
-    /* Update colors to match the image */
-    --background: 252 14% 12%; /* #131129 */
-    --foreground: 0 0% 100%; /* #FFFFFF */
+    /* Forçar modo escuro */
+    --background: 230 27% 14%; /* #1A1F2C */
+    --foreground: 225 3% 58%; /* #8E9196 */
 
-    --card: 252 14% 12%; /* #131129 */
-    --card-foreground: 0 0% 100%; /* #FFFFFF */
+    --card: 230 27% 14%; /* #1A1F2C */
+    --card-foreground: 210 40% 98%; /* #F8FAFC */
 
-    --popover: 252 14% 15%; /* #1A1839 */
-    --popover-foreground: 0 0% 100%; /* #FFFFFF */
+    --popover: 230 27% 16%; /* #1F2532 */
+    --popover-foreground: 210 40% 98%; /* #F8FAFC */
 
     --primary: 259 86% 86%; /* #D6BCFA */
-    --primary-foreground: 252 14% 12%; /* #131129 */
+    --primary-foreground: 230 27% 14%; /* #1A1F2C */
 
     --secondary: 254 69% 74%; /* #9B87F5 */
-    --secondary-foreground: 0 0% 100%; /* #FFFFFF */
+    --secondary-foreground: 210 40% 98%; /* #F8FAFC */
 
-    --muted: 260 18% 18%; /* #232036 */
-    --muted-foreground: 215 13% 75%; /* #B7C1D2 */
+    --muted: 230 22% 20%; /* #252A37 */
+    --muted-foreground: 215 13% 65%; /* #9DA7B8 */
 
     --accent: 259 39% 36%; /* #6E59A5 */
-    --accent-foreground: 0 0% 100%; /* #FFFFFF */
+    --accent-foreground: 210 40% 98%; /* #F8FAFC */
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 260 18% 18%; /* #232036 */
-    --input: 260 18% 18%; /* #232036 */
+    --border: 230 22% 20%; /* #252A37 */
+    --input: 230 22% 20%; /* #252A37 */
     --ring: 254 69% 74%; /* #9B87F5 */
 
     --radius: 0.75rem;
 
-    --sidebar-background: 260 18% 18%; /* #232036 */
-    --sidebar-foreground: 0 0% 100%; /* #FFFFFF */
+    --sidebar-background: 230 22% 20%; /* #252A37 */
+    --sidebar-foreground: 210 40% 98%; /* #F8FAFC */
     --sidebar-primary: 254 69% 74%; /* #9B87F5 */
-    --sidebar-primary-foreground: 252 14% 12%; /* #131129 */
+    --sidebar-primary-foreground: 230 27% 14%; /* #1A1F2C */
     --sidebar-accent: 259 39% 36%; /* #6E59A5 */
-    --sidebar-accent-foreground: 0 0% 100%; /* #FFFFFF */
-    --sidebar-border: 260 18% 18%; /* #232036 */
+    --sidebar-accent-foreground: 210 40% 98%; /* #F8FAFC */
+    --sidebar-border: 230 22% 20%; /* #252A37 */
     --sidebar-ring: 254 69% 74%; /* #9B87F5 */
   }
 }
@@ -126,43 +126,47 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-primary/50 rounded-full;
   }
-
-  /* Added styles for law article paragraphs */
-  .law-article-paragraph {
-    @apply mb-4 text-white;
+  
+  /* Audio Wave Animation */
+  .audio-wave {
+    display: flex;
+    align-items: center;
+    height: 16px;
+    margin-left: 8px;
   }
-
-  /* Numbered articles align left */
-  .law-article-numbered {
-    @apply text-left;
+  
+  .audio-wave span {
+    display: block;
+    width: 2px;
+    margin: 0 1px;
+    background: theme('colors.primary.300');
+    height: 5px;
+    border-radius: 1px;
+    animation: audio-wave 1.2s infinite ease-in-out;
   }
-
-  /* Non-numbered articles center and bold */
-  .law-article-unnumbered {
-    @apply text-center font-bold;
+  
+  .audio-wave span:nth-child(2) {
+    animation-delay: 0.2s;
   }
-
-  /* Example text in lighter gray */
-  .law-example {
-    @apply text-gray-300;
+  
+  .audio-wave span:nth-child(3) {
+    animation-delay: 0.4s;
   }
-
-  /* Magic effects for narration */
-  .narration-active {
-    @apply relative;
+  
+  .audio-wave span:nth-child(4) {
+    animation-delay: 0.6s;
   }
-
-  .narration-active::before {
-    content: '';
-    @apply absolute -inset-1 bg-gradient-to-r from-primary-300/20 via-secondary/20 to-primary-300/20 rounded-lg 
-           animate-shimmer bg-[length:200%_100%] -z-10;
+  
+  .audio-wave span:nth-child(5) {
+    animation-delay: 0.8s;
   }
-
-  .magic-sparkle {
-    @apply absolute w-2 h-2 rounded-full bg-primary-300 animate-magic-sparkle;
-  }
-
-  .narration-highlight {
-    @apply bg-secondary/10 border-l-2 border-secondary px-2 animate-pulse-light;
+  
+  @keyframes audio-wave {
+    0%, 100% {
+      height: 5px;
+    }
+    50% {
+      height: 12px;
+    }
   }
 }
