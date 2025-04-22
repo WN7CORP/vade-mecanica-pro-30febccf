@@ -81,7 +81,7 @@ const ArticleList = ({
           key={index}
           articleNumber={article.numero}
           content={article.conteudo}
-          example={article.exemplo}
+          example={article.exemplo1}
           lawName={lawName ? decodeURIComponent(lawName) : ""}
           onExplainRequest={(type) => onExplainArticle(article, type)}
           onAskQuestion={() => onAskQuestion(article)}
