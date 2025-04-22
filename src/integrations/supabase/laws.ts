@@ -3,9 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
   id: number;
-  numero: string;
-  conteudo: string;
-  exemplo?: string;
+  numero: string; // número do artigo
+  titulo?: string; // texto que aparece antes do artigo, opcional
+  conteudo: string; // conteúdo do artigo
+  explicacao_tecnica?: string; // explicação técnica
+  explicacao_formal?: string; // explicação formal
+  exemplo1?: string; // exemplo 1
+  exemplo2?: string; // exemplo 2
   created_at: string;
 }
 
@@ -70,6 +74,24 @@ async function logUserAction(
   }
 }
 
+/**
+ * Mapeia os dados crus vindos do supabase para a interface Article
+ * Trazendo os campos certos independentemente do nome da coluna no banco
+ */
+function mapRawArticle(dbRow: any): Article {
+  return {
+    id: dbRow.id,
+    numero: dbRow.numero,
+    titulo: dbRow.titulo ?? undefined,
+    conteudo: dbRow.artigo ?? dbRow.conteudo ?? "", // usa 'artigo' se existir, senão 'conteudo'
+    explicacao_tecnica: dbRow["explicacao tecnica"] ?? dbRow.explicacao_tecnica ?? undefined,
+    explicacao_formal: dbRow["explicacao formal"] ?? dbRow.explicacao_formal ?? undefined,
+    exemplo1: dbRow.exemplo1 ?? undefined,
+    exemplo2: dbRow.exemplo2 ?? undefined,
+    created_at: dbRow.created_at
+  };
+}
+
 export const fetchLawArticles = async (
   lawDisplayName: string
 ): Promise<Article[]> => {
@@ -79,16 +101,19 @@ export const fetchLawArticles = async (
     throw new Error(`Lei inválida: "${lawDisplayName}"`);
   }
 
+  // Define as colunas a serem retornadas
+  // Para Constituição Federal, traz todos os campos que possam interessar à tipagem nova
+  let selectCols = "*";
+  if (tableName === "constituicao_federal") {
+    selectCols = "id,numero,titulo,artigo,\"explicacao tecnica\",\"explicacao formal\",exemplo1,exemplo2,created_at";
+  }
+
   console.log(`Buscando artigos da tabela: ${tableName}`);
-  
-  // Log the search action
   await logUserAction('search', lawDisplayName);
-  
-  // Use type assertion to bypass TypeScript's type checking
-  // since we've already validated the table name exists
+
   const { data, error } = await supabase
     .from(tableName as any)
-    .select("*")
+    .select(selectCols)
     .order("numero", { ascending: true });
 
   if (error) {
@@ -100,8 +125,8 @@ export const fetchLawArticles = async (
     return [];
   }
 
-  // Use type assertion to ensure we return the expected type
-  return data as unknown as Article[];
+  // Faz o mapeamento para o tipo Article
+  return (data as any[]).map(mapRawArticle);
 };
 
 export const searchArticle = async (
@@ -114,12 +139,17 @@ export const searchArticle = async (
     return null;
   }
 
-  // Log the search action
   await logUserAction('search', lawDisplayName, articleNumber);
+
+  // Seleciona todas as colunas para não dar conflito de tipagem
+  let selectCols = "*";
+  if (tableName === "constituicao_federal") {
+    selectCols = "id,numero,titulo,artigo,\"explicacao tecnica\",\"explicacao formal\",exemplo1,exemplo2,created_at";
+  }
 
   const { data, error } = await supabase
     .from(tableName as any)
-    .select("*")
+    .select(selectCols)
     .eq("numero", articleNumber)
     .maybeSingle();
 
@@ -127,9 +157,11 @@ export const searchArticle = async (
     console.error("Erro ao buscar artigo:", error);
     return null;
   }
-  
-  // Use type assertion to ensure we return the expected type
-  return data as unknown as Article | null;
+  if (!data) {
+    return null;
+  }
+
+  return mapRawArticle(data);
 };
 
 export const searchByTerm = async (
@@ -142,14 +174,24 @@ export const searchByTerm = async (
     return [];
   }
 
-  // Log the search action
   await logUserAction('search', lawDisplayName);
 
+  let selectCols = "*";
+  if (tableName === "constituicao_federal") {
+    selectCols = "id,numero,titulo,artigo,\"explicacao tecnica\",\"explicacao formal\",exemplo1,exemplo2,created_at";
+  }
+
   const term = searchTerm.toLowerCase();
+  // Busca nos campos relevantes (numero, artigo/titulo/conteudo)
   const { data, error } = await supabase
     .from(tableName as any)
-    .select("*")
-    .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
+    .select(selectCols)
+    .or([
+      `numero.ilike.%${term}%`,
+      `artigo.ilike.%${term}%`,
+      `titulo.ilike.%${term}%`,
+      `conteudo.ilike.%${term}%`
+    ].join(","));
 
   if (error) {
     console.error("Erro na busca por termo:", error);
@@ -160,6 +202,5 @@ export const searchByTerm = async (
     return [];
   }
 
-  // Use type assertion to ensure we return the expected type
-  return data as unknown as Article[];
+  return (data as any[]).map(mapRawArticle);
 };
