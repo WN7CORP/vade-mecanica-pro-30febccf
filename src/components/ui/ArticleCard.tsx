@@ -11,8 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ArticleCardProps {
   articleNumber: string;
-  content?: string; // artigo
-  conteudo?: string; // título/subtítulo
+  content: string;
   example?: string;
   lawName: string;
   onExplainRequest?: (type: 'technical' | 'formal') => void;
@@ -36,8 +35,7 @@ if (typeof window !== 'undefined' && !window.currentAudio) {
 
 const ArticleCard = ({
   articleNumber,
-  content, // artigo
-  conteudo, // título/subtítulo
+  content,
   example,
   lawName,
   onExplainRequest,
@@ -66,6 +64,7 @@ const ArticleCard = ({
         setUserId(session.user.id);
       }
     };
+    
     checkAuth();
   }, []);
 
@@ -82,36 +81,31 @@ const ArticleCard = ({
   }, [lawName, articleNumber]);
 
   const copyArticle = () => {
-    const textToCopy = content
-      ? `Art. ${articleNumber}. ${content}`
-      : conteudo
-        ? conteudo
-        : "";
-    if (textToCopy) {
-      navigator.clipboard.writeText(textToCopy)
-        .then(() => {
-          setShowCopyToast(true);
-          setTimeout(() => setShowCopyToast(false), 2000);
-          if (userId) {
-            logUserActivity('copy', lawName, articleNumber);
-          }
-        })
-        .catch(err => console.error("Erro ao copiar: ", err));
-    }
+    const textToCopy = `Art. ${articleNumber}. ${content}`;
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        setShowCopyToast(true);
+        setTimeout(() => setShowCopyToast(false), 2000);
+        
+        if (userId) {
+          logUserActivity('copy', lawName, articleNumber);
+        }
+      })
+      .catch(err => console.error("Erro ao copiar: ", err));
   };
 
   const handleColorSelect = (colorClass: string) => {
     setSelectedColor(colorClass);
-
+    
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
       const range = selection.getRangeAt(0);
       const span = document.createElement('span');
       span.className = colorClass;
-
+      
       try {
         range.surroundContents(span);
-
+        
         if (userId) {
           logUserActivity('highlight', lawName, articleNumber);
         }
@@ -121,7 +115,7 @@ const ArticleCard = ({
         span.appendChild(fragment);
         range.insertNode(span);
       }
-
+      
       selection.removeAllRanges();
     }
   };
@@ -130,27 +124,27 @@ const ArticleCard = ({
     try {
       const newStatus = !isFavorite;
       setIsFavorite(newStatus);
-
+      
       const favoritedArticles = localStorage.getItem('favoritedArticles');
       const favorites = favoritedArticles ? JSON.parse(favoritedArticles) : {};
       const key = `${lawName}-${articleNumber}`;
-
+      
       if (newStatus) {
-        favorites[key] = {
-          articleNumber,
-          content,
-          example,
+        favorites[key] = { 
+          articleNumber, 
+          content, 
+          example, 
           lawName,
           timestamp: new Date().toISOString()
         };
-
+        
         if (userId) {
           logUserActivity('favorite', lawName, articleNumber);
         }
       } else {
         delete favorites[key];
       }
-
+      
       localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
     } catch (error) {
       console.error("Erro ao gerenciar favoritos:", error);
@@ -160,7 +154,7 @@ const ArticleCard = ({
   const handleExplain = (type: 'technical' | 'formal') => {
     if (onExplainRequest) {
       onExplainRequest(type);
-
+      
       if (userId) {
         logUserActivity('explain', lawName, articleNumber);
       }
@@ -169,7 +163,7 @@ const ArticleCard = ({
 
   const handleComment = () => {
     setShowNotes(true);
-
+    
     if (userId) {
       logUserActivity('note_view', lawName, articleNumber);
     }
@@ -180,18 +174,18 @@ const ArticleCard = ({
       setIsReading(false);
       return;
     }
-
+    
     if (isReading && contentType === 'example' && readingContent.title === 'Exemplo') {
       setIsReading(false);
       return;
     }
-
-    if (contentType === 'article' && content) {
+    
+    if (contentType === 'article') {
       setReadingContent({
         text: content,
         title: 'Artigo'
       });
-
+      
       if (userId) {
         logUserActivity('narrate', lawName, articleNumber);
       }
@@ -201,7 +195,7 @@ const ArticleCard = ({
         title: 'Exemplo'
       });
     }
-
+    
     setIsReading(true);
   };
 
@@ -223,31 +217,138 @@ const ArticleCard = ({
     }
   };
 
-  // Checa se existe artigo
-  const hasArtigo = !!content && content.trim().length > 0;
-
   return (
-    // remove todo card container/fundo extra, manter só fundo natural do app
-    <div className="mb-6">
-      {/* Conteúdo centralizado e negrito, antes do artigo */}
-      {conteudo && (
-        <div
-          className="mb-3 text-center font-bold"
-          style={{ fontSize: 18 }}
-        >
-          {conteudo}
+    <div className="card-article mb-6">
+      <CopyToast show={showCopyToast} />
+
+      {titulo && (
+        <div className="mb-2 text-primary-400 font-semibold text-lg">{titulo}</div>
+      )}
+
+      <ArticleHeader
+        articleNumber={articleNumber}
+        lawName={lawName}
+        onCopy={copyArticle}
+        onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
+        onExplainRequest={undefined}
+        showHighlightTools={showHighlightTools}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
+      />
+
+      {showHighlightTools && (
+        <HighlightTools
+          selectedColor={selectedColor}
+          onColorSelect={handleColorSelect}
+          onClose={() => setShowHighlightTools(false)}
+        />
+      )}
+
+      <ArticleContent
+        content={content}
+        example={undefined}
+        fontSize={fontSize}
+        onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
+        onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
+        articleNumber={articleNumber}
+      />
+
+      {(explicacao_tecnica || explicacao_formal) && (
+        <div className="flex gap-2 mb-4">
+          {explicacao_tecnica && (
+            <button
+              className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition ${showExplicacao === 'tecnica' ? 'bg-primary/40' : ''}`}
+              onClick={() => handleShowExplicacao('tecnica')}
+            >
+              Ver Explicação Técnica
+            </button>
+          )}
+          {explicacao_formal && (
+            <button
+              className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition ${showExplicacao === 'formal' ? 'bg-primary/40' : ''}`}
+              onClick={() => handleShowExplicacao('formal')}
+            >
+              Ver Explicação Formal
+            </button>
+          )}
+        </div>
+      )}
+      {showExplicacao === 'tecnica' && explicacao_tecnica && (
+        <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
+          <h4 className="font-medium text-primary-200 mb-1">Explicação Técnica</h4>
+          <p>{explicacao_tecnica}</p>
+        </div>
+      )}
+      {showExplicacao === 'formal' && explicacao_formal && (
+        <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
+          <h4 className="font-medium text-primary-200 mb-1">Explicação Formal</h4>
+          <p>{explicacao_formal}</p>
         </div>
       )}
 
-      {/* Texto do artigo, alinhado à esquerda, fonte normal */}
-      {hasArtigo && (
-        <div
-          className="whitespace-pre-line text-left mb-4 text-white"
-          style={{ fontWeight: "normal", fontSize: 16 }}
-        >
-          {content}
+      {(exemplo1 || exemplo2) && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {exemplo1 && (
+            <>
+              <button
+                className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition`}
+                onClick={() => setShowExemplo1((v) => !v)}
+              >
+                {showExemplo1 ? "Ocultar Exemplo 1" : "Ver Exemplo 1"}
+              </button>
+              {showExemplo1 && (
+                <div className="w-full mt-2 p-3 bg-primary-50/10 border-l-4 border-primary-200 rounded animate-fade-in">
+                  <h4 className="text-primary-300 mb-2 font-medium">Exemplo 1:</h4>
+                  <p className="text-gray-400 whitespace-pre-wrap">{exemplo1}</p>
+                </div>
+              )}
+            </>
+          )}
+          {exemplo2 && (
+            <>
+              <button
+                className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition`}
+                onClick={() => setShowExemplo2((v) => !v)}
+              >
+                {showExemplo2 ? "Ocultar Exemplo 2" : "Ver Exemplo 2"}
+              </button>
+              {showExemplo2 && (
+                <div className="w-full mt-2 p-3 bg-primary-50/10 border-l-4 border-primary-200 rounded animate-fade-in">
+                  <h4 className="text-primary-300 mb-2 font-medium">Exemplo 2:</h4>
+                  <p className="text-gray-400 whitespace-pre-wrap">{exemplo2}</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
+
+      <ArticleInteractions 
+        articleNumber={articleNumber}
+        content={content}
+        example={undefined}
+        onExplain={() => {}}
+        onAddComment={handleComment}
+        onStartNarration={handleNarration}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
+      />
+
+      <VoiceNarration
+        text={readingContent.text}
+        title={readingContent.title}
+        isActive={isReading}
+        onComplete={() => setIsReading(false)}
+        onStop={() => setIsReading(false)}
+      />
+
+      <ArticleNotes
+        isOpen={showNotes}
+        onClose={() => setShowNotes(false)}
+        articleNumber={articleNumber}
+        articleContent={content}
+        lawName={lawName}
+      />
     </div>
   );
 };
