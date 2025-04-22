@@ -1,4 +1,3 @@
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = "AIzaSyDvJ23IolKwjdxAnTv7l8DwLuwGRZ_tIR8";
@@ -13,6 +12,31 @@ export interface AIExplanation {
   examples: string[];
 }
 
+const generateGeminiExplanation = async (prompt: string) => {
+  try {
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDvJ23IolKwjdxAnTv7l8DwLuwGRZ_tIR8",
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: prompt }]
+          }]
+        })
+      }
+    );
+
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+  } catch (error) {
+    console.error("Erro ao gerar explicação com Gemini:", error);
+    return "Não foi possível gerar a explicação no momento.";
+  }
+}
+
 export const generateArticleExplanation = async (
   articleNumber: string,
   articleContent: string,
@@ -22,48 +46,24 @@ export const generateArticleExplanation = async (
   try {
     const prompt = `
       ${type === 'technical' 
-        ? 'Explique o seguinte artigo jurídico de forma técnica e detalhada, mantendo a linguagem formal e os termos técnicos apropriados:'
-        : 'Explique o seguinte artigo jurídico de forma clara e acessível, usando linguagem simples e exemplos práticos:'}
+        ? 'Explique o seguinte artigo jurídico de forma técnica e detalhada, mantendo a linguagem formal e os termos técnicos apropriados. Estruture sua resposta em três partes: 1) Um resumo conciso, 2) Uma explicação detalhada, 3) Três exemplos práticos:'
+        : 'Explique o seguinte artigo jurídico de forma clara e acessível, usando linguagem simples e exemplos práticos. Estruture sua resposta em três partes: 1) Um resumo conciso em linguagem simples, 2) Uma explicação detalhada usando termos cotidianos, 3) Três exemplos práticos do dia a dia:'}
       
       Lei: ${lawName}
       Artigo ${articleNumber}: ${articleContent}
-      
-      Forneça:
-      1. Um resumo conciso do artigo
-      2. Uma explicação detalhada do significado e aplicação
-      3. Três exemplos práticos da aplicação deste artigo
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    const response = await generateGeminiExplanation(prompt);
     
-    // Processamento simples da resposta (pode ser melhorado com regex mais precisas)
+    // Split the response into sections
     const sections = response.split(/\n\n|\n(?=\d\.)/);
     
-    const summary = sections.find(s => 
-      s.toLowerCase().includes("resumo") || 
-      sections.indexOf(s) === 0
-    ) || "Resumo não disponível";
-    
-    const detailed = sections.find(s => 
-      s.toLowerCase().includes("explicação") || 
-      s.toLowerCase().includes("significado") || 
-      sections.indexOf(s) === 1
-    ) || "Explicação detalhada não disponível";
-    
-    const examplesSection = sections.find(s => 
-      s.toLowerCase().includes("exemplo") || 
-      sections.indexOf(s) === 2
-    );
-    
-    const examples = examplesSection 
-      ? examplesSection.split(/\n(?=\d\.)/).filter(e => e.trim())
-      : ["Exemplos não disponíveis"];
-
     return {
-      summary: summary.replace(/^.*?resumo:?\s*/i, "").trim(),
-      detailed: detailed.replace(/^.*?explicação:?\s*/i, "").trim(),
-      examples: examples.map(e => e.replace(/^\d\.\s*/, "").trim())
+      summary: sections[0]?.replace(/^.*?resumo:?\s*/i, "").trim() || "Resumo não disponível",
+      detailed: sections[1]?.replace(/^.*?explicação:?\s*/i, "").trim() || "Explicação detalhada não disponível",
+      examples: sections.slice(2)
+        .filter(s => s?.trim())
+        .map(e => e.replace(/^\d\.\s*/, "").trim()) || ["Exemplos não disponíveis"]
     };
   } catch (error) {
     console.error("Erro ao gerar explicação:", error);
