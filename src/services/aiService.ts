@@ -17,9 +17,9 @@ const generateGeminiExplanation = async (prompt: string) => {
   try {
     console.log("Enviando requisição para API do Gemini...");
     
-    // Use the SDK method instead of fetch
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    // Use the SDK method correctly with array format
+    const result = await model.generateContent([prompt]);
+    const response = result.response;
     const text = response.text();
     
     console.log("Resposta recebida do Gemini:", text.substring(0, 150) + "...");
@@ -153,7 +153,8 @@ export const askAIQuestion = async (
       Responda de forma clara, precisa e com base na legislação citada.
     `;
 
-    const result = await model.generateContent(prompt);
+    // Use the SDK method correctly with array format
+    const result = await model.generateContent([prompt]);
     return result.response.text();
   } catch (error) {
     console.error("Erro ao processar pergunta:", error);
@@ -177,7 +178,8 @@ export const generateArticleNotes = async (
       Resumo: [resumo conciso]
     `;
 
-    const result = await model.generateContent(prompt);
+    // Use the SDK method correctly with array format
+    const result = await model.generateContent([prompt]);
     const response = result.response.text();
     
     const titleMatch = response.match(/Título:\s*(.*?)(?:\n|$)/);
