@@ -6,11 +6,9 @@ import {
   Pause, 
   Play, 
   Volume1, 
-  Loader2,
-  StopCircle
+  Loader2 
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { Button } from "./button";
 
 interface VoiceNarrationProps {
   text: string;
@@ -219,6 +217,14 @@ const VoiceNarration = ({
                   <Pause size={16} />
                 </button>
               )}
+              
+              <button 
+                onClick={stopNarration}
+                className="p-1.5 neomorph-sm text-gray-400 hover:text-gray-300"
+                aria-label="Parar narração"
+              >
+                <VolumeX size={16} />
+              </button>
             </div>
           </div>
           
@@ -240,7 +246,7 @@ const VoiceNarration = ({
           </div>
           
           {/* Texto sendo lido */}
-          <div className="max-h-32 overflow-y-auto scrollbar-thin neomorph-inset p-3 text-sm mb-4">
+          <div className="max-h-32 overflow-y-auto scrollbar-thin neomorph-inset p-3 text-sm">
             {highlightedText.map((paragraph, index) => (
               <p 
                 key={index} 
@@ -250,16 +256,6 @@ const VoiceNarration = ({
               </p>
             ))}
           </div>
-
-          {/* Botão de parar (mais visível) */}
-          <Button 
-            onClick={stopNarration}
-            variant="destructive"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            <StopCircle size={18} />
-            Parar Narração
-          </Button>
         </div>
       </div>
     </div>

@@ -22,19 +22,16 @@ const ArticleContent = ({
 }: ArticleContentProps) => {
   const renderContent = () => {
     return content.split('\n').map((line, i) => {
-      // Se articleNumber for indefinido ou vazio, centralize apenas o primeiro parágrafo
-      // Caso contrário, centralize apenas linhas que começam com § ou Art.
-      const shouldCenter = (!articleNumber && i === 0) || 
-                           line.trim().startsWith('§') || 
-                           line.trim().startsWith('Art.');
+      // Check if the line contains any content for centereing
+      const shouldCenter = !articleNumber && i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.');
       
       return (
         <p 
           key={i} 
           className={`mb-2 whitespace-pre-wrap transition-all duration-200 ${
-            shouldCenter ? "text-center" : "text-left"
+            shouldCenter ? "text-center" : ""
           } ${!articleNumber && i === 0 ? "text-sm text-gray-400" : ""}`}
-          style={{ fontSize: `${fontSize}px` }}
+          style={{ fontSize: `${fontSize + 2}px` }}
         >
           {line}
         </p>
@@ -49,7 +46,7 @@ const ArticleContent = ({
       {example && (
         <div className="mt-6 p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded">
           <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
-          <p className="text-gray-600 whitespace-pre-wrap text-left" style={{ fontSize: `${fontSize}px` }}>
+          <p className="text-gray-600 whitespace-pre-wrap" style={{ fontSize: `${fontSize}px` }}>
             {example}
           </p>
         </div>

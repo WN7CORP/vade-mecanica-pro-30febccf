@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap');
 
 @tailwind base;
@@ -9,7 +8,7 @@
   :root {
     /* Forçar modo escuro */
     --background: 230 27% 14%; /* #1A1F2C */
-    --foreground: 225 3% 80%; /* Quase branco para textos */
+    --foreground: 225 3% 58%; /* #8E9196 */
 
     --card: 230 27% 14%; /* #1A1F2C */
     --card-foreground: 210 40% 98%; /* #F8FAFC */
@@ -17,10 +16,10 @@
     --popover: 230 27% 16%; /* #1F2532 */
     --popover-foreground: 210 40% 98%; /* #F8FAFC */
 
-    --primary: 259 86% 75%; /* #9b87f5 */
+    --primary: 259 86% 86%; /* #D6BCFA */
     --primary-foreground: 230 27% 14%; /* #1A1F2C */
 
-    --secondary: 254 35% 54%; /* #7E69AB */
+    --secondary: 254 69% 74%; /* #9B87F5 */
     --secondary-foreground: 210 40% 98%; /* #F8FAFC */
 
     --muted: 230 22% 20%; /* #252A37 */

@@ -14,7 +14,7 @@ export interface LawOption {
   table: string;
 }
 
-// Define the allowed table names as a type
+// Defining the allowed table names as a type to match Supabase's type system
 export type LawTableName = 
   | "constituicao_federal"
   | "codigo_civil"
@@ -24,7 +24,7 @@ export type LawTableName =
   | "codigo_defesa_consumidor"
   | "codigo_tributario";
 
-// Update to include only the laws that exist in the database
+// Atualizando para incluir apenas as leis que existem no banco de dados
 export const LAW_OPTIONS: LawOption[] = [
   { display: "Constituição Federal",         table: "constituicao_federal"      },
   { display: "Código Civil",                 table: "codigo_civil"              },
@@ -44,7 +44,7 @@ function getTableName(displayName: string): LawTableName | null {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
   );
-  return found ? found.table as LawTableName : null;
+  return found?.table as LawTableName ?? null;
 }
 
 export const fetchLawArticles = async (
@@ -58,9 +58,8 @@ export const fetchLawArticles = async (
 
   console.log(`Buscando artigos da tabela: ${tableName}`);
   
-  // Use a type assertion to fix TypeScript errors with dynamic table names
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select("*")
     .order("numero", { ascending: true });
 
@@ -86,9 +85,8 @@ export const searchArticle = async (
     return null;
   }
 
-  // Use a type assertion to fix TypeScript errors with dynamic table names
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select("*")
     .eq("numero", articleNumber)
     .maybeSingle();
@@ -112,10 +110,8 @@ export const searchByTerm = async (
   }
 
   const term = searchTerm.toLowerCase();
-  
-  // Use a type assertion to fix TypeScript errors with dynamic table names
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select("*")
     .or(`numero.ilike.%${term}%,conteudo.ilike.%${term}%`);
 
@@ -130,3 +126,4 @@ export const searchByTerm = async (
 
   return data as Article[];
 };
+

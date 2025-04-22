@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -30,8 +29,8 @@ export default {
 					foreground: 'hsl(var(--primary-foreground))',
 					100: '#D6BCFA',
 					200: '#B794F4',
-					300: '#9B87F5', // Roxo principal
-					400: '#7E69AB', // Roxo secundário
+					300: '#9B87F5',
+					400: '#7E69AB',
 					500: '#6E59A5'
 				},
 				secondary: {
@@ -71,7 +70,7 @@ export default {
 				lawapp: {
 					dark: '#1A1F2C',
 					neutral: '#8E9196',
-					highlight: '#9B87F5'
+					highlight: '#D6BCFA'
 				}
 			},
 			borderRadius: {

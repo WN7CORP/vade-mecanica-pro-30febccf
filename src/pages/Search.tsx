@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -7,6 +6,7 @@ import SearchBar from "@/components/ui/SearchBar";
 import ArticleCard from "@/components/ui/ArticleCard";
 import AIExplanation from "@/components/ui/AIExplanation";
 import AIChat from "@/components/ui/AIChat";
+import PDFExporter from "@/components/ui/PDFExporter";
 import { Loader2, FileText, BookOpen } from "lucide-react";
 import { 
   searchArticle, 
@@ -229,6 +229,18 @@ const Search = () => {
                   lawName={selectedArticle.lawName}
                   onClose={closeChat}
                 />
+              )}
+              
+              {/* Botão de exportar PDF */}
+              {showExplanation && !loadingExplanation && selectedArticle && explanation && (
+                <div className="mt-4 flex justify-end">
+                  <PDFExporter
+                    articleNumber={selectedArticle.article}
+                    articleContent={selectedArticle.content}
+                    lawName={selectedArticle.lawName}
+                    explanation={explanation}
+                  />
+                </div>
               )}
             </div>
           )}
