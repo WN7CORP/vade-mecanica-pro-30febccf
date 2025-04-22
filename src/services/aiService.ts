@@ -1,3 +1,4 @@
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = "AIzaSyDvJ23IolKwjdxAnTv7l8DwLuwGRZ_tIR8";
@@ -15,7 +16,7 @@ export interface AIExplanation {
 const generateGeminiExplanation = async (prompt: string) => {
   try {
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDvJ23IolKwjdxAnTv7l8DwLuwGRZ_tIR8",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0",
       {
         method: 'POST',
         headers: {
@@ -30,6 +31,12 @@ const generateGeminiExplanation = async (prompt: string) => {
     );
 
     const data = await response.json();
+    
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
+      console.error("Resposta da API do Gemini em formato inesperado:", data);
+      return "Não foi possível processar a resposta da IA no momento.";
+    }
+    
     return data.candidates[0].content.parts[0].text;
   } catch (error) {
     console.error("Erro ao gerar explicação com Gemini:", error);
@@ -44,6 +51,8 @@ export const generateArticleExplanation = async (
   type: 'technical' | 'formal' = 'technical'
 ): Promise<AIExplanation> => {
   try {
+    console.log(`Gerando explicação ${type} para artigo ${articleNumber} da lei ${lawName}`);
+    
     const prompt = `
       ${type === 'technical' 
         ? 'Explique o seguinte artigo jurídico de forma técnica e detalhada, mantendo a linguagem formal e os termos técnicos apropriados. Estruture sua resposta em três partes: 1) Um resumo conciso, 2) Uma explicação detalhada, 3) Três exemplos práticos:'
@@ -54,17 +63,22 @@ export const generateArticleExplanation = async (
     `;
 
     const response = await generateGeminiExplanation(prompt);
+    console.log("Resposta recebida da API Gemini");
     
     // Split the response into sections
     const sections = response.split(/\n\n|\n(?=\d\.)/);
+    console.log(`Processando ${sections.length} seções da resposta`);
     
-    return {
+    const result = {
       summary: sections[0]?.replace(/^.*?resumo:?\s*/i, "").trim() || "Resumo não disponível",
       detailed: sections[1]?.replace(/^.*?explicação:?\s*/i, "").trim() || "Explicação detalhada não disponível",
       examples: sections.slice(2)
         .filter(s => s?.trim())
         .map(e => e.replace(/^\d\.\s*/, "").trim()) || ["Exemplos não disponíveis"]
     };
+    
+    console.log("Explicação processada com sucesso");
+    return result;
   } catch (error) {
     console.error("Erro ao gerar explicação:", error);
     return {
