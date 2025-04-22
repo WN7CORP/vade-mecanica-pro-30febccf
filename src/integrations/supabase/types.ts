@@ -1611,6 +1611,14 @@ export type Database = {
         }
         Relationships: []
       }
+      user_weekly_activity: {
+        Row: {
+          action_count: number | null
+          activity_day: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_unique_themes: {

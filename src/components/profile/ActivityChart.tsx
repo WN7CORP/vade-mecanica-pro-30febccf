@@ -1,25 +1,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, TooltipProps } from "recharts";
 import { ChartLine } from "lucide-react";
+import { useUserActivity } from "@/hooks/useUserActivity";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
-interface ActivityData {
-  name: string;
-  points: number;
-}
-
-const mockData: ActivityData[] = [
-  { name: "Dom", points: 240 },
-  { name: "Seg", points: 300 },
-  { name: "Ter", points: 200 },
-  { name: "Qua", points: 278 },
-  { name: "Qui", points: 189 },
-  { name: "Sex", points: 239 },
-  { name: "Sab", points: 349 },
-];
-
-// Create a custom tooltip component function that matches what Recharts expects
 const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
     return (
@@ -37,6 +24,16 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
 };
 
 export function ActivityChart() {
+  const [userId, setUserId] = useState<string>();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id);
+    });
+  }, []);
+
+  const { data: activityData = [] } = useUserActivity(userId);
+
   return (
     <Card>
       <CardHeader>
@@ -58,7 +55,7 @@ export function ActivityChart() {
             }}
           >
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockData}>
+              <BarChart data={activityData}>
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip content={CustomTooltip} />

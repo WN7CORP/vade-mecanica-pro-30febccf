@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { FileText, Star, Search, BookOpen } from "lucide-react";
 import { RankingList } from "@/components/profile/RankingList";
 import { ActivityChart } from "@/components/profile/ActivityChart";
 import { useRankings } from "@/hooks/useRankings";
+import { useQuery } from "@tanstack/react-query";
 
 interface UserStats {
   totalSearches: number;
@@ -18,14 +20,43 @@ interface UserStats {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<UserStats>({
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const { data: rankings } = useRankings();
+  const [userId, setUserId] = useState<string>();
+
+  const { data: stats = {
     totalSearches: 0,
     totalFavorites: 0,
     totalNotes: 0,
     totalReads: 0
+  } } = useQuery({
+    queryKey: ['user-stats', userId],
+    queryFn: async (): Promise<UserStats> => {
+      if (!userId) throw new Error('No user ID');
+
+      const counts = {
+        totalSearches: 0,
+        totalFavorites: 0,
+        totalNotes: 0,
+        totalReads: 0
+      };
+
+      const { data: statsData } = await supabase
+        .from('user_statistics')
+        .select('action_type')
+        .eq('user_id', userId);
+
+      if (statsData) {
+        counts.totalSearches = statsData.filter(s => s.action_type === 'search').length;
+        counts.totalFavorites = statsData.filter(s => s.action_type === 'favorite').length;
+        counts.totalNotes = statsData.filter(s => s.action_type === 'note').length;
+        counts.totalReads = statsData.filter(s => s.action_type === 'read').length;
+      }
+
+      return counts;
+    },
+    enabled: !!userId
   });
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const { data: rankings } = useRankings();
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -36,7 +67,8 @@ const Profile = () => {
         return;
       }
 
-      // Carregar perfil do usuário
+      setUserId(session.user.id);
+
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('*')
@@ -44,26 +76,6 @@ const Profile = () => {
         .single();
 
       setUserProfile(profile);
-
-      // Carregar estatísticas
-      const { data: statsData } = await supabase
-        .from('user_statistics')
-        .select('action_type')
-        .eq('user_id', session.user.id);
-
-      if (statsData) {
-        const searchCount = statsData.filter(s => s.action_type === 'search').length;
-        const favoriteCount = statsData.filter(s => s.action_type === 'favorite').length;
-        const noteCount = statsData.filter(s => s.action_type === 'note').length;
-        const readCount = statsData.filter(s => s.action_type === 'read').length;
-
-        setStats({
-          totalSearches: searchCount,
-          totalFavorites: favoriteCount,
-          totalNotes: noteCount,
-          totalReads: readCount
-        });
-      }
     };
 
     loadUserData();
