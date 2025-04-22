@@ -1,9 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// API key for Gemini
-const API_KEY = "AIzaSyCkcVGFIytBLnzQh1PhIB6q20ZOXMfLX2I";
+// API key para Gemini (atualizada)
+const API_KEY = "AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0";
 
-// Initialize the Gemini API
+// Inicializar a API do Gemini
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
@@ -17,10 +17,12 @@ const generateGeminiExplanation = async (prompt: string) => {
   try {
     console.log("Enviando requisição para API do Gemini...");
     
-    // Use the SDK method correctly with array format
-    const result = await model.generateContent([prompt]);
-    const response = result.response;
-    const text = response.text();
+    // Formato correto conforme documentação da API
+    const result = await model.generateContent({
+      contents: [{ parts: [{ text: prompt }] }]
+    });
+    
+    const text = result.response.text();
     
     console.log("Resposta recebida do Gemini:", text.substring(0, 150) + "...");
     return text;
@@ -153,8 +155,11 @@ export const askAIQuestion = async (
       Responda de forma clara, precisa e com base na legislação citada.
     `;
 
-    // Use the SDK method correctly with array format
-    const result = await model.generateContent([prompt]);
+    // Usando o formato correto para a API
+    const result = await model.generateContent({
+      contents: [{ parts: [{ text: prompt }] }]
+    });
+    
     return result.response.text();
   } catch (error) {
     console.error("Erro ao processar pergunta:", error);
@@ -178,8 +183,11 @@ export const generateArticleNotes = async (
       Resumo: [resumo conciso]
     `;
 
-    // Use the SDK method correctly with array format
-    const result = await model.generateContent([prompt]);
+    // Usando o formato correto para a API
+    const result = await model.generateContent({
+      contents: [{ parts: [{ text: prompt }] }]
+    });
+    
     const response = result.response.text();
     
     const titleMatch = response.match(/Título:\s*(.*?)(?:\n|$)/);
