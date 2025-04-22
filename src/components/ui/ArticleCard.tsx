@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -10,11 +9,10 @@ import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
 
-// PROPS ATUALIZADAS PARA RECEBER "conteudo" (texto antes do artigo) E "artigo" (texto do artigo)
 interface ArticleCardProps {
   articleNumber: string;
-  content?: string; // coluna artigo
-  conteudo?: string; // coluna conteudo
+  content?: string; // artigo
+  conteudo?: string; // título/subtítulo
   example?: string;
   lawName: string;
   onExplainRequest?: (type: 'technical' | 'formal') => void;
@@ -38,8 +36,8 @@ if (typeof window !== 'undefined' && !window.currentAudio) {
 
 const ArticleCard = ({
   articleNumber,
-  content, // coluna artigo (padrão anterior)
-  conteudo, // novo campo para textos antes do artigo
+  content, // artigo
+  conteudo, // título/subtítulo
   example,
   lawName,
   onExplainRequest,
@@ -225,164 +223,30 @@ const ArticleCard = ({
     }
   };
 
-  // VERIFICAR SE EXISTE "artigo" (content). Card só com "conteudo" = content === undefined ou vazio.
+  // Checa se existe artigo
   const hasArtigo = !!content && content.trim().length > 0;
 
   return (
-    <div className={`card-article mb-6 ${!hasArtigo ? "bg-background border-none shadow-none" : ""}`}>
-      <CopyToast show={showCopyToast} />
-
-      {titulo && (
-        <div className="mb-2 text-primary-400 font-semibold text-lg">{titulo}</div>
-      )}
-
-      {/* Texto da coluna "conteudo", centralizado e negrito, antes do artigo */}
+    // remove todo card container/fundo extra, manter só fundo natural do app
+    <div className="mb-6">
+      {/* Conteúdo centralizado e negrito, antes do artigo */}
       {conteudo && (
-        <div className="mb-3 text-center font-bold text-white" style={{ fontSize: fontSize + 2 }}>
+        <div
+          className="mb-3 text-center font-bold"
+          style={{ fontSize: 18 }}
+        >
           {conteudo}
         </div>
       )}
 
-      {/* Apenas exiba o header, ferramentas e artigo se houver "artigo" */}
+      {/* Texto do artigo, alinhado à esquerda, fonte normal */}
       {hasArtigo && (
-        <>
-          <ArticleHeader
-            articleNumber={articleNumber}
-            lawName={lawName}
-            onCopy={copyArticle}
-            onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
-            onExplainRequest={undefined}
-            showHighlightTools={showHighlightTools}
-            isFavorite={isFavorite}
-            onToggleFavorite={toggleFavorite}
-          />
-
-          {showHighlightTools && (
-            <HighlightTools
-              selectedColor={selectedColor}
-              onColorSelect={handleColorSelect}
-              onClose={() => setShowHighlightTools(false)}
-            />
-          )}
-
-          {/* Texto da coluna "artigo" (content), alinhado à esquerda */}
-          <ArticleContent
-            content={content ?? ""}
-            example={undefined}
-            fontSize={fontSize}
-            onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
-            onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
-            articleNumber={articleNumber}
-          />
-        </>
-      )}
-
-      {/* Botões e interações só aparecem se houver artigo */}
-      {hasArtigo && (explicacao_tecnica || explicacao_formal) && (
-        <div className="flex gap-2 mb-4">
-          {explicacao_tecnica && (
-            <button
-              className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition ${showExplicacao === 'tecnica' ? 'bg-primary/40' : ''}`}
-              onClick={() => handleShowExplicacao('tecnica')}
-            >
-              Ver Explicação Técnica
-            </button>
-          )}
-          {explicacao_formal && (
-            <button
-              className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition ${showExplicacao === 'formal' ? 'bg-primary/40' : ''}`}
-              onClick={() => handleShowExplicacao('formal')}
-            >
-              Ver Explicação Formal
-            </button>
-          )}
+        <div
+          className="whitespace-pre-line text-left mb-4 text-white"
+          style={{ fontWeight: "normal", fontSize: 16 }}
+        >
+          {content}
         </div>
-      )}
-      {hasArtigo && showExplicacao === 'tecnica' && explicacao_tecnica && (
-        <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
-          <h4 className="font-medium text-primary-200 mb-1">Explicação Técnica</h4>
-          <p>{explicacao_tecnica}</p>
-        </div>
-      )}
-      {hasArtigo && showExplicacao === 'formal' && explicacao_formal && (
-        <div className="p-3 mb-2 rounded bg-primary-900/20 border border-primary-600 text-primary-100 animate-fade-in">
-          <h4 className="font-medium text-primary-200 mb-1">Explicação Formal</h4>
-          <p>{explicacao_formal}</p>
-        </div>
-      )}
-
-      {/* Exemplos, ainda aparecem independente de ter artigo */}
-      {(exemplo1 || exemplo2) && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {exemplo1 && (
-            <>
-              <button
-                className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition`}
-                onClick={() => setShowExemplo1((v) => !v)}
-              >
-                {showExemplo1 ? "Ocultar Exemplo 1" : "Ver Exemplo 1"}
-              </button>
-              {showExemplo1 && (
-                <div className="w-full mt-2 p-3 bg-primary-50/10 border-l-4 border-primary-200 rounded animate-fade-in">
-                  <h4 className="text-primary-300 mb-2 font-medium">Exemplo 1:</h4>
-                  <p className="text-gray-400 whitespace-pre-wrap">{exemplo1}</p>
-                </div>
-              )}
-            </>
-          )}
-          {exemplo2 && (
-            <>
-              <button
-                className={`px-3 py-1 rounded bg-primary/10 text-primary font-medium hover:bg-primary/30 transition`}
-                onClick={() => setShowExemplo2((v) => !v)}
-              >
-                {showExemplo2 ? "Ocultar Exemplo 2" : "Ver Exemplo 2"}
-              </button>
-              {showExemplo2 && (
-                <div className="w-full mt-2 p-3 bg-primary-50/10 border-l-4 border-primary-200 rounded animate-fade-in">
-                  <h4 className="text-primary-300 mb-2 font-medium">Exemplo 2:</h4>
-                  <p className="text-gray-400 whitespace-pre-wrap">{exemplo2}</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Botões só aparecem se houver artigo */}
-      {hasArtigo && (
-        <ArticleInteractions
-          articleNumber={articleNumber}
-          content={content ?? ""}
-          example={undefined}
-          onExplain={() => {}}
-          onAddComment={handleComment}
-          onStartNarration={handleNarration}
-          isFavorite={isFavorite}
-          onToggleFavorite={toggleFavorite}
-        />
-      )}
-
-      {/* Narração só do artigo se existir, senão, narração só aparece para exemplos */}
-      {hasArtigo && (
-        <VoiceNarration
-          text={readingContent.text}
-          title={readingContent.title}
-          isActive={isReading}
-          onComplete={() => setIsReading(false)}
-          onStop={() => setIsReading(false)}
-        />
-      )}
-
-      {/* Notas só aparecem se houver artigo */}
-      {hasArtigo && (
-        <ArticleNotes
-          isOpen={showNotes}
-          onClose={() => setShowNotes(false)}
-          articleNumber={articleNumber}
-          articleContent={content ?? ""}
-          lawName={lawName}
-        />
       )}
     </div>
   );
