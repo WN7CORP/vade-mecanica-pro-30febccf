@@ -10,7 +10,7 @@ interface ArticleInteractionsProps {
   example?: string;
   onExplain: (type: 'technical' | 'formal') => void;
   onAddComment: () => void;
-  onStartNarration: (content: 'article' | 'example') => void;
+  onStartNarration: (content: 'article' | 'example' | 'explanation') => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
@@ -42,7 +42,7 @@ const ArticleInteractions = ({
           variant="outline"
           size="sm"
           onClick={() => setShowExplainOptions(!showExplainOptions)}
-          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
+          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
         >
           <BookOpen size={16} />
           Explicar
@@ -53,7 +53,7 @@ const ArticleInteractions = ({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full mb-1 justify-start text-primary hover:text-primary-foreground"
+              className="w-full mb-1 justify-start text-primary hover:text-primary-foreground hover:bg-primary/30"
               onClick={() => {
                 onExplain('technical');
                 setShowExplainOptions(false);
@@ -65,7 +65,7 @@ const ArticleInteractions = ({
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start text-primary hover:text-primary-foreground"
+              className="w-full justify-start text-primary hover:text-primary-foreground hover:bg-primary/30"
               onClick={() => {
                 onExplain('formal');
                 setShowExplainOptions(false);
@@ -82,7 +82,7 @@ const ArticleInteractions = ({
         variant="outline"
         size="sm"
         onClick={onAddComment}
-        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
+        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
       >
         <ScrollText size={16} />
         Anotações
@@ -92,7 +92,7 @@ const ArticleInteractions = ({
         variant="outline"
         size="sm"
         onClick={copyArticle}
-        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
+        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
       >
         <Copy size={16} />
         Copiar
@@ -102,7 +102,7 @@ const ArticleInteractions = ({
         variant="outline"
         size="sm"
         onClick={() => onStartNarration('article')}
-        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
+        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
       >
         <Volume2 size={16} />
         Narrar Artigo
@@ -113,7 +113,7 @@ const ArticleInteractions = ({
           variant="outline"
           size="sm"
           onClick={() => onStartNarration('example')}
-          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300"
+          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
         >
           <Volume2 size={16} />
           Narrar Exemplo
@@ -129,7 +129,7 @@ const ArticleInteractions = ({
             isFavorite 
               ? "bg-primary text-primary-foreground" 
               : "bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary"
-          } font-medium transition-all duration-300`}
+          } font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95`}
         >
           <Bookmark size={16} className={isFavorite ? "fill-current" : ""} />
           {isFavorite ? "Favoritado" : "Favoritar"}

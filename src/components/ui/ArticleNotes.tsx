@@ -3,13 +3,14 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "./button";
 import { Textarea } from "./textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
-import { BookmarkPlus, Highlighter, MessageSquareText, X } from "lucide-react";
+import { BookmarkPlus, Edit, Trash2, MessageSquareText, X } from "lucide-react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "./drawer";
 import { askAIQuestion } from "@/services/aiService";
 import { Badge } from "./badge";
 import { toast } from "@/hooks/use-toast";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription, AlertTitle } from "./alert";
 
 interface ArticleNotesProps {
   isOpen: boolean;
@@ -36,6 +37,8 @@ const ArticleNotes = ({
   const aiHelpRef = useRef<HTMLDivElement>(null);
   const [userId, setUserId] = useState<string | undefined>();
   const { logUserActivity } = useUserActivity(userId);
+  const [isEditing, setIsEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   
   const storageKey = `article-notes-${articleNumber}-${lawName}`;
 
@@ -87,8 +90,12 @@ const ArticleNotes = ({
       }
       
       toast({
-        description: "Suas anotações foram salvas",
+        description: isEditing ? "Suas anotações foram atualizadas" : "Suas anotações foram salvas",
       });
+      
+      if (isEditing) {
+        setIsEditing(false);
+      }
     } catch (error) {
       console.error("Erro ao salvar anotações:", error);
       toast({
@@ -140,22 +147,69 @@ const ArticleNotes = ({
     setNotes(aiResponse);
     setShowAiHelp(false);
   };
+  
+  const handleDeleteNotes = () => {
+    if (confirmDelete) {
+      try {
+        localStorage.removeItem(storageKey);
+        setNotes("");
+        setTopics([]);
+        setConfirmDelete(false);
+        toast({
+          description: "Suas anotações foram excluídas"
+        });
+      } catch (error) {
+        console.error("Erro ao excluir anotações:", error);
+        toast({
+          description: "Erro ao excluir anotações. Tente novamente.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      setConfirmDelete(true);
+    }
+  };
 
   return (
-    <Drawer open={isOpen} onOpenChange={onClose}>
+    <Drawer open={isOpen} onOpenChange={onClose} className="animate-slide-in-right">
       <DrawerContent className="max-h-[85vh] overflow-y-auto">
         <DrawerHeader>
           <DrawerTitle className="flex items-center justify-between">
             <span className="text-primary-300">Anotações - Art. {articleNumber}</span>
-            <DrawerClose className="flex h-9 w-9 items-center justify-center text-muted-foreground">
+            <DrawerClose className="flex h-9 w-9 items-center justify-center text-muted-foreground hover:scale-105 transition-all">
               <X size={18} />
             </DrawerClose>
           </DrawerTitle>
         </DrawerHeader>
         
         <div className="px-4 pb-16">
+          {confirmDelete && (
+            <Alert className="mb-4 border-red-500/50 bg-red-500/10 animate-fade-in">
+              <AlertTitle className="text-red-500">Confirmar exclusão</AlertTitle>
+              <AlertDescription className="text-gray-300">
+                Tem certeza que deseja excluir esta anotação? Esta ação não pode ser desfeita.
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteNotes}
+                  >
+                    Sim, excluir
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmDelete(false)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {showAiHelp && (
-            <Card className="mb-4 border-primary/20" ref={aiHelpRef}>
+            <Card className="mb-4 border-primary/20 animate-fade-in" ref={aiHelpRef}>
               <CardHeader>
                 <CardTitle className="text-sm text-primary-300">Assistente Jurídico IA</CardTitle>
               </CardHeader>
@@ -184,7 +238,7 @@ const ArticleNotes = ({
                   <Button 
                     size="sm" 
                     onClick={useAISuggestion}
-                    className="bg-primary/80 hover:bg-primary"
+                    className="bg-primary/80 hover:bg-primary transition-all"
                   >
                     Usar esta sugestão
                   </Button>
@@ -193,7 +247,7 @@ const ArticleNotes = ({
                     size="sm" 
                     onClick={handleAskAI} 
                     disabled={loading}
-                    className="bg-primary/80 hover:bg-primary"
+                    className="bg-primary/80 hover:bg-primary transition-all"
                   >
                     {loading ? "Consultando IA..." : "Obter sugestão"}
                   </Button>
@@ -204,11 +258,14 @@ const ArticleNotes = ({
 
           <div className="flex flex-wrap gap-2 mb-3">
             {topics.map((topic, index) => (
-              <Badge key={index} className="bg-primary/20 text-primary-foreground hover:bg-primary/30">
+              <Badge 
+                key={index} 
+                className="bg-primary/20 text-primary-foreground hover:bg-primary/30 transition-colors animate-fade-in"
+              >
                 {topic}
                 <button 
                   onClick={() => removeTopic(index)} 
-                  className="ml-2 text-primary-foreground/70 hover:text-primary-foreground"
+                  className="ml-2 text-primary-foreground/70 hover:text-primary-foreground transition-colors"
                 >
                   <X size={12} />
                 </button>
@@ -222,43 +279,64 @@ const ArticleNotes = ({
                 onChange={(e) => setNewTopic(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addTopic()}
                 placeholder="Novo tópico..."
-                className="px-2 py-1 text-sm border rounded-md bg-background"
+                className="px-2 py-1 text-sm border rounded-md bg-background transition-all focus:ring-1 focus:ring-primary-300"
               />
-              <Button variant="ghost" size="sm" onClick={addTopic}>+</Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={addTopic} 
+                className="hover:bg-primary/10 hover:text-primary-300 transition-all"
+              >
+                +
+              </Button>
             </div>
           </div>
           
           <Textarea
             placeholder="Suas anotações sobre este artigo..."
-            className="min-h-[200px] mb-4"
+            className="min-h-[200px] mb-4 transition-all focus:ring-1 focus:ring-primary-300"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
+            disabled={!isEditing && notes.length > 0}
           />
           
-          <div className="flex gap-2 mb-6">
-            <Button 
-              onClick={saveNotes} 
-              className="text-primary-foreground bg-primary/90 hover:bg-primary flex items-center gap-2"
-            >
-              <BookmarkPlus size={16} />
-              Salvar anotações
-            </Button>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {!isEditing && notes.length > 0 ? (
+              <>
+                <Button 
+                  onClick={() => setIsEditing(true)} 
+                  className="text-primary-foreground bg-primary/90 hover:bg-primary flex items-center gap-2 transition-all hover:scale-[1.02]"
+                >
+                  <Edit size={16} />
+                  Editar anotações
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={handleDeleteNotes}
+                  className="flex items-center gap-2 text-primary border-primary/20 hover:bg-primary/10 transition-all"
+                >
+                  <Trash2 size={16} />
+                  Excluir
+                </Button>
+              </>
+            ) : (
+              <Button 
+                onClick={saveNotes} 
+                className="text-primary-foreground bg-primary/90 hover:bg-primary flex items-center gap-2 transition-all hover:scale-[1.02]"
+              >
+                <BookmarkPlus size={16} />
+                {isEditing ? "Salvar alterações" : "Salvar anotações"}
+              </Button>
+            )}
             
             <Button 
               variant="outline" 
               onClick={() => setShowAiHelp(!showAiHelp)}
-              className="flex items-center gap-2 text-primary"
+              className="flex items-center gap-2 text-primary border-primary/20 hover:bg-primary/10 transition-all"
             >
               <MessageSquareText size={16} />
               Ajuda da IA
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2 text-primary"
-            >
-              <Highlighter size={16} />
-              Destacar no texto
             </Button>
           </div>
         </div>

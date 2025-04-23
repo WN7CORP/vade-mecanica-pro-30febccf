@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -18,6 +19,7 @@ import {
   generateArticleExplanation, 
   AIExplanation as AIExplanationType 
 } from "@/services/aiService";
+import debounce from 'lodash/debounce';
 
 interface SearchResult {
   article: string;
@@ -25,14 +27,26 @@ interface SearchResult {
   lawName: string;
 }
 
+interface SearchPreview {
+  article?: string;
+  content: string;
+  lawName: string;
+  previewType: 'article' | 'term';
+}
+
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchPreviews, setSearchPreviews] = useState<SearchPreview[]>([]);
+  const [showPreviews, setShowPreviews] = useState(false);
+  const [inputValue, setInputValue] = useState(query);
   const [selectedLaw, setSelectedLaw] = useState<string>("");
   const [availableLaws, setAvailableLaws] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Estados para explicação da IA
   const [showExplanation, setShowExplanation] = useState(false);
@@ -109,12 +123,96 @@ const Search = () => {
     performSearch();
   }, [query, selectedLaw]);
 
+  // Função debounce para busca em tempo real
+  const debouncedSearchPreview = useRef(
+    debounce(async (term: string, law: string) => {
+      if (term.length < 2 || !law) {
+        setSearchPreviews([]);
+        return;
+      }
+      
+      try {
+        // Buscar artigo exato
+        const article = await searchArticle(law, term);
+        
+        const previews: SearchPreview[] = [];
+        
+        if (article && article.numero) {
+          previews.push({
+            article: article.numero,
+            content: article.conteudo.substring(0, 100) + "...",
+            lawName: law,
+            previewType: 'article'
+          });
+        }
+        
+        // Buscar por termo (limitado a 3 resultados)
+        const termResults = await searchByTerm(law, term);
+        if (termResults.length > 0) {
+          termResults.slice(0, 3).forEach(result => {
+            // Evitar duplicação se já adicionamos o artigo exato
+            if (!previews.some(p => p.article === result.numero)) {
+              previews.push({
+                article: result.numero,
+                content: result.conteudo.substring(0, 100) + "...",
+                lawName: law,
+                previewType: 'term'
+              });
+            }
+          });
+        }
+        
+        setSearchPreviews(previews);
+        setShowPreviews(previews.length > 0 && isFocused);
+      } catch (error) {
+        console.error("Erro na busca prévia:", error);
+        setSearchPreviews([]);
+      }
+    }, 300)
+  ).current;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    if (value.length >= 2) {
+      debouncedSearchPreview(value, selectedLaw);
+    } else {
+      setSearchPreviews([]);
+      setShowPreviews(false);
+    }
+  };
+
   const handleSearch = (term: string) => {
+    setSearchPreviews([]);
+    setShowPreviews(false);
     setSearchParams({ q: term });
+  };
+  
+  const handlePreviewClick = (preview: SearchPreview) => {
+    setInputValue(preview.article || preview.content.substring(0, 20));
+    handleSearch(preview.article || preview.content.substring(0, 20));
+    setShowPreviews(false);
+  };
+  
+  const handleSearchFocus = () => {
+    setIsFocused(true);
+    setShowPreviews(searchPreviews.length > 0);
+  };
+  
+  const handleSearchBlur = () => {
+    // Delay para permitir cliques nas sugestões
+    setTimeout(() => {
+      setIsFocused(false);
+      setShowPreviews(false);
+    }, 200);
   };
   
   const handleLawChange = (lawName: string) => {
     setSelectedLaw(lawName);
+    if (inputValue) {
+      debouncedSearchPreview(inputValue, lawName);
+    }
   };
   
   const handleExplainArticle = async (result: SearchResult, type: 'technical' | 'formal' = 'technical') => {
@@ -154,12 +252,38 @@ const Search = () => {
       <Header />
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
-        <div className="mb-6">
+        <div className="mb-6 relative">
           <SearchBar 
             onSearch={handleSearch} 
-            initialValue={query}
+            initialValue={inputValue}
             placeholder="Buscar artigo ou termo..." 
+            onInputChange={handleInputChange}
+            onFocus={handleSearchFocus}
+            onBlur={handleSearchBlur}
+            ref={searchInputRef}
           />
+          
+          {/* Previews de busca */}
+          {showPreviews && searchPreviews.length > 0 && (
+            <div className="absolute z-50 left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto animate-fade-in">
+              {searchPreviews.map((preview, index) => (
+                <div 
+                  key={index}
+                  className="p-3 border-b border-border hover:bg-accent/20 cursor-pointer transition-colors"
+                  onClick={() => handlePreviewClick(preview)}
+                >
+                  <div className="flex items-center gap-2">
+                    <BookOpen size={16} className="text-primary-300" />
+                    <div className="text-sm text-primary-100">
+                      {preview.previewType === 'article' ? 'Artigo' : 'Contém'} {preview.article && `${preview.article} - `} 
+                      <span className="text-gray-400">{preview.lawName}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1 line-clamp-1">{preview.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         
         {/* Seletor de lei */}
@@ -171,8 +295,8 @@ const Search = () => {
                 onClick={() => handleLawChange(law.display)}
                 className={`px-4 py-2 whitespace-nowrap text-sm ${
                   selectedLaw === law.display
-                    ? "neomorph text-primary-300"
-                    : "text-gray-400 hover:text-gray-300"
+                    ? "neomorph text-primary-300 hover:scale-[1.02] transition-transform"
+                    : "text-gray-400 hover:text-gray-300 hover:bg-primary/5 rounded-md transition-colors"
                 }`}
               >
                 {law.display}
@@ -199,7 +323,7 @@ const Search = () => {
               </p>
             </div>
           ) : (
-            <div>
+            <div className="animate-fade-in">
               {searchResults.map((result, index) => (
                 <ArticleCard
                   key={index}

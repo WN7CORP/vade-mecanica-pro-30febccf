@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap');
 
 @tailwind base;
@@ -57,19 +58,24 @@
   #root {
     @apply min-h-full flex flex-col;
   }
+  
+  /* Improved focus styles for accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary/60;
+  }
 }
 
 @layer components {
   .neomorph {
-    @apply shadow-neomorph bg-lawapp-dark rounded-lg border border-gray-800/20;
+    @apply shadow-neomorph bg-lawapp-dark rounded-lg border border-gray-800/20 hover:shadow-neomorph-lg transition-shadow duration-300;
   }
   
   .neomorph-sm {
-    @apply shadow-neomorph-sm bg-lawapp-dark rounded-md border border-gray-800/20;
+    @apply shadow-neomorph-sm bg-lawapp-dark rounded-md border border-gray-800/20 hover:shadow-neomorph transition-all duration-300;
   }
   
   .neomorph-inset {
-    @apply shadow-neomorph-inset bg-muted rounded-md border border-gray-800/20;
+    @apply shadow-neomorph-inset bg-muted rounded-md border border-gray-800/20 transition-all duration-300;
   }
   
   .highlight-purple {
@@ -93,7 +99,7 @@
   }
   
   .shadow-button {
-    @apply neomorph-sm px-4 py-2 hover:shadow-neomorph-inset transition-all duration-300 flex items-center justify-center gap-2;
+    @apply neomorph-sm px-4 py-2 hover:shadow-neomorph-inset transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95;
   }
   
   .glass-effect {
@@ -113,7 +119,7 @@
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-primary/50 rounded-full;
+    @apply bg-primary/50 rounded-full hover:bg-primary/70 transition-colors;
   }
   
   /* Audio Wave Animation */
@@ -150,16 +156,153 @@
     animation-delay: 0.8s;
   }
   
-  @keyframes audio-wave {
-    0%, 100% {
-      height: 5px;
-    }
-    50% {
-      height: 12px;
-    }
+  /* Pulse animation for notification indicator */
+  .pulse-animation {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
   
-  .article-content {
-    @apply text-[0.95rem] leading-relaxed;
+  /* Animated app logo with gradient effect */
+  .animate-gradient {
+    background-size: 200% auto;
+    animation: gradient 3s linear infinite;
   }
+  
+  .bg-size-200 {
+    background-size: 200% 200%;
+  }
+  
+  /* Improved article content styling */
+  .article-content {
+    @apply text-[0.95rem] leading-relaxed transition-all duration-300;
+  }
+  
+  /* Interactive buttons with hover effects */
+  .interactive-button {
+    @apply transition-all duration-200 hover:scale-105 active:scale-95;
+  }
+}
+
+@keyframes audio-wave {
+  0%, 100% {
+    height: 5px;
+  }
+  50% {
+    height: 12px;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Add shine effect for interactive elements */
+.shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 20%;
+  height: 200%;
+  opacity: 0;
+  transform: rotate(30deg);
+  background: rgba(255, 255, 255, 0.13);
+  background: linear-gradient(
+    to right, 
+    rgba(255, 255, 255, 0.13) 0%,
+    rgba(255, 255, 255, 0.13) 77%,
+    rgba(255, 255, 255, 0.5) 92%,
+    rgba(255, 255, 255, 0.0) 100%
+  );
+}
+
+.shine:hover::after {
+  opacity: 1;
+  left: 130%;
+  transition: left 0.7s ease-in-out;
+}
+
+/* Fade-in animation for new elements */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide-in animation for drawers and sidebars */
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-in-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Shadow variations for neomorphism */
+.shadow-neomorph {
+  box-shadow: 
+    5px 5px 10px rgba(0, 0, 0, 0.3),
+    -5px -5px 10px rgba(255, 255, 255, 0.05);
+}
+
+.shadow-neomorph-lg {
+  box-shadow: 
+    8px 8px 16px rgba(0, 0, 0, 0.4),
+    -8px -8px 16px rgba(255, 255, 255, 0.07);
+}
+
+.shadow-neomorph-sm {
+  box-shadow: 
+    3px 3px 6px rgba(0, 0, 0, 0.25),
+    -3px -3px 6px rgba(255, 255, 255, 0.04);
+}
+
+.shadow-neomorph-inset {
+  box-shadow: 
+    inset 2px 2px 5px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.05);
+}
+
+/* Scale transition for interactive elements */
+.hover-scale {
+  transition: transform 0.2s ease-in-out;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
 }

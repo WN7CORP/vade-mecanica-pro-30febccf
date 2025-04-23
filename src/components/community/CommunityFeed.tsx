@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,7 +43,8 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         created_at, 
         likes, 
         tags,
-        is_favorite
+        is_favorite,
+        liked_by
       `);
 
       if (activeFilter !== 'all') {
@@ -90,7 +92,8 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         tags: newPost.tags,
         author_id: sessionData.session.user.id,
         likes: 0,
-        is_favorite: false
+        is_favorite: false,
+        liked_by: [] // Initialize an empty array of users who liked the post
       }).select();
 
       if (error) {
@@ -141,24 +144,23 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
           size="icon" 
           variant="outline" 
           onClick={onDecreaseFont}
-          className="hover:bg-primary-300/10"
+          className="hover:bg-primary-300/10 transition-all hover:scale-105"
+          aria-label="Diminuir fonte"
         >
           <Minus className="text-primary-300" />
         </Button>
-        <span className="inline-block text-sm text-primary-300 mt-1">
-          Ajustar fonte ({fontSize}px)
-        </span>
         <Button 
           size="icon" 
           variant="outline" 
           onClick={onIncreaseFont}
-          className="hover:bg-primary-300/10"
+          className="hover:bg-primary-300/10 transition-all hover:scale-105"
+          aria-label="Aumentar fonte"
         >
           <Plus className="text-primary-300" />
         </Button>
       </div>
 
-      <div className="p-4 mb-6 border border-primary-300/30 rounded-lg bg-primary-300/5">
+      <div className="p-4 mb-6 border border-primary-300/30 rounded-lg bg-primary-300/5 animate-fade-in">
         <h3 className="text-primary-300 font-medium mb-2">Selecione pelo menos uma tag para seu post:</h3>
         <div className="flex flex-wrap gap-2">
           {TAGS.map((tag) => (
@@ -169,8 +171,8 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
               onClick={() => handleTagToggle(tag)}
               className={
                 selectedTags.includes(tag)
-                  ? "bg-primary-300 text-gray-900 hover:bg-primary-400"
-                  : "border-primary-300/30 text-primary-300 hover:bg-primary-300/10"
+                  ? "bg-primary-300 text-gray-900 hover:bg-primary-400 transition-colors hover:scale-[1.02]"
+                  : "border-primary-300/30 text-primary-300 hover:bg-primary-300/10 transition-colors hover:scale-[1.02]"
               }
             >
               {tag}
@@ -179,33 +181,40 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         </div>
       </div>
 
-      <Card className="p-4 mb-4 border border-gray-800 bg-gray-900/50">
+      <Card className="p-4 mb-4 border border-gray-800 bg-gray-900/50 hover:shadow-lg transition-all duration-300">
         <textarea
           value={newPostContent}
           onChange={(e) => setNewPostContent(e.target.value)}
           placeholder="Compartilhe uma dúvida ou dica com a comunidade..."
-          className="w-full p-3 bg-gray-800/80 border border-gray-700 rounded-md text-gray-300 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-300 min-h-[100px]"
+          className="w-full p-3 bg-gray-800/80 border border-gray-700 rounded-md text-gray-300 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-300 min-h-[100px] transition-all"
           style={{ fontSize }}
         />
         <div className="flex justify-end mt-3">
           <Button 
             onClick={handleCreatePost}
             disabled={selectedTags.length === 0 || newPostContent.trim() === ''}
-            className="bg-primary-300 hover:bg-primary-400 text-gray-900 disabled:opacity-50"
+            className="bg-primary-300 hover:bg-primary-400 text-gray-900 disabled:opacity-50 transition-all hover:scale-[1.02] active:scale-95"
           >
             Publicar
           </Button>
         </div>
       </Card>
 
-      <div className="space-y-4">
+      <div className="space-y-4 animate-fade-in">
         {isLoading ? (
-          <div>Carregando posts...</div>
+          <div className="text-center py-8">
+            <div className="animate-spin h-8 w-8 border-4 border-primary-300 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-400">Carregando posts...</p>
+          </div>
+        ) : posts?.length === 0 ? (
+          <div className="text-center py-8 neomorph">
+            <p className="text-gray-400">Nenhum post encontrado. Seja o primeiro a compartilhar!</p>
+          </div>
         ) : (
           posts?.map((post) => (
             <PostCard 
               key={post.id} 
-              post={post}
+              post={post} 
             />
           ))
         )}

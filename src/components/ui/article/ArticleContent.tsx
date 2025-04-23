@@ -63,6 +63,20 @@ const ArticleContent = ({
       {renderContent()}
       
       <div className="fixed left-4 bottom-24 flex flex-col space-y-2 z-10">
+        <button 
+          onClick={onIncreaseFontSize}
+          className="w-10 h-10 bg-primary-300/20 hover:bg-primary-300/30 rounded-full flex items-center justify-center text-primary-300 backdrop-blur-sm transition-all hover:scale-105"
+          aria-label="Aumentar tamanho da fonte"
+        >
+          <ZoomIn size={18} />
+        </button>
+        <button 
+          onClick={onDecreaseFontSize}
+          className="w-10 h-10 bg-primary-300/20 hover:bg-primary-300/30 rounded-full flex items-center justify-center text-primary-300 backdrop-blur-sm transition-all hover:scale-105"
+          aria-label="Diminuir tamanho da fonte"
+        >
+          <ZoomOut size={18} />
+        </button>
       </div>
     </div>
   );

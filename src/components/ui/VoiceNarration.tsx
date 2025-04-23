@@ -50,6 +50,18 @@ const VoiceNarration = ({
   }, [isActive, text]);
   
   const startNarration = async () => {
+    // Check if current audio exists and is the same content
+    // If so, just toggle pause state
+    if (audioRef.current && audioRef.current.src) {
+      if (!isPaused) {
+        pauseNarration();
+        return;
+      } else {
+        resumeNarration();
+        return;
+      }
+    }
+    
     setIsLoading(true);
     
     try {
@@ -191,9 +203,9 @@ const VoiceNarration = ({
   if (!isActive) return null;
   
   return (
-    <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
+    <div className="fixed bottom-20 left-0 right-0 z-40 px-4 animate-fade-in transform transition-transform duration-300">
       <div className="max-w-screen-md mx-auto">
-        <div className="neomorph p-4 flex flex-col backdrop-blur-md bg-background/90">
+        <div className="neomorph p-4 flex flex-col backdrop-blur-md bg-background/90 hover:shadow-lg transition-all duration-300">
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center">
               <div className="text-sm font-medium text-primary-200 mr-2">
@@ -223,7 +235,7 @@ const VoiceNarration = ({
               {isPaused ? (
                 <button 
                   onClick={resumeNarration}
-                  className="p-1.5 neomorph-sm text-primary-300"
+                  className="p-1.5 neomorph-sm text-primary-300 hover:scale-105 transition-transform"
                   aria-label="Continuar narração"
                 >
                   <Play size={16} />
@@ -231,7 +243,7 @@ const VoiceNarration = ({
               ) : (
                 <button 
                   onClick={pauseNarration}
-                  className="p-1.5 neomorph-sm text-primary-300"
+                  className="p-1.5 neomorph-sm text-primary-300 hover:scale-105 transition-transform"
                   aria-label="Pausar narração"
                 >
                   <Pause size={16} />
@@ -240,7 +252,7 @@ const VoiceNarration = ({
               
               <button 
                 onClick={stopNarration}
-                className="p-1.5 neomorph-sm text-gray-400 hover:text-gray-300"
+                className="p-1.5 neomorph-sm text-gray-400 hover:text-gray-300 hover:scale-105 transition-transform"
                 aria-label="Parar narração"
               >
                 <VolumeX size={16} />

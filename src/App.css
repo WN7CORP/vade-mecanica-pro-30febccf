@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,7 +40,7 @@ code {
 }
 
 body, html {
-  background: #1A1F2C;
+  background: #131620;  /* Darker background than before */
 }
 
 @media (max-width: 768px) {
@@ -61,4 +62,41 @@ body, html {
     padding: 8px;
     border-top: 1px solid rgba(155, 135, 245, 0.1);
   }
+}
+
+/* App logo animation */
+@keyframes fire-gradient {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: fire-gradient 4s ease infinite;
+  background-image: linear-gradient(45deg, #8B5CF6, #D946EF, #9B87F5, #8B5CF6);
+}
+
+/* Animated underline effect */
+.animated-underline {
+  position: relative;
+  display: inline-block;
+}
+
+.animated-underline::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background: linear-gradient(90deg, #9B87F5, #D946EF);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease-out;
+}
+
+.animated-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
 }

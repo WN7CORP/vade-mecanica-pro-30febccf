@@ -39,8 +39,6 @@ const ArticleCard = ({
   const [fontSize, setFontSize] = useState(15);
   const [isReading, setIsReading] = useState(false);
   const [readingContent, setReadingContent] = useState<{text: string, title: string}>({text: '', title: ''});
-  const [showHighlightTools, setShowHighlightTools] = useState(false);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -86,26 +84,6 @@ const ArticleCard = ({
       .catch(err => console.error("Erro ao copiar: ", err));
   };
   
-  const handleColorSelect = (colorClass: string) => {
-    setSelectedColor(colorClass);
-    const selection = window.getSelection();
-    if (selection && selection.toString().length > 0) {
-      const range = selection.getRangeAt(0);
-      const span = document.createElement('span');
-      span.className = colorClass;
-      try {
-        range.surroundContents(span);
-        if (userId) logUserActivity('highlight', lawName, articleNumber);
-      } catch (e) {
-        console.error("Erro ao destacar texto: ", e);
-        const fragment = range.extractContents();
-        span.appendChild(fragment);
-        range.insertNode(span);
-      }
-      selection.removeAllRanges();
-    }
-  };
-  
   const toggleFavorite = () => {
     try {
       const newStatus = !isFavorite;
@@ -140,25 +118,33 @@ const ArticleCard = ({
     if (type === "technical") {
       title = "Explicação Técnica";
       
-      if ((content as any)?.explicacao_tecnica) {
+      if (typeof content === 'object' && content !== null && 'explicacao_tecnica' in content) {
         setCustomExplanation((content as any).explicacao_tecnica);
       } 
-      else if (example && (example as any)?.explicacao_tecnica) {
+      else if (example && typeof example === 'object' && 'explicacao_tecnica' in example) {
         setCustomExplanation((example as any).explicacao_tecnica);
       }
       else {
+        if (onExplainRequest) {
+          onExplainRequest(type);
+          return;
+        }
         setCustomExplanation("Não há explicação técnica disponível para este artigo.");
       }
     } else {
       title = "Explicação Formal";
       
-      if ((content as any)?.explicacao_formal) {
+      if (typeof content === 'object' && content !== null && 'explicacao_formal' in content) {
         setCustomExplanation((content as any).explicacao_formal);
       }
-      else if (example && (example as any)?.explicacao_formal) {
+      else if (example && typeof example === 'object' && 'explicacao_formal' in example) {
         setCustomExplanation((example as any).explicacao_formal);
       }
       else {
+        if (onExplainRequest) {
+          onExplainRequest(type);
+          return;
+        }
         setCustomExplanation("Não há explicação formal disponível para este artigo.");
       }
     }
@@ -176,20 +162,23 @@ const ArticleCard = ({
     if (userId) logUserActivity('note_view', lawName, articleNumber);
   };
   
-  const handleNarration = (contentType: 'article' | 'example') => {
-    if (isReading && contentType === 'article' && readingContent.title === 'Artigo') {
-      setIsReading(false);
-      return;
+  const handleNarration = (contentType: 'article' | 'example' | 'explanation') => {
+    if (isReading) {
+      if ((contentType === 'article' && readingContent.title === 'Artigo') ||
+          (contentType === 'example' && readingContent.title === 'Exemplo') ||
+          (contentType === 'explanation' && readingContent.title.includes('Explicação'))) {
+        setIsReading(false);
+        return;
+      }
     }
-    if (isReading && contentType === 'example' && readingContent.title === 'Exemplo') {
-      setIsReading(false);
-      return;
-    }
+    
     if (contentType === 'article') {
-      setReadingContent({ text: content, title: 'Artigo' });
+      setReadingContent({ text: typeof content === 'string' ? content : JSON.stringify(content), title: 'Artigo' });
       if (userId) logUserActivity('narrate', lawName, articleNumber);
     } else if (contentType === 'example' && example) {
-      setReadingContent({ text: example, title: 'Exemplo' });
+      setReadingContent({ text: typeof example === 'string' ? example : JSON.stringify(example), title: 'Exemplo' });
+    } else if (contentType === 'explanation' && customExplanation) {
+      setReadingContent({ text: customExplanation, title: `Narração: ${explanationTitle}` });
     }
     setIsReading(true);
   };
@@ -212,26 +201,17 @@ const ArticleCard = ({
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
   return (
-    <div className="card-article mb-6">
+    <div className="card-article mb-6 hover:shadow-lg transition-all duration-300">
       <CopyToast show={showCopyToast} />
       
       <ArticleHeader
         articleNumber={shouldCenterContent ? "" : articleNumber}
         lawName={lawName}
         onCopy={copyArticle}
-        onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
-        showHighlightTools={showHighlightTools}
+        onToggleHighlight={() => {}}
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
       />
-      
-      {showHighlightTools && (
-        <HighlightTools
-          selectedColor={selectedColor}
-          onColorSelect={handleColorSelect}
-          onClose={() => setShowHighlightTools(false)}
-        />
-      )}
       
       <ArticleContent
         content={content}
@@ -257,19 +237,47 @@ const ArticleCard = ({
           <div className="px-4 py-2 bg-primary-50/10 border-l-4 border-primary-200 rounded text-gray-400 text-left whitespace-pre-wrap w-full max-w-xl">
             {example}
           </div>
-          <button
-            className="shadow-button w-full max-w-xs mx-auto mt-3 text-primary bg-primary/10 text-sm font-medium rounded transition-all 
-            hover:bg-primary/30 active:scale-95"
-            onClick={() => setShowExample(false)}
-          >
-            Voltar
-          </button>
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => handleNarration('example')}
+              className="shadow-button px-3 py-1 text-primary-300 bg-primary/10 text-sm font-medium rounded transition-all 
+              hover:bg-primary/30 active:scale-95 flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-volume-2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+              Narrar Exemplo
+            </button>
+            <button
+              className="shadow-button px-3 py-1 text-primary-300 bg-primary/10 text-sm font-medium rounded transition-all 
+              hover:bg-primary/30 active:scale-95"
+              onClick={() => setShowExample(false)}
+            >
+              Voltar
+            </button>
+          </div>
         </div>
       )}
 
       {showCustomExplanation && (
         <div className="mt-5 p-4 bg-primary-900/20 border-l-4 border-primary-300 rounded animate-fade-in">
-          <h4 className="text-primary-300 mb-2 font-medium">{explanationTitle}</h4>
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="text-primary-300 font-medium">{explanationTitle}</h4>
+            <button
+              onClick={() => handleNarration('explanation')}
+              className="shadow-button px-3 py-1 text-primary-300 bg-primary/10 text-xs font-medium rounded transition-all 
+                hover:bg-primary/30 active:scale-95 flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-volume-2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+              Narrar
+            </button>
+          </div>
           <p className="text-gray-300 whitespace-pre-wrap text-left">
             {customExplanation}
           </p>
