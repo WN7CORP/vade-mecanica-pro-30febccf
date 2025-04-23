@@ -90,10 +90,21 @@ const PostCard = ({ post }: { post: Post }) => {
   // Create comment mutation
   const createCommentMutation = useMutation({
     mutationFn: async (commentContent: string) => {
+      // Get current user from session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        toast.error("Você precisa estar logado para adicionar um comentário");
+        throw new Error("User not authenticated");
+      }
+      
+      const userId = sessionData.session.user.id;
+
       const { data, error } = await supabase.from('community_comments').insert({
         content: commentContent,
         post_id: post.id,
-        author_id: (await supabase.auth.getUser()).data.user?.id
+        author_id: userId,
+        likes: 0 // Only add fields that exist in the database table
       });
 
       if (error) {
@@ -112,6 +123,7 @@ const PostCard = ({ post }: { post: Post }) => {
 
   // Function to mark a comment as the best tip
   const handleSetBestTip = async (postId: string, commentId: string) => {
+    // First update the comment to mark as best tip
     const { error: updateCommentError } = await supabase
       .from('community_comments')
       .update({ is_best_tip: true })
@@ -122,6 +134,7 @@ const PostCard = ({ post }: { post: Post }) => {
       return;
     }
 
+    // Then update the post to reference this comment
     const { error: updatePostError } = await supabase
       .from('community_posts')
       .update({ best_tip_id: commentId })
