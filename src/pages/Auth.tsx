@@ -11,9 +11,11 @@ const Auth = () => {
 
   useEffect(() => {
     // Check for authenticated session and admin status
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        if (session.user.email === "wesleyhard@hotmail.com") {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      
+      if (data.session) {
+        if (data.session.user.email === "wesleyhard@hotmail.com") {
           navigate("/admin");
         } else if (isAdmin) {
           navigate("/admin");
@@ -21,7 +23,9 @@ const Auth = () => {
           navigate("/");
         }
       }
-    });
+    };
+    
+    checkSession();
   }, [navigate, isAdmin]);
 
   // Show loading state while checking admin status

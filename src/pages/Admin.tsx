@@ -21,8 +21,8 @@ const Admin = () => {
   useEffect(() => {
     // Check session exists
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
         navigate("/auth");
       }
     };
@@ -40,13 +40,7 @@ const Admin = () => {
 
   // Check if user has admin privileges (either hard-coded admin or from database)
   if (!isAdmin) {
-    const { data: { session } } = supabase.auth.getSession();
-    if (session?.user.email === "wesleyhard@hotmail.com") {
-      // Special case for our super admin
-      // Continue to admin page
-    } else {
-      return <AdminLogin onLoginSuccess={() => window.location.reload()} />;
-    }
+    return <AdminLogin onLoginSuccess={() => window.location.reload()} />;
   }
 
   return (
