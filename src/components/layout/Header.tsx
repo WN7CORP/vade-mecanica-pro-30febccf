@@ -1,47 +1,32 @@
+
 import { useState } from "react";
-import { Search } from "lucide-react";
-import { MainNav } from "@/components/layout/MainNav";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useTheme } from "next-themes";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Sun, Moon } from "lucide-react";
+import React from "react";
 import ProfileMenu from "./ProfileMenu";
 import NotificationCenter from "@/components/layout/NotificationCenter";
-import React from "react";
-interface SearchBarProps {
-  onSearch: (query: string) => void;
-}
-const SearchBar = ({
-  onSearch
-}: SearchBarProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-  const handleSearch = () => {
-    onSearch(searchQuery);
-  };
-  return <div className="relative">
-      <Input type="text" placeholder="Pesquisar..." value={searchQuery} onChange={handleInputChange} className="pr-10 shadow-none" />
-      <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground peer-focus:text-primary" />
-    </div>;
-};
+
 const Header = () => {
-  const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
-  const {
-    setTheme
-  } = useTheme();
+  const { setTheme } = useTheme();
+
   React.useEffect(() => {
     setMounted(true);
   }, []);
-  const handleSearch = (query: string) => {
-    console.log("Searching for:", query);
-  };
-  return <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      
-    </header>;
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container h-14 flex items-center justify-between">
+        <div className="mr-4">
+          <span className="font-heading font-bold text-xl">JurisAI</span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <NotificationCenter />
+          <ProfileMenu />
+        </div>
+      </div>
+    </header>
+  );
 };
+
 export default Header;

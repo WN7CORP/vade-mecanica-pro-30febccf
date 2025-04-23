@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -108,6 +107,42 @@ const PostCard = ({ post }: { post: Post }) => {
       return data;
     }
   });
+
+const likeCommentMutation = useMutation({
+  mutationFn: async (commentId: string) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    
+    if (!sessionData.session) {
+      toast.error("Você precisa estar logado para curtir um comentário");
+      throw new Error("User not authenticated");
+    }
+
+    const { data: comment } = await supabase
+      .from('community_comments')
+      .select('likes')
+      .eq('id', commentId)
+      .single();
+
+    if (!comment) throw new Error("Comment not found");
+
+    const { data, error } = await supabase
+      .from('community_comments')
+      .update({ likes: comment.likes + 1 })
+      .eq('id', commentId)
+      .select();
+
+    if (error) {
+      toast.error("Erro ao curtir comentário", { description: error.message });
+      throw error;
+    }
+
+    toast.success("Comentário curtido!");
+    return data;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['post-comments', post.id] });
+  }
+});
 
   const { data: comments, isLoading } = useQuery({
     queryKey: ['post-comments', post.id],
@@ -236,6 +271,10 @@ const PostCard = ({ post }: { post: Post }) => {
   const currentUserName = currentUserData?.full_name || 'Usuário';
   const currentUserInitial = currentUserName.charAt(0).toUpperCase();
   const currentUserAvatarUrl = currentUserData?.avatar_url;
+
+const handleLikeComment = (commentId: string) => {
+  likeCommentMutation.mutate(commentId);
+};
 
   return (
     <Card className="mb-4 overflow-hidden border border-gray-800 bg-gray-900/50">

@@ -291,6 +291,7 @@ export type Database = {
         Row: {
           author_id: string
           best_tip_id: string | null
+          community_type: string
           content: string
           created_at: string
           id: string
@@ -301,6 +302,7 @@ export type Database = {
         Insert: {
           author_id: string
           best_tip_id?: string | null
+          community_type?: string
           content: string
           created_at?: string
           id?: string
@@ -311,6 +313,7 @@ export type Database = {
         Update: {
           author_id?: string
           best_tip_id?: string | null
+          community_type?: string
           content?: string
           created_at?: string
           id?: string
@@ -1090,6 +1093,59 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_movies: {
+        Row: {
+          average_rating: number | null
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          director: string | null
+          id: string
+          poster_url: string
+          rating_count: number | null
+          title: string
+          tmdb_poster_path: string | null
+          year: number
+          youtube_trailer_url: string | null
+        }
+        Insert: {
+          average_rating?: number | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          director?: string | null
+          id?: string
+          poster_url: string
+          rating_count?: number | null
+          title: string
+          tmdb_poster_path?: string | null
+          year: number
+          youtube_trailer_url?: string | null
+        }
+        Update: {
+          average_rating?: number | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          director?: string | null
+          id?: string
+          poster_url?: string
+          rating_count?: number | null
+          title?: string
+          tmdb_poster_path?: string | null
+          year?: number
+          youtube_trailer_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_movies_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "movie_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lei_penal_especial_flashcards: {
         Row: {
           created_at: string
@@ -1151,6 +1207,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      movie_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          content: string
+          created_at: string | null
+          from_user_id: string | null
+          id: string
+          read: boolean | null
+          related_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          read?: boolean | null
+          related_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          read?: boolean | null
+          related_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       perfis: {
         Row: {
@@ -1556,6 +1663,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achieved_at: string | null
+          achievement_type: string
+          id: string
+          points_awarded: number
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string | null
+          achievement_type: string
+          id?: string
+          points_awarded: number
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string | null
+          achievement_type?: string
+          id?: string
+          points_awarded?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_favorites: {
         Row: {
           article_content: string
@@ -1788,6 +1919,14 @@ export type Database = {
       }
     }
     Functions: {
+      award_achievement: {
+        Args: {
+          p_user_id: string
+          p_achievement_type: string
+          p_points: number
+        }
+        Returns: undefined
+      }
       get_unique_themes: {
         Args: { table_name: string }
         Returns: {
