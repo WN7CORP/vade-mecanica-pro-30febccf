@@ -297,7 +297,7 @@ const ArticleCard = ({
         <ArticleInteractions 
           articleNumber={articleNumber}
           content={content || ""}
-          example={example}
+          example={example || ""}
           onExplain={handleExplain}
           onAddComment={handleComment}
           onStartNarration={handleNarration}
