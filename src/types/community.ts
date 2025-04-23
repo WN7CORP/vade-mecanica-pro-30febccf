@@ -9,4 +9,5 @@ export interface Post {
   tags: string[];
   best_tip_id: string | null;
   community_type: 'general' | 'legislation' | 'movies';
+  commentCount?: number;
 }

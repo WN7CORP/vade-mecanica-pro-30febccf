@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -63,6 +64,25 @@ const CommunityFeed = ({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newPostContent, setNewPostContent] = useState("");
 
+  const getTags = () => {
+    switch(communityType) {
+      case 'legislation': return LEGISLATION_TAGS;
+      case 'movies': return MOVIE_TAGS;
+      default: return GENERAL_TAGS;
+    }
+  };
+
+  const getPlaceholderText = () => {
+    switch(communityType) {
+      case 'legislation':
+        return "Compartilhe dúvidas ou comentários sobre legislação, códigos ou projetos de lei...";
+      case 'movies':
+        return "Recomende um filme jurídico ou comente sobre algum que você assistiu...";
+      default:
+        return "Compartilhe seus pensamentos, dúvidas ou insights sobre o mundo jurídico...";
+    }
+  };
+
   const { data: posts, isLoading } = useQuery({
     queryKey: ['community-posts', filter, communityType],
     queryFn: async () => {
@@ -100,7 +120,8 @@ const CommunityFeed = ({
 
       return data.map(post => ({
         ...post,
-        commentCount: post.comments?.[0]?.count || 0
+        commentCount: post.comments?.[0]?.count || 0,
+        community_type: post.community_type as 'general' | 'legislation' | 'movies'
       }));
     }
   });

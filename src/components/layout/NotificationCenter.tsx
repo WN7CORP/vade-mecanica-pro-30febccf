@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -37,11 +38,11 @@ const NotificationCenter = () => {
           id,
           content,
           created_at,
-          author:user_profiles!community_comments_author_id_fkey(
+          post:community_posts!inner(
             id,
-            full_name
+            author_id
           ),
-          post:community_posts(id)
+          author_id
         `)
         .eq('post.author_id', session.user.id)
         .order('created_at', { ascending: false })
@@ -52,18 +53,40 @@ const NotificationCenter = () => {
         return;
       }
 
-      const notificationsData = commentsData.map(comment => ({
-        id: comment.id,
-        type: 'comment' as const,
-        content: 'comentou em sua publicação',
-        from: {
-          id: comment.author.id,
-          name: comment.author.full_name || 'Usuário',
-        },
-        postId: comment.post.id,
-        createdAt: new Date(comment.created_at),
-        read: false
-      }));
+      // Get user profiles for each author
+      const authorIds = commentsData.map(comment => comment.author_id);
+      const { data: userProfiles, error: userError } = await supabase
+        .from('user_profiles')
+        .select('id, full_name')
+        .in('id', authorIds);
+
+      if (userError) {
+        console.error('Error fetching user profiles:', userError);
+        return;
+      }
+
+      // Create a map for quick lookup
+      const userMap = new Map();
+      userProfiles?.forEach(profile => {
+        userMap.set(profile.id, profile);
+      });
+
+      const notificationsData = commentsData.map(comment => {
+        const userProfile = userMap.get(comment.author_id) || { full_name: 'Usuário' };
+        
+        return {
+          id: comment.id,
+          type: 'comment' as const,
+          content: 'comentou em sua publicação',
+          from: {
+            id: comment.author_id,
+            name: userProfile?.full_name || 'Usuário',
+          },
+          postId: comment.post?.id,
+          createdAt: new Date(comment.created_at),
+          read: false
+        };
+      });
 
       setNotifications(notificationsData);
       setUnreadCount(notificationsData.filter(n => !n.read).length);
