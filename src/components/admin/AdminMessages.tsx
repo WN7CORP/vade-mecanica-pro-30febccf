@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -115,12 +114,10 @@ const AdminMessages = () => {
         `)
         .order('created_at', { ascending: false });
       
-      // Filtrar por usuário específico
       if (selectedUserId) {
         query = query.eq('user_id', selectedUserId);
       }
       
-      // Se a tab for "sent", mostrar apenas mensagens enviadas pelo admin atual
       if (activeTab === "sent") {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
@@ -132,7 +129,6 @@ const AdminMessages = () => {
       
       if (error) throw error;
       
-      // Buscar informações de usuários mencionados nas mensagens
       const userIds = data?.map(message => [message.admin_id, message.user_id]).flat();
       const uniqueUserIds = [...new Set(userIds)];
       
@@ -148,7 +144,6 @@ const AdminMessages = () => {
         userMap.set(user.id, user.full_name || 'Usuário não identificado');
       });
       
-      // Combinar os dados
       const formattedMessages = data?.map(message => ({
         id: message.id,
         admin_id: message.admin_id,
@@ -162,7 +157,6 @@ const AdminMessages = () => {
       
       setMessages(formattedMessages || []);
       
-      // Log da ação
       await supabase.rpc('log_admin_action', {
         action_type: 'view_messages',
         details: { timestamp: new Date().toISOString() }
@@ -191,12 +185,10 @@ const AdminMessages = () => {
       
       if (profileError) throw profileError;
       
-      // Fix: Get user emails from auth API but handle possible errors safely
       const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
         console.error("Error fetching user emails:", authError);
-        // Proceed with profile data only
         const formattedUsers = profileData?.map(user => ({
           id: user.id,
           full_name: user.full_name || 'Sem nome',
@@ -205,7 +197,6 @@ const AdminMessages = () => {
         
         setUsers(formattedUsers);
       } else {
-        // Safe access with optional chaining and type checking
         const emailMap = new Map();
         if (authData && authData.users && Array.isArray(authData.users)) {
           authData.users.forEach(user => {
@@ -236,26 +227,21 @@ const AdminMessages = () => {
     }
   };
 
-  // Carregar dados iniciais
   useEffect(() => {
     fetchUsers();
     fetchMessages();
   }, []);
 
-  // Recarregar mensagens quando mudar a tab ou usuário selecionado
   useEffect(() => {
     fetchMessages();
   }, [activeTab, selectedUserId]);
 
-  // Enviar nova mensagem
   const handleSendMessage = async (values: z.infer<typeof messageSchema>) => {
     try {
-      // Obter ID do admin
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) throw new Error("Sessão administrativa não encontrada");
       
-      // Inserir mensagem
       const { error } = await supabase
         .from('admin_messages')
         .insert({
@@ -266,7 +252,6 @@ const AdminMessages = () => {
 
       if (error) throw error;
       
-      // Log da ação
       await supabase.rpc('log_admin_action', {
         action_type: 'send_message',
         details: { 
@@ -280,11 +265,9 @@ const AdminMessages = () => {
         description: "Sua mensagem foi enviada para o usuário",
       });
       
-      // Fechar diálogo e redefinir formulário
       setIsNewMessageOpen(false);
       messageForm.reset();
       
-      // Atualizar lista de mensagens
       fetchMessages();
       
     } catch (error: any) {
@@ -297,7 +280,6 @@ const AdminMessages = () => {
     }
   };
 
-  // Marcar mensagem como lida
   const handleMarkAsRead = async (messageId: string) => {
     try {
       const { error } = await supabase
@@ -307,7 +289,6 @@ const AdminMessages = () => {
 
       if (error) throw error;
       
-      // Atualizar estado local
       setMessages(messages.map(msg => 
         msg.id === messageId ? { ...msg, is_read: true } : msg
       ));
@@ -327,7 +308,6 @@ const AdminMessages = () => {
     }
   };
 
-  // Mensagens filtradas por termo de busca
   const filteredMessages = messages.filter(message =>
     message.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.admin_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -441,14 +421,14 @@ const AdminMessages = () => {
         
         <div className="flex flex-col sm:flex-row gap-2">
           <Select 
-            value={selectedUserId || ""}
-            onValueChange={(value) => setSelectedUserId(value || null)}
+            value={selectedUserId || "all-users"}
+            onValueChange={(value) => setSelectedUserId(value === "all-users" ? null : value)}
           >
             <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Todos os usuários" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os usuários</SelectItem>
+              <SelectItem value="all-users">Todos os usuários</SelectItem>
               {users.map(user => (
                 <SelectItem key={user.id} value={user.id}>
                   {user.full_name}
@@ -466,7 +446,6 @@ const AdminMessages = () => {
         </div>
       </div>
 
-      {/* Lista de mensagens */}
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
