@@ -9,18 +9,7 @@ import CommentList from "./CommentList";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-export interface Post {
-  id: string;
-  content: string;
-  author_id: string;
-  created_at: string;
-  likes: number;
-  tags: string[];
-  is_favorite?: boolean;
-  best_tip_id?: string;
-  community_type?: 'general' | 'legislation' | 'movies'; 
-}
+import type { Post } from "@/types/community";
 
 export interface Comment {
   id: string;
@@ -234,6 +223,7 @@ const PostCard = ({ post }: { post: Post }) => {
   const currentUserAvatarUrl = currentUserData?.avatar_url;
   
   const isMoviePost = post.community_type === 'movies';
+  const commentCount = post.commentCount || 0;
 
   return (
     <Card className={`mb-4 overflow-hidden border border-gray-800 ${isMoviePost ? "bg-gray-900/70" : "bg-gray-900/50"}`}>
@@ -301,7 +291,7 @@ const PostCard = ({ post }: { post: Post }) => {
             onClick={() => setShowComments(!showComments)}
           >
             <MessageSquare size={16} className="mr-1" />
-            <span>{comments?.length || 0}</span>
+            <span>{commentCount}</span>
           </Button>
           
           {post.is_favorite !== undefined && (
