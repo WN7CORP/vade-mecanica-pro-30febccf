@@ -1,12 +1,11 @@
 
-import { Copy, PenLine, BookOpen, MessagesSquare, Bookmark } from "lucide-react";
+import { Copy, PenLine, Bookmark } from "lucide-react";
 
 interface ArticleHeaderProps {
   articleNumber: string;
   lawName: string;
   onCopy: () => void;
   onToggleHighlight: () => void;
-  onExplainRequest: (type: 'technical' | 'formal') => void;
   showHighlightTools: boolean;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
@@ -17,7 +16,6 @@ const ArticleHeader = ({
   lawName,
   onCopy,
   onToggleHighlight,
-  onExplainRequest,
   showHighlightTools,
   isFavorite = false,
   onToggleFavorite
@@ -30,7 +28,6 @@ const ArticleHeader = ({
         </h3>
         <p className="text-xs text-muted-foreground">{lawName}</p>
       </div>
-      
       <div className="flex space-x-2">
         <button 
           onClick={onCopy} 
@@ -39,25 +36,6 @@ const ArticleHeader = ({
         >
           <Copy size={16} />
         </button>
-        
-        <button 
-          onClick={() => onExplainRequest('technical')} 
-          className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-200" 
-          aria-label="Explicação técnica"
-          title="Explicação técnica"
-        >
-          <BookOpen size={16} />
-        </button>
-        
-        <button 
-          onClick={() => onExplainRequest('formal')} 
-          className="p-1.5 neomorph-sm text-gray-400 hover:text-primary-200" 
-          aria-label="Explicação formal"
-          title="Explicação formal"
-        >
-          <MessagesSquare size={16} />
-        </button>
-        
         <button 
           onClick={onToggleHighlight} 
           className={`p-1.5 neomorph-sm ${showHighlightTools ? "text-primary-300" : "text-gray-400 hover:text-primary-200"}`} 
@@ -65,7 +43,6 @@ const ArticleHeader = ({
         >
           <PenLine size={16} />
         </button>
-        
         {onToggleFavorite && (
           <button 
             onClick={onToggleFavorite} 

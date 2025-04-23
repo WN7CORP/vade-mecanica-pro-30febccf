@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -46,10 +45,10 @@ const ArticleCard = ({
   const [showNotes, setShowNotes] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
-  const [showExample, setShowExample] = useState(false); // PARA EXIBIR O EXEMPLO
-  const [customExplanation, setCustomExplanation] = useState<string | null>(null); // EXPLICAÇÃO DIRETO DO BANCO
+  const [showExample, setShowExample] = useState(false);
+  const [customExplanation, setCustomExplanation] = useState<string | null>(null);
   const [showCustomExplanation, setShowCustomExplanation] = useState(false);
-  const [explanationTitle, setExplanationTitle] = useState(""); // 'Técnica' ou 'Formal'
+  const [explanationTitle, setExplanationTitle] = useState("");
   const { logUserActivity } = useUserActivity(userId);
   
   useEffect(() => {
@@ -132,7 +131,6 @@ const ArticleCard = ({
     }
   };
 
-  // Novo: busca explicação direto do artigo
   const handleExplain = (type: 'technical' | 'formal') => {
     setShowCustomExplanation(false);
     setCustomExplanation(null);
@@ -142,30 +140,24 @@ const ArticleCard = ({
     if (type === "technical") {
       title = "Explicação Técnica";
       
-      // Verifica se a explicação técnica está disponível no content
       if ((content as any)?.explicacao_tecnica) {
         setCustomExplanation((content as any).explicacao_tecnica);
       } 
-      // Se não estiver no content, verifica no example
       else if (example && (example as any)?.explicacao_tecnica) {
         setCustomExplanation((example as any).explicacao_tecnica);
       }
-      // Se não encontrar em nenhum lugar
       else {
         setCustomExplanation("Não há explicação técnica disponível para este artigo.");
       }
     } else {
       title = "Explicação Formal";
       
-      // Verifica se a explicação formal está disponível no content
       if ((content as any)?.explicacao_formal) {
         setCustomExplanation((content as any).explicacao_formal);
       }
-      // Se não estiver no content, verifica no example
       else if (example && (example as any)?.explicacao_formal) {
         setCustomExplanation((example as any).explicacao_formal);
       }
-      // Se não encontrar em nenhum lugar
       else {
         setCustomExplanation("Não há explicação formal disponível para este artigo.");
       }
@@ -208,8 +200,8 @@ const ArticleCard = ({
     }
   }, [userId, lawName, articleNumber, logUserActivity]);
 
-  // Verifica se deve centralizar/se é artigo zerado
-  const shouldCenterContent = !articleNumber || articleNumber === "0";
+  const shouldLeftAlign = articleNumber === "esquerda nas linhas";
+  const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
   return (
     <div className="card-article mb-6">
@@ -220,7 +212,6 @@ const ArticleCard = ({
         lawName={lawName}
         onCopy={copyArticle}
         onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
-        onExplainRequest={handleExplain}
         showHighlightTools={showHighlightTools}
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
@@ -236,7 +227,7 @@ const ArticleCard = ({
       
       <ArticleContent
         content={content}
-        example={undefined} // O exemplo será gerenciado abaixo ao clicar no botão
+        example={undefined}
         fontSize={fontSize}
         onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
         onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
@@ -246,15 +237,25 @@ const ArticleCard = ({
 
       {!showExample && example && (
         <button
-          className="text-primary-300 underline mb-2 mt-2 block mx-auto"
+          className="shadow-button w-full max-w-xs mx-auto mt-2 mb-2 text-primary bg-primary/10 text-sm font-medium rounded transition-all 
+          hover:bg-primary/30 active:scale-95 animate-fade-in flex justify-center items-center"
           onClick={() => setShowExample(true)}
         >
           Exibir Exemplo
         </button>
       )}
       {showExample && example && (
-        <div className="mt-2 mb-2 px-4 py-2 bg-primary-50/10 border-l-4 border-primary-200 rounded text-gray-400 text-left whitespace-pre-wrap">
-          {example}
+        <div className="flex flex-col items-center mt-2 mb-2 animate-fade-in">
+          <div className="px-4 py-2 bg-primary-50/10 border-l-4 border-primary-200 rounded text-gray-400 text-left whitespace-pre-wrap w-full max-w-xl">
+            {example}
+          </div>
+          <button
+            className="shadow-button w-full max-w-xs mx-auto mt-3 text-primary bg-primary/10 text-sm font-medium rounded transition-all 
+            hover:bg-primary/30 active:scale-95"
+            onClick={() => setShowExample(false)}
+          >
+            Voltar
+          </button>
         </div>
       )}
 
@@ -267,17 +268,19 @@ const ArticleCard = ({
         </div>
       )}
 
-      <ArticleInteractions 
-        articleNumber={articleNumber}
-        content={content}
-        example={example}
-        onExplain={handleExplain}
-        onAddComment={handleComment}
-        onStartNarration={handleNarration}
-        isFavorite={isFavorite}
-        onToggleFavorite={toggleFavorite}
-      />
-      
+      {!shouldLeftAlign && (
+        <ArticleInteractions 
+          articleNumber={articleNumber}
+          content={content}
+          example={example}
+          onExplain={handleExplain}
+          onAddComment={handleComment}
+          onStartNarration={handleNarration}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
+        />
+      )}
+
       <VoiceNarration
         text={readingContent.text}
         title={readingContent.title}
@@ -293,9 +296,19 @@ const ArticleCard = ({
         articleContent={content}
         lawName={lawName}
       />
+
+      {shouldLeftAlign && (
+        <div className="mt-8 mb-12 animate-fade-in">
+          <p
+            className="mb-4 whitespace-pre-wrap transition-all duration-200 text-left text-white"
+            style={{ fontSize: `${fontSize + 2}px` }}
+          >
+            {content}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
 
 export default ArticleCard;
-
