@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { MainNav } from "./MainNav";
 import ProfileMenu from "./ProfileMenu";
 import NotificationCenter from "./NotificationCenter";
@@ -12,6 +12,8 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -43,7 +45,7 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <BackButton />
+            {!isHomePage && <BackButton />}
             <Link to="/" className="flex items-center">
               <div className="relative mr-2 animate-bounce-slow">
                 <svg 
