@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -50,6 +51,10 @@ const ArticleCard = ({
   const { logUserActivity } = useUserActivity(userId);
   const [showHighlightTools, setShowHighlightTools] = useState(false);
   
+  // Convert content and example to safe string values
+  const safeContent = typeof content === 'string' ? content : (content ? JSON.stringify(content) : '');
+  const safeExample = typeof example === 'string' ? example : (example ? JSON.stringify(example) : '');
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -74,8 +79,8 @@ const ArticleCard = ({
   
   const copyArticle = () => {
     const textToCopy = (articleNumber && articleNumber !== "0")
-      ? `Art. ${articleNumber}. ${content}`
-      : content;
+      ? `Art. ${articleNumber}. ${safeContent}`
+      : safeContent;
     navigator.clipboard.writeText(textToCopy)
       .then(() => {
         setShowCopyToast(true);
@@ -95,8 +100,8 @@ const ArticleCard = ({
       if (newStatus) {
         favorites[key] = { 
           articleNumber, 
-          content, 
-          example, 
+          content: safeContent, 
+          example: safeExample, 
           lawName,
           timestamp: new Date().toISOString()
         };
@@ -175,13 +180,13 @@ const ArticleCard = ({
     
     if (contentType === 'article') {
       setReadingContent({ 
-        text: typeof content === 'string' ? content : (content ? JSON.stringify(content) : ''), 
+        text: safeContent, 
         title: 'Artigo' 
       });
       if (userId) logUserActivity('narrate', lawName, articleNumber);
-    } else if (contentType === 'example' && example) {
+    } else if (contentType === 'example') {
       setReadingContent({ 
-        text: typeof example === 'string' ? example : (example ? JSON.stringify(example) : ''), 
+        text: safeExample, 
         title: 'Exemplo' 
       });
     } else if (contentType === 'explanation' && customExplanation) {
@@ -206,9 +211,6 @@ const ArticleCard = ({
 
   const shouldLeftAlign = articleNumber === "esquerda nas linhas";
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
-
-  const safeContent = typeof content === 'string' ? content : (content ? JSON.stringify(content) : '');
-  const safeExample = typeof example === 'string' ? example : (example ? JSON.stringify(example) : '');
 
   return (
     <div className="card-article mb-6 hover:shadow-lg transition-all duration-300">
@@ -320,7 +322,7 @@ const ArticleCard = ({
         isOpen={showNotes}
         onClose={() => setShowNotes(false)}
         articleNumber={articleNumber}
-        articleContent={content || ""}
+        articleContent={safeContent}
         lawName={lawName}
       />
 
@@ -330,7 +332,7 @@ const ArticleCard = ({
             className="mb-4 whitespace-pre-wrap transition-all duration-200 text-left text-white"
             style={{ fontSize: `${fontSize + 2}px` }}
           >
-            {content || ""}
+            {safeContent}
           </p>
         </div>
       )}
