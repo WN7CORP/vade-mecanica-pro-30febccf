@@ -38,7 +38,7 @@ const Index = () => {
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-heading font-bold text-primary-300">
+          <h1 className="text-3xl font-heading font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-300 to-primary-500">
             VADE MECUM <span className="text-primary-100">PRO</span>
           </h1>
           <p className="text-gray-400 mt-2">
