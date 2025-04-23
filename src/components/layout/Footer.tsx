@@ -1,5 +1,5 @@
 
-import { HelpCircle, Users, User } from "lucide-react";
+import { Search, BookOpen, MessageCircle, Home, User, List } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Footer = () => {
@@ -10,17 +10,35 @@ const Footer = () => {
 
   const navItems = [
     {
-      icon: <HelpCircle size={20} />,
+      icon: <Home size={20} />,
+      label: "Início",
+      path: "/",
+      active: isActive("/")
+    },
+    {
+      icon: <Search size={20} />,
+      label: "Pesquisar",
+      path: "/pesquisa",
+      active: isActive("/pesquisa")
+    },
+    {
+      icon: <BookOpen size={20} />,
+      label: "Leis",
+      path: "/leis",
+      active: isActive("/leis")
+    },
+    {
+      icon: <MessageCircle size={20} />,
       label: "Dúvidas",
       path: "/duvidas",
       active: isActive("/duvidas")
     },
     {
-      icon: <Users size={20} />,
+      icon: <List size={20} />, // ÚNICO ícone diferente
       label: "Comunidade",
       path: "/comunidade",
       active: isActive("/comunidade"),
-      className: isActive("/comunidade") ? "text-primary-300 font-bold border-t-2 border-primary-300" : ""
+      className: "text-primary-300 font-bold border-t-2 border-primary-300"
     },
     {
       icon: <User size={20} />,

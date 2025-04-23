@@ -54,48 +54,46 @@ const PostCard = ({ post }: { post: Post }) => {
         return [];
       }
 
-      // Threading
+      // Process comments to build thread structure
       const threadedComments = [];
       const commentMap = new Map();
+      
+      // First pass: Add all comments to the map
       data.forEach(comment => {
-        commentMap.set(comment.id, { ...comment, replies: [] });
+        commentMap.set(comment.id, {...comment, replies: []});
       });
+      
+      // Second pass: Create the threaded structure
       data.forEach(comment => {
         const commentWithReplies = commentMap.get(comment.id);
+        
         if (comment.parent_comment_id) {
+          // This is a reply - add it to its parent
           const parent = commentMap.get(comment.parent_comment_id);
           if (parent) {
             parent.replies.push(commentWithReplies);
           } else {
+            // Fallback if parent doesn't exist
             threadedComments.push(commentWithReplies);
           }
         } else {
+          // This is a top-level comment
           threadedComments.push(commentWithReplies);
         }
       });
+      
       return threadedComments as Comment[];
     },
     enabled: showComments
   });
 
-  // Criação de comentário
+  // Create comment mutation
   const createCommentMutation = useMutation({
     mutationFn: async (commentContent: string) => {
-      if (commentContent.trim() === "") {
-        toast.error("Comentário não pode ser vazio.");
-        throw new Error("Comentário vazio");
-      }
-      // Busca o usuário autenticado
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData.user) {
-        toast.error("Você precisa estar logado para comentar.");
-        throw new Error("Usuário não autenticado");
-      }
-
       const { data, error } = await supabase.from('community_comments').insert({
         content: commentContent,
         post_id: post.id,
-        author_id: userData.user.id
+        author_id: (await supabase.auth.getUser()).data.user?.id
       });
 
       if (error) {
@@ -261,4 +259,5 @@ const PostCard = ({ post }: { post: Post }) => {
     </Card>
   );
 };
+
 export default PostCard;
