@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Award, Bookmark, Heart, MessageSquare } from "lucide-react";
+import { Award, Bookmark, Heart, MessageSquare, Film } from "lucide-react";
 import CommentList from "./CommentList";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,6 +19,7 @@ export interface Post {
   tags: string[];
   is_favorite?: boolean;
   best_tip_id?: string;
+  community_type?: 'general' | 'legislation' | 'movies'; 
 }
 
 export interface Comment {
@@ -53,7 +53,6 @@ const PostCard = ({ post }: { post: Post }) => {
         return { full_name: 'Usuário', avatar_url: null, default_avatar_id: null };
       }
 
-      // If user has default avatar, fetch it
       if (data.default_avatar_id && !data.avatar_url) {
         const { data: avatarData } = await supabase
           .from('default_avatars')
@@ -70,7 +69,6 @@ const PostCard = ({ post }: { post: Post }) => {
     }
   });
 
-  // Fetch current user data including avatar
   const { data: currentUserData } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
@@ -92,7 +90,6 @@ const PostCard = ({ post }: { post: Post }) => {
         return { full_name: 'Usuário', avatar_url: null, default_avatar_id: null };
       }
 
-      // If user has default avatar, fetch it
       if (data.default_avatar_id && !data.avatar_url) {
         const { data: avatarData } = await supabase
           .from('default_avatars')
@@ -228,7 +225,6 @@ const PostCard = ({ post }: { post: Post }) => {
     createCommentMutation.mutate(newComment);
   };
 
-  // Extract user data
   const authorName = authorData?.full_name || 'Usuário';
   const authorInitial = authorName.charAt(0).toUpperCase();
   const authorAvatarUrl = authorData?.avatar_url;
@@ -236,9 +232,11 @@ const PostCard = ({ post }: { post: Post }) => {
   const currentUserName = currentUserData?.full_name || 'Usuário';
   const currentUserInitial = currentUserName.charAt(0).toUpperCase();
   const currentUserAvatarUrl = currentUserData?.avatar_url;
+  
+  const isMoviePost = post.community_type === 'movies';
 
   return (
-    <Card className="mb-4 overflow-hidden border border-gray-800 bg-gray-900/50">
+    <Card className={`mb-4 overflow-hidden border border-gray-800 ${isMoviePost ? "bg-gray-900/70" : "bg-gray-900/50"}`}>
       <div className="p-4">
         <div className="flex items-center gap-3 mb-3">
           <Avatar>
@@ -260,6 +258,13 @@ const PostCard = ({ post }: { post: Post }) => {
               {formatDistanceToNow(new Date(post.created_at), { locale: ptBR, addSuffix: true })}
             </p>
           </div>
+          
+          {isMoviePost && (
+            <div className="ml-auto flex items-center gap-1 bg-primary-900/30 text-primary-300 text-xs px-2 py-0.5 rounded-full">
+              <Film size={12} />
+              <span>Filme</span>
+            </div>
+          )}
         </div>
 
         <div className="mb-3">

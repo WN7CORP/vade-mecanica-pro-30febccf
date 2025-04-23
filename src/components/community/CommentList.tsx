@@ -56,7 +56,7 @@ const CommentItem = ({
     mutationFn: async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       
-      // Fixed TypeScript error - Check if session exists before accessing user
+      // Check if session exists before accessing user
       if (!sessionData.session) {
         toast.error("Você precisa estar logado para curtir um comentário");
         throw new Error("User not authenticated");
@@ -78,6 +78,39 @@ const CommentItem = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['post-comments', postId] });
+    }
+  });
+
+  const addEmojiReactionMutation = useMutation({
+    mutationFn: async (emoji: string) => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        toast.error("Você precisa estar logado para reagir com emoji");
+        throw new Error("User not authenticated");
+      }
+
+      // In a real implementation, you would add to a reactions table
+      // For now, we'll just add the emoji to the comment content with a prefix
+      const newContent = `${comment.content} [${emoji}]`;
+      
+      const { data, error } = await supabase
+        .from('community_comments')
+        .update({ content: newContent })
+        .eq('id', comment.id)
+        .select();
+
+      if (error) {
+        toast.error("Erro ao adicionar emoji", { description: error.message });
+        throw error;
+      }
+
+      toast.success(`Emoji ${emoji} adicionado ao comentário!`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['post-comments', postId] });
+      setShowEmojiPicker(false);
     }
   });
 
@@ -119,6 +152,10 @@ const CommentItem = ({
 
   const handleLikeComment = () => {
     likeCommentMutation.mutate();
+  };
+
+  const handleEmojiSelection = (emoji: string) => {
+    addEmojiReactionMutation.mutate(emoji);
   };
 
   const emojis = ['👍', '❤️', '😂', '👏', '🎉', '👀', '🔥'];
@@ -195,12 +232,8 @@ const CommentItem = ({
                 variant="ghost"
                 size="sm"
                 className="text-lg hover:bg-primary-900/30 p-1 h-8 w-8"
-                onClick={() => {
-                  setShowEmojiPicker(false);
-                  toast.success(`Emoji ${emoji} selecionado`, { 
-                    description: "A inserção de emojis será implementada em breve!" 
-                  });
-                }}
+                onClick={() => handleEmojiSelection(emoji)}
+                disabled={addEmojiReactionMutation.isPending}
               >
                 {emoji}
               </Button>
