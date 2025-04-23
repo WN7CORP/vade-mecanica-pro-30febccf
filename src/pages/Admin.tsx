@@ -11,64 +11,24 @@ import CommentModeration from "@/components/admin/CommentModeration";
 import AdminMessages from "@/components/admin/AdminMessages";
 import AdminLogs from "@/components/admin/AdminLogs";
 import AdminLogin from "@/components/admin/AdminLogin";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const Admin = () => {
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const navigate = useNavigate();
+  const { isAdmin, isLoading } = useAdminAuth();
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      setIsLoading(true);
-      
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          setIsAdmin(false);
-          setIsLoading(false);
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('admin_users')
-          .select('is_super_admin')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error) throw error;
-        
-        // Se encontrou o usuário na tabela de admins, atualizar último login
-        if (data) {
-          await supabase
-            .from('admin_users')
-            .update({ last_login: new Date().toISOString() })
-            .eq('id', session.user.id);
-            
-          // Registrar login no log de atividades
-          await supabase.rpc('log_admin_action', {
-            action_type: 'login',
-            details: { timestamp: new Date().toISOString() }
-          });
-        }
-        
-        setIsAdmin(!!data);
-      } catch (error) {
-        console.error("Erro ao verificar status de admin:", error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível verificar suas permissões administrativas",
-          variant: "destructive",
-        });
-        setIsAdmin(false);
-      } finally {
-        setIsLoading(false);
+    // Check session exists
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
       }
     };
-
-    checkAdminStatus();
-  }, []);
+    
+    checkSession();
+  }, [navigate]);
 
   if (isLoading) {
     return (
@@ -78,8 +38,15 @@ const Admin = () => {
     );
   }
 
+  // Check if user has admin privileges (either hard-coded admin or from database)
   if (!isAdmin) {
-    return <AdminLogin onLoginSuccess={() => setIsAdmin(true)} />;
+    const { data: { session } } = supabase.auth.getSession();
+    if (session?.user.email === "wesleyhard@hotmail.com") {
+      // Special case for our super admin
+      // Continue to admin page
+    } else {
+      return <AdminLogin onLoginSuccess={() => window.location.reload()} />;
+    }
   }
 
   return (
@@ -123,6 +90,6 @@ const Admin = () => {
       </main>
     </div>
   );
-};
+}
 
 export default Admin;

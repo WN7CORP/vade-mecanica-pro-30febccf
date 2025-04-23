@@ -13,7 +13,9 @@ const Auth = () => {
     // Check for authenticated session and admin status
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        if (session.user.email === "wesleyhard@hotmail.com" || isAdmin) {
+        if (session.user.email === "wesleyhard@hotmail.com") {
+          navigate("/admin");
+        } else if (isAdmin) {
           navigate("/admin");
         } else {
           navigate("/");

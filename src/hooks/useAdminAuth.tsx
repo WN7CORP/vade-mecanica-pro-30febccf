@@ -20,27 +20,32 @@ export function useAdminAuth() {
           return;
         }
 
-        const { data, error } = await supabase
-          .from('admin_users')
-          .select('is_super_admin, email')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error) {
-          console.error("Error checking admin status:", error);
-          setIsAdmin(false);
-          setAdminEmail(null);
+        // Hard-coded admin check as temporary solution until proper admin table access is fixed
+        // This avoids recursive RLS policy issues
+        if (session.user.email === "wesleyhard@hotmail.com") {
+          setIsAdmin(true);
+          setAdminEmail(session.user.email);
         } else {
-          // Explicitly check if data exists and is an admin
-          setIsAdmin(!!data && data.is_super_admin);
-          setAdminEmail(data?.email || null);
-          
-          // Log admin login action
-          if (data && data.is_super_admin) {
-            await supabase.rpc('log_admin_action', {
-              action_type: 'login',
-              details: { timestamp: new Date().toISOString() }
-            });
+          // Still try the regular check but catch and handle errors
+          try {
+            const { data, error } = await supabase
+              .from('admin_users')
+              .select('is_super_admin, email')
+              .eq('id', session.user.id)
+              .single();
+
+            if (error) {
+              console.error("Error checking admin status in database:", error);
+              setIsAdmin(false);
+              setAdminEmail(null);
+            } else {
+              setIsAdmin(!!data && data.is_super_admin);
+              setAdminEmail(data?.email || null);
+            }
+          } catch (error) {
+            console.error("Error in admin status check:", error);
+            setIsAdmin(false);
+            setAdminEmail(null);
           }
         }
       } catch (error) {
