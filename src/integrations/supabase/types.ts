@@ -723,33 +723,6 @@ export type Database = {
         }
         Relationships: []
       }
-      direito_constitucional_flashcards: {
-        Row: {
-          created_at: string
-          explicacao: string | null
-          id: string
-          pergunta: string
-          resposta: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          explicacao?: string | null
-          id?: string
-          pergunta: string
-          resposta: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          explicacao?: string | null
-          id?: string
-          pergunta?: string
-          resposta?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       direito_desportivo_flashcards: {
         Row: {
           created_at: string

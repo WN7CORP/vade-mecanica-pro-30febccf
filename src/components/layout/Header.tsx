@@ -1,10 +1,10 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import MainNav from "./MainNav";
+import { MainNav } from "./MainNav";
 import ProfileMenu from "./ProfileMenu";
 import NotificationCenter from "./NotificationCenter";
-import BackButton from "@/components/ui/BackButton";
+import { BackButton } from "@/components/ui/BackButton";
 import { Book } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 

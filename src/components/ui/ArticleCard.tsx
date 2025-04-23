@@ -4,7 +4,7 @@ import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
 import ArticleContent from "./article/ArticleContent";
 import CopyToast from "./article/CopyToast";
-import VoiceNarration from "./ui/VoiceNarration";
+import VoiceNarration from "../ui/VoiceNarration";
 import ArticleInteractions from "./ArticleInteractions";
 import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
