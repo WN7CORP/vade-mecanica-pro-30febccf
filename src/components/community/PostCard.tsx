@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
@@ -43,14 +43,66 @@ const PostCard = ({ post }: { post: Post }) => {
     queryKey: ['user', post.author_id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('user_profiles') // Changed from 'profiles' to 'user_profiles'
-        .select('full_name')
+        .from('user_profiles')
+        .select('full_name, default_avatar_id, avatar_url')
         .eq('id', post.author_id)
         .single();
 
       if (error) {
         console.error('Error fetching author:', error);
-        return { full_name: 'Usuário' };
+        return { full_name: 'Usuário', avatar_url: null, default_avatar_id: null };
+      }
+
+      // If user has default avatar, fetch it
+      if (data.default_avatar_id && !data.avatar_url) {
+        const { data: avatarData } = await supabase
+          .from('default_avatars')
+          .select('url')
+          .eq('id', data.default_avatar_id)
+          .single();
+
+        if (avatarData) {
+          return { ...data, avatar_url: avatarData.url };
+        }
+      }
+
+      return data;
+    }
+  });
+
+  // Fetch current user data including avatar
+  const { data: currentUserData } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        return null;
+      }
+      
+      const userId = sessionData.session.user.id;
+      
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('full_name, default_avatar_id, avatar_url')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching current user:', error);
+        return { full_name: 'Usuário', avatar_url: null, default_avatar_id: null };
+      }
+
+      // If user has default avatar, fetch it
+      if (data.default_avatar_id && !data.avatar_url) {
+        const { data: avatarData } = await supabase
+          .from('default_avatars')
+          .select('url')
+          .eq('id', data.default_avatar_id)
+          .single();
+
+        if (avatarData) {
+          return { ...data, avatar_url: avatarData.url };
+        }
       }
 
       return data;
@@ -176,20 +228,33 @@ const PostCard = ({ post }: { post: Post }) => {
     createCommentMutation.mutate(newComment);
   };
 
+  // Extract user data
+  const authorName = authorData?.full_name || 'Usuário';
+  const authorInitial = authorName.charAt(0).toUpperCase();
+  const authorAvatarUrl = authorData?.avatar_url;
+
+  const currentUserName = currentUserData?.full_name || 'Usuário';
+  const currentUserInitial = currentUserName.charAt(0).toUpperCase();
+  const currentUserAvatarUrl = currentUserData?.avatar_url;
+
   return (
     <Card className="mb-4 overflow-hidden border border-gray-800 bg-gray-900/50">
       <div className="p-4">
         <div className="flex items-center gap-3 mb-3">
           <Avatar>
-            <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
-              <span className="text-lg font-medium text-gray-300">
-                {authorData?.full_name?.charAt(0) || 'U'}
-              </span>
-            </div>
+            {authorAvatarUrl ? (
+              <AvatarImage src={authorAvatarUrl} alt={authorName} />
+            ) : (
+              <AvatarFallback className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
+                <span className="text-lg font-medium text-gray-300">
+                  {authorInitial}
+                </span>
+              </AvatarFallback>
+            )}
           </Avatar>
           <div>
             <h3 className="font-medium text-gray-200">
-              {authorData?.full_name || 'Usuário'}
+              {authorName}
             </h3>
             <p className="text-xs text-gray-400">
               {formatDistanceToNow(new Date(post.created_at), { locale: ptBR, addSuffix: true })}
@@ -259,9 +324,15 @@ const PostCard = ({ post }: { post: Post }) => {
           <form onSubmit={handleSubmitComment} className="mt-4">
             <div className="flex gap-3">
               <Avatar>
-                <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-300">U</span>
-                </div>
+                {currentUserAvatarUrl ? (
+                  <AvatarImage src={currentUserAvatarUrl} alt={currentUserName} />
+                ) : (
+                  <AvatarFallback className="bg-gray-700">
+                    <span className="text-sm font-medium text-gray-300">
+                      {currentUserInitial}
+                    </span>
+                  </AvatarFallback>
+                )}
               </Avatar>
               <input
                 type="text"
