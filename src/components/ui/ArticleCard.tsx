@@ -137,67 +137,43 @@ const ArticleCard = ({
     setShowCustomExplanation(false);
     setCustomExplanation(null);
     setExplanationTitle("");
-    let explanation = null;
     let title = "";
-    if (type === "technical") {
-      explanation = (content as any)?.explicacao_tecnica || (example as any)?.explicacao_tecnica;
-      title = "Explicação Técnica";
-    } else {
-      explanation = (content as any)?.explicacao_formal || (example as any)?.explicacao_formal;
-      title = "Explicação Formal";
-    }
-    // Se ArticleCard recebeu as propriedades, vão estar como props, não dentro do content
-    // Então vamos esperar essas props serem repassadas pelo ArticleList
-    // Mas por via das dúvidas, tentamos os dois padrões
-    if ((type === "technical" && (content as any).explicacao_tecnica) ||
-        (type === "formal" && (content as any).explicacao_formal)) {
-      explanation = (content as any)[type === "technical" ? "explicacao_tecnica" : "explicacao_formal"];
-    } else if (
-      type === "technical" && (example as any)?.explicacao_tecnica
-    ) {
-      explanation = (example as any).explicacao_tecnica;
-    } else if (
-      type === "formal" && (example as any)?.explicacao_formal
-    ) {
-      explanation = (example as any).explicacao_formal;
-    } else if (
-      type === "technical" && (arguments.length === 2 && typeof arguments[1] === "object") && (arguments[1] as any).explicacao_tecnica
-    ) {
-      explanation = (arguments[1] as any).explicacao_tecnica;
-    } else if (
-      type === "formal" && (arguments.length === 2 && typeof arguments[1] === "object") && (arguments[1] as any).explicacao_formal
-    ) {
-      explanation = (arguments[1] as any).explicacao_formal;
-    }
-    // Alternativa: tentar acessar via props se forem passadas
-    if (type === "technical" && (arguments[0] as any)?.explicacao_tecnica) {
-      explanation = (arguments[0] as any).explicacao_tecnica;
-    }
-    if (type === "formal" && (arguments[0] as any)?.explicacao_formal) {
-      explanation = (arguments[0] as any).explicacao_formal;
-    }
-    // Por fim fallback: se veio como prop, pode estar direto: ArticleCardProps add essas props
     
-    if (type === "technical" && (articleNumber as any)?.explicacao_tecnica) {
-      explanation = (articleNumber as any).explicacao_tecnica;
-    }
-    if (type === "formal" && (articleNumber as any)?.explicacao_formal) {
-      explanation = (articleNumber as any).explicacao_formal;
-    }
-
-    // Nova versão: Recebe por props as colunas explicacao_tecnica e explicacao_formal
-    // Se não achar nada, não mostra
-
-    setExplanationTitle(title);
-    if (type === "technical" && (content as any)?.explicacao_tecnica) {
-      setCustomExplanation((content as any).explicacao_tecnica);
-    } else if (type === "formal" && (content as any)?.explicacao_formal) {
-      setCustomExplanation((content as any).explicacao_formal);
+    if (type === "technical") {
+      title = "Explicação Técnica";
+      
+      // Verifica se a explicação técnica está disponível no content
+      if ((content as any)?.explicacao_tecnica) {
+        setCustomExplanation((content as any).explicacao_tecnica);
+      } 
+      // Se não estiver no content, verifica no example
+      else if (example && (example as any)?.explicacao_tecnica) {
+        setCustomExplanation((example as any).explicacao_tecnica);
+      }
+      // Se não encontrar em nenhum lugar
+      else {
+        setCustomExplanation("Não há explicação técnica disponível para este artigo.");
+      }
     } else {
-      // fallback (não encontrado)
-      setCustomExplanation("Não há explicação disponível para este artigo.");
+      title = "Explicação Formal";
+      
+      // Verifica se a explicação formal está disponível no content
+      if ((content as any)?.explicacao_formal) {
+        setCustomExplanation((content as any).explicacao_formal);
+      }
+      // Se não estiver no content, verifica no example
+      else if (example && (example as any)?.explicacao_formal) {
+        setCustomExplanation((example as any).explicacao_formal);
+      }
+      // Se não encontrar em nenhum lugar
+      else {
+        setCustomExplanation("Não há explicação formal disponível para este artigo.");
+      }
     }
+    
+    setExplanationTitle(title);
     setShowCustomExplanation(true);
+    
     if (userId) {
       logUserActivity('explain', lawName, articleNumber);
     }
