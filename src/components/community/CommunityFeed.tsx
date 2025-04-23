@@ -49,36 +49,22 @@ interface CommunityFeedProps {
   onIncreaseFont: () => void;
   onDecreaseFont: () => void;
   communityType: 'general' | 'legislation' | 'movies';
+  filter: string;
 }
 
-const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont, communityType = 'general' }: CommunityFeedProps) => {
+const CommunityFeed = ({ 
+  fontSize, 
+  onIncreaseFont, 
+  onDecreaseFont, 
+  communityType = 'general',
+  filter = 'recent'
+}: CommunityFeedProps) => {
   const queryClient = useQueryClient();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newPostContent, setNewPostContent] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
-
-  const getTags = () => {
-    switch(communityType) {
-      case 'legislation': return LEGISLATION_TAGS;
-      case 'movies': return MOVIE_TAGS;
-      default: return GENERAL_TAGS;
-    }
-  };
-
-  const getPlaceholderText = () => {
-    switch(communityType) {
-      case 'legislation':
-        return "Compartilhe dúvidas ou informações sobre legislações...";
-      case 'movies':
-        return "Recomende um filme jurídico ou discuta sobre um título...";
-      default:
-        return "Compartilhe uma dúvida ou dica com a comunidade...";
-    }
-  };
 
   const { data: posts, isLoading } = useQuery({
-    queryKey: ['community-posts', activeFilter, sortBy, communityType],
+    queryKey: ['community-posts', filter, communityType],
     queryFn: async () => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
@@ -86,28 +72,23 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont, communityType
         return [];
       }
 
-      let query = supabase.from('community_posts').select(`
-        id, 
-        content, 
-        author_id, 
-        created_at, 
-        likes, 
-        tags,
-        is_favorite,
-        best_tip_id,
-        community_type
-      `);
+      let query = supabase
+        .from('community_posts')
+        .select(`
+          *,
+          author:user_profiles!community_posts_author_id_fkey(
+            id,
+            full_name
+          ),
+          comments:community_comments(count)
+        `);
       
       query = query.eq('community_type', communityType);
 
-      if (activeFilter !== 'all') {
-        query = query.contains('tags', [activeFilter]);
-      }
-
-      if (sortBy === 'recent') {
-        query = query.order('created_at', { ascending: false });
-      } else {
+      if (filter === 'engagement') {
         query = query.order('likes', { ascending: false });
+      } else {
+        query = query.order('created_at', { ascending: false });
       }
 
       const { data, error } = await query;
@@ -117,7 +98,10 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont, communityType
         return [];
       }
 
-      return data as Post[];
+      return data.map(post => ({
+        ...post,
+        commentCount: post.comments?.[0]?.count || 0
+      }));
     }
   });
 
@@ -282,6 +266,7 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont, communityType
             <PostCard 
               key={post.id} 
               post={post}
+              commentCount={post.commentCount}
             />
           ))
         ) : (

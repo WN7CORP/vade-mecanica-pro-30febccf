@@ -2,6 +2,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useRankings } from "@/hooks/useRankings";
+import { ActivityChart } from "@/components/profile/ActivityChart";
 import {
   Sidebar,
   SidebarContent,
@@ -12,8 +13,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { MessageSquare, TrendingUp, Users } from "lucide-react";
+import { MessageSquare, TrendingUp, Users, BarChart, Clock, Activity } from "lucide-react";
 
 export function CommunitySidebar() {
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ export function CommunitySidebar() {
                 <SidebarMenuButton asChild>
                   <button onClick={() => navigate("/comunidade")}>
                     <MessageSquare />
-                    <span>Feed</span>
+                    <span>Feed Principal</span>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -48,9 +50,36 @@ export function CommunitySidebar() {
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <button onClick={() => navigate("/comunidade?filter=engagement")}>
+                    <Activity />
+                    <span>Mais Engajadas</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <button onClick={() => navigate("/comunidade?filter=recent")}>
+                    <Clock />
+                    <span>Recentes</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Atividade Semanal</SidebarGroupLabel>
+          <SidebarGroupContent className="px-2">
+            <ActivityChart />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
 
         <SidebarGroup>
           <SidebarGroupLabel>Top Usuários</SidebarGroupLabel>

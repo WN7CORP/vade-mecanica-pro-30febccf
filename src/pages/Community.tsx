@@ -1,5 +1,5 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CommunityFeed from "@/components/community/CommunityFeed";
 import CommunityRanking from "@/components/community/CommunityRanking";
@@ -40,9 +40,13 @@ const CommunityHeaderCompact = () => {
 };
 
 const Community = () => {
+  const [searchParams] = useSearchParams();
   const [fontSize, setFontSize] = useState(16);
   const [communityType, setCommunityType] = useState<'general' | 'legislation' | 'movies'>('general');
   const isMobile = useIsMobile();
+  
+  const filter = searchParams.get('filter') || 'recent';
+  const tab = searchParams.get('tab') || 'feed';
 
   const getCommunityTitle = () => {
     switch(communityType) {
@@ -59,7 +63,7 @@ const Community = () => {
         <div className="flex-1">
           <div className="container max-w-3xl mx-auto pt-0 pb-32 px-0 sm:px-2">
             <CommunityHeaderCompact />
-            <Tabs defaultValue="feed" className="w-full">
+            <Tabs defaultValue={tab} className="w-full">
               <TabsList className="mb-4 mt-1 w-full flex bg-gray-900">
                 <TabsTrigger value="feed" className="flex-1">
                   Feed
@@ -118,6 +122,7 @@ const Community = () => {
                   onIncreaseFont={() => setFontSize((s) => Math.min(26, s + 2))}
                   onDecreaseFont={() => setFontSize((s) => Math.max(12, s - 2))}
                   communityType={communityType}
+                  filter={filter}
                 />
               </TabsContent>
               
