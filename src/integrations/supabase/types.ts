@@ -1098,31 +1098,43 @@ export type Database = {
           average_rating: number | null
           category_id: string | null
           created_at: string | null
+          description: string | null
+          director: string | null
           id: string
           poster_url: string
           rating_count: number | null
           title: string
+          tmdb_poster_path: string | null
           year: number
+          youtube_trailer_url: string | null
         }
         Insert: {
           average_rating?: number | null
           category_id?: string | null
           created_at?: string | null
+          description?: string | null
+          director?: string | null
           id?: string
           poster_url: string
           rating_count?: number | null
           title: string
+          tmdb_poster_path?: string | null
           year: number
+          youtube_trailer_url?: string | null
         }
         Update: {
           average_rating?: number | null
           category_id?: string | null
           created_at?: string | null
+          description?: string | null
+          director?: string | null
           id?: string
           poster_url?: string
           rating_count?: number | null
           title?: string
+          tmdb_poster_path?: string | null
           year?: number
+          youtube_trailer_url?: string | null
         }
         Relationships: [
           {

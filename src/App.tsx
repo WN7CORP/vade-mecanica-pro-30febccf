@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Community from "./pages/Community";
 import MovieRecommendations from "./pages/MovieRecommendations";
+import MovieDetails from "./pages/MovieDetails";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +37,7 @@ const App = () => (
           <Route path="/perfil" element={<Profile />} />
           <Route path="/comunidade" element={<Community />} />
           <Route path="/filmes" element={<MovieRecommendations />} />
-          <Route path="/filmes/:id" element={<MovieRecommendations />} />
+          <Route path="/filmes/:id" element={<MovieDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
