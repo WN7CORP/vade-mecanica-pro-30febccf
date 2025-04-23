@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ const PostCard = ({ post }: { post: Post }) => {
     queryKey: ['user', post.author_id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user_profiles') // Changed from 'profiles' to 'user_profiles'
         .select('full_name')
         .eq('id', post.author_id)
         .single();
