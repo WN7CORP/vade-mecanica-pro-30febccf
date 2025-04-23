@@ -23,12 +23,15 @@ export function useAdminMetrics() {
     setIsLoading(true);
     
     try {
-      // 1. Total de usuários
+      // 1. Total de usuários - usando contagem da tabela user_profiles
       const { count: totalUsers, error: usersError } = await supabase
         .from('user_profiles')
         .select('*', { count: 'exact', head: true });
       
-      if (usersError) throw usersError;
+      if (usersError) {
+        console.error("Erro ao buscar total de usuários:", usersError);
+        // Continuar mesmo com erro para tentar obter outras métricas
+      }
       
       // 2. Tempo médio de sessão
       const { data: sessionData, error: sessionError } = await supabase
@@ -36,7 +39,9 @@ export function useAdminMetrics() {
         .select('duration')
         .not('duration', 'is', null);
       
-      if (sessionError) throw sessionError;
+      if (sessionError) {
+        console.error("Erro ao buscar tempo de sessão:", sessionError);
+      }
       
       let averageSessionTime = 0;
       if (sessionData && sessionData.length > 0) {
@@ -49,17 +54,37 @@ export function useAdminMetrics() {
         .from('community_comments')
         .select('*', { count: 'exact', head: true });
       
-      if (commentsError) throw commentsError;
+      if (commentsError) {
+        console.error("Erro ao buscar total de comentários:", commentsError);
+      }
       
-      // 4. Total de curtidas
+      // 4. Total de curtidas - buscando diretamente da tabela de métricas
       const { data: likesData, error: likesError } = await supabase
         .from('community_metrics')
         .select('metric_value')
         .eq('metric_name', 'curtidas_geral')
         .single();
       
-      // Se não encontrar a métrica, assume zero
-      const totalLikes = likesData?.metric_value || 0;
+      if (likesError && likesError.code !== 'PGRST116') { // Ignorar erro de não encontrado
+        console.error("Erro ao buscar total de curtidas:", likesError);
+      }
+      
+      // Se não encontrar a métrica, calcula diretamente
+      let totalLikes = likesData?.metric_value || 0;
+      if (!likesData) {
+        const { data: postsLikes } = await supabase
+          .from('community_posts')
+          .select('likes');
+          
+        const { data: commentsLikes } = await supabase
+          .from('community_comments')
+          .select('likes');
+          
+        const postLikesSum = postsLikes?.reduce((sum, post) => sum + (post.likes || 0), 0) || 0;
+        const commentLikesSum = commentsLikes?.reduce((sum, comment) => sum + (comment.likes || 0), 0) || 0;
+        
+        totalLikes = postLikesSum + commentLikesSum;
+      }
       
       // 5. Banimentos ativos
       const { count: activeBans, error: bansError } = await supabase
@@ -67,7 +92,9 @@ export function useAdminMetrics() {
         .select('*', { count: 'exact', head: true })
         .or('expires_at.gt.now,expires_at.is.null');
       
-      if (bansError) throw bansError;
+      if (bansError) {
+        console.error("Erro ao buscar banimentos ativos:", bansError);
+      }
       
       // 6. Denúncias pendentes
       const { count: pendingReports, error: reportsError } = await supabase
@@ -75,15 +102,18 @@ export function useAdminMetrics() {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
       
-      if (reportsError) throw reportsError;
+      if (reportsError) {
+        console.error("Erro ao buscar denúncias pendentes:", reportsError);
+      }
 
       // 7. Dados para gráfico de distribuição de atividades
-      // Fix: Usando agregação manual em vez do método group
       const { data: activityData, error: activityError } = await supabase
         .from('user_statistics')
         .select('action_type');
       
-      if (activityError) throw activityError;
+      if (activityError) {
+        console.error("Erro ao buscar dados de atividade:", activityError);
+      }
       
       // Processar dados manualmente para criar contagem por action_type
       const activityCounts: Record<string, number> = {};
@@ -103,14 +133,18 @@ export function useAdminMetrics() {
         .order('login_time', { ascending: false })
         .limit(100);
       
-      if (loginError) throw loginError;
+      if (loginError) {
+        console.error("Erro ao buscar dados de login:", loginError);
+      }
       
       // Agrupar por dia
       const dailyLoginMap = new Map();
       
       loginData?.forEach(session => {
-        const date = new Date(session.login_time).toISOString().split('T')[0];
-        dailyLoginMap.set(date, (dailyLoginMap.get(date) || 0) + 1);
+        if (session.login_time) {
+          const date = new Date(session.login_time).toISOString().split('T')[0];
+          dailyLoginMap.set(date, (dailyLoginMap.get(date) || 0) + 1);
+        }
       });
       
       // Ultimos 7 dias

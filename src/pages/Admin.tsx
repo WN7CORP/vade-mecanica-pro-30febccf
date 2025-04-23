@@ -25,6 +25,11 @@ const Admin = () => {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Session check error:", error);
+          toast({
+            title: "Sessão expirada",
+            description: "Você precisa fazer login novamente.",
+            variant: "destructive",
+          });
           navigate("/auth");
           return;
         }
@@ -95,6 +100,6 @@ const Admin = () => {
       </main>
     </div>
   );
-}
+};
 
 export default Admin;

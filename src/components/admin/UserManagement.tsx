@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -73,20 +72,17 @@ interface User {
   banned?: boolean;
 }
 
-// Schema para cadastro de novo usuário
 const newUserSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
   full_name: z.string().min(3, "Nome completo é obrigatório"),
 });
 
-// Schema para banimento de usuário
 const banUserSchema = z.object({
   reason: z.string().min(5, "Motivo é obrigatório"),
   duration: z.string(),
 });
 
-// Schema para envio de mensagem
 const messageSchema = z.object({
   content: z.string().min(5, "Mensagem é obrigatória"),
 });
@@ -106,7 +102,6 @@ const UserManagement = () => {
   
   const ITEMS_PER_PAGE = 10;
 
-  // Forms
   const newUserForm = useForm<z.infer<typeof newUserSchema>>({
     resolver: zodResolver(newUserSchema),
     defaultValues: {
@@ -135,28 +130,15 @@ const UserManagement = () => {
     setIsLoading(true);
     
     try {
-      // Fix: Handle pagination data more robustly, including total count
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers({
-        page: page,
-        perPage: ITEMS_PER_PAGE,
-      });
-      
-      if (authError) throw authError;
-      
-      // Safely access the users array and other pagination data
-      const authUsers = authData?.users || [];
-      
-      // Agora busca dados de perfil adicional
-      const userIds = authUsers.map(user => user.id);
-      
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData, error: profileError, count } = await supabase
         .from('user_profiles')
-        .select('*')
-        .in('id', userIds);
+        .select('*', { count: 'exact' })
+        .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1);
       
       if (profileError) throw profileError;
       
-      // Verificando banimentos
+      const userIds = profileData?.map(profile => profile.id) || [];
+      
       const { data: bans, error: bansError } = await supabase
         .from('user_bans')
         .select('user_id')
@@ -167,47 +149,24 @@ const UserManagement = () => {
       
       const bannedUserIds = new Set(bans?.map(ban => ban.user_id) || []);
       
-      // Combinando os dados
-      const combinedUsers = authUsers.map(authUser => {
-        const profile = profileData?.find(p => p.id === authUser.id);
-        return {
-          id: authUser.id,
-          email: authUser.email || '',
-          username: profile?.username || '',
-          full_name: profile?.full_name || authUser.user_metadata?.full_name || '',
-          created_at: authUser.created_at,
-          points: profile?.points || 0,
-          last_active: profile?.updated_at || authUser.last_sign_in_at || '',
-          banned: bannedUserIds.has(authUser.id)
-        };
-      });
+      const combinedUsers = profileData?.map(profile => ({
+        id: profile.id,
+        email: profile.username || '',
+        username: profile.username || '',
+        full_name: profile.full_name || '',
+        created_at: profile.created_at,
+        points: profile.points || 0,
+        last_active: profile.updated_at || '',
+        banned: bannedUserIds.has(profile.id)
+      })) || [];
       
-      // Calculating total pages - using correct property based on response type
-      let totalCount = 0;
-      if (authData) {
-        // The property may exist directly on authData or via a metadata field
-        // Try common patterns for pagination data
-        if ('total_users' in authData) {
-          totalCount = (authData as any).total_users;
-        } else if ('count' in authData) {
-          totalCount = (authData as any).count;
-        } else if (authUsers.length < ITEMS_PER_PAGE && page === 1) {
-          // If we have fewer users than the page size on the first page,
-          // we can assume that's the total
-          totalCount = authUsers.length;
-        } else {
-          // Estimate at least enough for the current page
-          totalCount = page * ITEMS_PER_PAGE;
-        }
-      }
-      
+      const totalCount = count || 0;
       const calculatedTotalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
       
       setUsers(combinedUsers);
       setFilteredUsers(combinedUsers);
       setTotalPages(calculatedTotalPages);
       
-      // Log da ação
       await supabase.rpc('log_admin_action', {
         action_type: 'view_users',
         details: { page: page }
@@ -228,12 +187,10 @@ const UserManagement = () => {
     }
   };
 
-  // Efeito inicial para carregar usuários
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // Efeito para filtrar usuários quando o termo de busca é alterado
   useEffect(() => {
     if (searchTerm) {
       const filtered = users.filter(
@@ -248,26 +205,23 @@ const UserManagement = () => {
     }
   }, [searchTerm, users]);
 
-  // Mudar de página
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     fetchUsers(page);
   };
 
-  // Criar novo usuário
   const handleCreateUser = async (values: z.infer<typeof newUserSchema>) => {
     try {
-      // Criar usuário na autenticação Supabase
-      const { data, error } = await supabase.auth.admin.createUser({
+      const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
-        email_confirm: true,
-        user_metadata: { full_name: values.full_name }
+        options: {
+          data: { full_name: values.full_name }
+        }
       });
 
       if (error) throw error;
 
-      // Log da ação
       await supabase.rpc('log_admin_action', {
         action_type: 'create_user',
         details: { 
@@ -281,7 +235,6 @@ const UserManagement = () => {
         description: `O usuário ${values.email} foi criado`,
       });
       
-      // Fechar diálogo e recarregar usuários
       setIsNewUserDialogOpen(false);
       newUserForm.reset();
       fetchUsers(currentPage);
@@ -296,19 +249,17 @@ const UserManagement = () => {
     }
   };
 
-  // Excluir usuário
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     
     try {
-      // Deletar usuário
-      const { error } = await supabase.auth.admin.deleteUser(
-        selectedUser.id
-      );
-
-      if (error) throw error;
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', selectedUser.id);
+        
+      if (profileError) throw profileError;
       
-      // Log da ação
       await supabase.rpc('log_admin_action', {
         action_type: 'delete_user',
         details: { 
@@ -323,7 +274,6 @@ const UserManagement = () => {
         description: `O usuário ${selectedUser.email} foi excluído`,
       });
       
-      // Fechar diálogo e recarregar usuários
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
       fetchUsers(currentPage);
@@ -338,14 +288,12 @@ const UserManagement = () => {
     }
   };
 
-  // Banir usuário
   const handleBanUser = async (values: z.infer<typeof banUserSchema>) => {
     if (!selectedUser) return;
     
     try {
       let expiresAt = null;
       
-      // Calcular data de expiração se não for permanente
       if (values.duration !== 'permanent') {
         const days = parseInt(values.duration.replace('d', ''));
         const date = new Date();
@@ -353,12 +301,10 @@ const UserManagement = () => {
         expiresAt = date.toISOString();
       }
       
-      // Obter ID do admin
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) throw new Error("Sessão administrativa não encontrada");
       
-      // Inserir registro de banimento
       const { error } = await supabase
         .from('user_bans')
         .insert({
@@ -370,7 +316,6 @@ const UserManagement = () => {
 
       if (error) throw error;
       
-      // Log da ação
       await supabase.rpc('log_admin_action', {
         action_type: 'ban_user',
         details: { 
@@ -387,7 +332,6 @@ const UserManagement = () => {
         description: `O usuário ${selectedUser.email} foi banido`,
       });
       
-      // Fechar diálogo e recarregar usuários
       setIsBanDialogOpen(false);
       banUserForm.reset();
       setSelectedUser(null);
@@ -403,17 +347,14 @@ const UserManagement = () => {
     }
   };
 
-  // Enviar mensagem ao usuário
   const handleSendMessage = async (values: z.infer<typeof messageSchema>) => {
     if (!selectedUser) return;
     
     try {
-      // Obter ID do admin
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) throw new Error("Sessão administrativa não encontrada");
       
-      // Inserir mensagem
       const { error } = await supabase
         .from('admin_messages')
         .insert({
@@ -424,7 +365,6 @@ const UserManagement = () => {
 
       if (error) throw error;
       
-      // Log da ação
       await supabase.rpc('log_admin_action', {
         action_type: 'send_message',
         details: { 
@@ -439,7 +379,6 @@ const UserManagement = () => {
         description: `Mensagem enviada para ${selectedUser.email}`,
       });
       
-      // Fechar diálogo
       setIsMessageDialogOpen(false);
       messageForm.reset();
       setSelectedUser(null);
@@ -454,7 +393,6 @@ const UserManagement = () => {
     }
   };
 
-  // Desbanir usuário
   const handleUnbanUser = async (user: User) => {
     try {
       const { error } = await supabase
@@ -464,7 +402,6 @@ const UserManagement = () => {
 
       if (error) throw error;
       
-      // Log da ação
       await supabase.rpc('log_admin_action', {
         action_type: 'unban_user',
         details: { 
@@ -479,7 +416,6 @@ const UserManagement = () => {
         description: `O usuário ${user.email} foi desbanido`,
       });
       
-      // Recarregar usuários
       fetchUsers(currentPage);
       
     } catch (error: any) {
@@ -560,7 +496,6 @@ const UserManagement = () => {
         </Dialog>
       </div>
 
-      {/* Busca */}
       <div className="flex items-center space-x-2">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -573,7 +508,6 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Tabela de usuários */}
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
@@ -680,7 +614,6 @@ const UserManagement = () => {
         </Table>
       </div>
 
-      {/* Paginação */}
       {totalPages > 1 && (
         <Pagination className="mt-4">
           <PaginationContent>
@@ -726,7 +659,6 @@ const UserManagement = () => {
         </Pagination>
       )}
 
-      {/* Diálogo de confirmação de exclusão */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -749,7 +681,6 @@ const UserManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de banimento */}
       <Dialog open={isBanDialogOpen} onOpenChange={setIsBanDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -805,7 +736,6 @@ const UserManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo de enviar mensagem */}
       <Dialog open={isMessageDialogOpen} onOpenChange={setIsMessageDialogOpen}>
         <DialogContent>
           <DialogHeader>
