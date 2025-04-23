@@ -30,22 +30,25 @@ const MovieRecommendations = () => {
   const { data: movies, isLoading } = useQuery({
     queryKey: ['legal-movies', selectedCategory, searchTerm],
     queryFn: async () => {
-      // Using a more explicit type assertion approach
-      const query = supabase.from('legal_movies')
+      // Cast the entire supabase instance to any to bypass type checking
+      const supabaseAny = supabase as any;
+      
+      // Build the query
+      let query = supabaseAny.from('legal_movies')
         .select(`
           *,
           movie_tag_relations(
             movie_tags(name)
           ),
           category:movie_categories(name)
-        `) as unknown as any;
+        `);
 
       if (selectedCategory) {
-        query.eq('category_id', selectedCategory);
+        query = query.eq('category_id', selectedCategory);
       }
 
       if (searchTerm) {
-        query.ilike('title', `%${searchTerm}%`);
+        query = query.ilike('title', `%${searchTerm}%`);
       }
 
       const { data, error } = await query;
