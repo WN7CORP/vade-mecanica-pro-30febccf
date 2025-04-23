@@ -58,9 +58,17 @@ const CommentItem = ({
         throw new Error("User not authenticated");
       }
 
+      const { data: commentData } = await supabase
+        .from('community_comments')
+        .select('likes')
+        .eq('id', comment.id)
+        .single();
+
+      if (!commentData) throw new Error("Comment not found");
+
       const { data, error } = await supabase
         .from('community_comments')
-        .update({ likes: comment.likes + 1 })
+        .update({ likes: commentData.likes + 1 })
         .eq('id', comment.id)
         .select();
 
@@ -69,6 +77,7 @@ const CommentItem = ({
         throw error;
       }
 
+      toast.success("Comentário curtido!");
       return data;
     },
     onSuccess: () => {
