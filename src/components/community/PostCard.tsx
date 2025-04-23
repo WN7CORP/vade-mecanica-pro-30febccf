@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -35,6 +34,7 @@ export interface Comment {
   createdAt: Date;
   likes: number;
   isBestTip?: boolean;
+  replies?: Comment[]; // Added replies property
 }
 
 interface PostCardProps {

@@ -91,23 +91,6 @@ interface CommunityFeedProps {
   onDecreaseFont: () => void;
 }
 
-const renderThreadedComments = (comments: any[], depth = 0) =>
-  comments.map((comment) => (
-    <div key={comment.id} className={`ml-${Math.min(depth * 4, 12)} border-l-2 border-gray-800 pl-3 mt-2`}>
-      <div className="flex gap-2 items-center text-xs">
-        <span className="font-bold text-primary-200">{comment.author.name}</span>
-        <span className="text-gray-500">{Math.floor((Date.now() - new Date(comment.createdAt).getTime()) / 60000)}min atrás</span>
-        {comment.isBestTip && <span className="ml-1 px-2 py-0.5 bg-purple-600/30 text-purple-200 rounded text-xxs">Melhor Dica</span>}
-      </div>
-      <div className="my-1 text-gray-200 text-sm">{comment.content}</div>
-      <div className="flex gap-3 items-center mb-2">
-        <Button size="sm" variant="ghost" className="text-primary-200 px-1">Curtir</Button>
-        <Button size="sm" variant="ghost" className="text-primary-200 px-1">Responder</Button>
-      </div>
-      {comment.replies && comment.replies.length > 0 && renderThreadedComments(comment.replies, depth + 1)}
-    </div>
-  ));
-
 const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }: CommunityFeedProps) => {
   const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
   const [activeFilter, setActiveFilter] = useState("all");
@@ -277,34 +260,14 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }: CommunityFe
 
       <div className="space-y-4">
         {sortedPosts.map((post) => (
-          <Card key={post.id} className="p-4 border border-gray-800 bg-gray-900/50">
-            <div className="mb-2">
-              <span className="font-semibold text-primary-200">{post.author.name}</span>
-              <span className="ml-2 text-xs text-gray-500">{Math.floor((Date.now() - new Date(post.createdAt).getTime())/60000)}min atrás</span>
-              {post.tags && (
-                <div className="mt-1 flex gap-1 flex-wrap">
-                  {post.tags.map((tag: string) => (
-                    <span key={tag} className="px-2 py-0.5 bg-primary-300/10 text-primary-200 text-xs rounded">{tag}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="my-2 text-gray-100" style={{ fontSize }}>
-              {post.content}
-            </div>
-            <div className="flex gap-4 mt-2 items-center">
-              <Button size="sm" variant="ghost" className="hover:text-primary-300 px-2" onClick={() => handleLike(post.id)}>
-                Curtir {post.likes > 0 && <span className="ml-1 text-primary-200">{post.likes}</span>}
-              </Button>
-              <Button size="sm" variant="ghost" className="hover:text-primary-300 px-2">
-                Comentar
-              </Button>
-              {/* Outros ícones: copiar, favoritar, grifar seriam implementados aqui */}
-            </div>
-            <div className="mt-2">
-              {post.comments?.length > 0 && renderThreadedComments(post.comments)}
-            </div>
-          </Card>
+          <PostCard 
+            key={post.id} 
+            post={post}
+            onLike={handleLike}
+            onComment={handleComment}
+            onSetBestTip={handleSetBestTip}
+            onToggleFavorite={handleToggleFavorite}
+          />
         ))}
       </div>
     </div>
