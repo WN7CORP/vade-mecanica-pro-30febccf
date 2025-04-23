@@ -42,7 +42,7 @@ const Index = () => {
             VADE MECUM <span className="text-primary-100">PRO</span>
           </h1>
           <p className="text-gray-400 mt-2">
-            Seu assistente jurídico inteligente
+            Vade Mecum Profissional
           </p>
         </div>
         
