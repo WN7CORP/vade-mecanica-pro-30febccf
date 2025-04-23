@@ -27,21 +27,16 @@ export function useAdminAuth() {
           .single();
 
         if (error) {
-          console.error("Erro ao verificar status de admin:", error);
+          console.error("Error checking admin status:", error);
           setIsAdmin(false);
           setAdminEmail(null);
         } else {
-          setIsAdmin(!!data); // data will be null if no matching record
+          // Explicitly check if data exists and is an admin
+          setIsAdmin(!!data && data.is_super_admin);
           setAdminEmail(data?.email || null);
           
-          // Se é admin, atualizar último login
-          if (data) {
-            await supabase
-              .from('admin_users')
-              .update({ last_login: new Date().toISOString() })
-              .eq('id', session.user.id);
-              
-            // Log da ação de login
+          // Log admin login action
+          if (data && data.is_super_admin) {
             await supabase.rpc('log_admin_action', {
               action_type: 'login',
               details: { timestamp: new Date().toISOString() }
@@ -49,7 +44,7 @@ export function useAdminAuth() {
           }
         }
       } catch (error) {
-        console.error("Erro ao verificar status de admin:", error);
+        console.error("Error checking admin status:", error);
         setIsAdmin(false);
         setAdminEmail(null);
       } finally {
@@ -59,7 +54,7 @@ export function useAdminAuth() {
 
     checkAdminStatus();
 
-    // Configurar listener para mudanças de autenticação
+    // Set up listener for authentication state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
