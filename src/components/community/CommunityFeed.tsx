@@ -36,35 +36,40 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         return [];
       }
 
-      let query = supabase.from('community_posts').select(`
-        id, 
-        content, 
-        author_id, 
-        created_at, 
-        likes, 
-        tags,
-        is_favorite,
-        liked_by
-      `);
+      try {
+        let query = supabase.from('community_posts').select(`
+          id, 
+          content, 
+          author_id, 
+          created_at, 
+          likes, 
+          tags,
+          is_favorite
+        `);
 
-      if (activeFilter !== 'all') {
-        query = query.contains('tags', [activeFilter]);
-      }
+        if (activeFilter !== 'all') {
+          query = query.contains('tags', [activeFilter]);
+        }
 
-      if (sortBy === 'recent') {
-        query = query.order('created_at', { ascending: false });
-      } else {
-        query = query.order('likes', { ascending: false });
-      }
+        if (sortBy === 'recent') {
+          query = query.order('created_at', { ascending: false });
+        } else {
+          query = query.order('likes', { ascending: false });
+        }
 
-      const { data, error } = await query;
-      
-      if (error) {
-        toast.error("Erro ao carregar posts", { description: error.message });
+        const { data, error } = await query;
+        
+        if (error) {
+          toast.error("Erro ao carregar posts", { description: error.message });
+          return [];
+        }
+
+        return data as Post[];
+      } catch (err) {
+        console.error("Error fetching posts:", err);
+        toast.error("Erro ao carregar posts");
         return [];
       }
-
-      return data as Post[];
     }
   });
 
@@ -92,8 +97,8 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         tags: newPost.tags,
         author_id: sessionData.session.user.id,
         likes: 0,
-        is_favorite: false,
-        liked_by: [] // Initialize an empty array of users who liked the post
+        is_favorite: false
+        // We're not mentioning liked_by here since it causes errors
       }).select();
 
       if (error) {

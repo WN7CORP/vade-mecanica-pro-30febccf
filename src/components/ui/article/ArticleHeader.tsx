@@ -6,7 +6,7 @@ interface ArticleHeaderProps {
   lawName: string;
   onCopy: () => void;
   onToggleHighlight: () => void;
-  showHighlightTools: boolean;
+  showHighlightTools?: boolean;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
 }
@@ -16,7 +16,7 @@ const ArticleHeader = ({
   lawName,
   onCopy,
   onToggleHighlight,
-  showHighlightTools,
+  showHighlightTools = false,
   isFavorite = false,
   onToggleFavorite
 }: ArticleHeaderProps) => {

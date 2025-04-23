@@ -1,18 +1,24 @@
 
 import { Search, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 
 interface SearchBarProps {
   onSearch: (term: string) => void;
   initialValue?: string;
   placeholder?: string;
+  onInputChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
-const SearchBar = ({ 
+const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({ 
   onSearch, 
   initialValue = "", 
-  placeholder = "Buscar artigo ou termo..." 
-}: SearchBarProps) => {
+  placeholder = "Buscar artigo ou termo...",
+  onInputChange,
+  onFocus: propOnFocus,
+  onBlur: propOnBlur
+}, ref) => {
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -38,6 +44,27 @@ const SearchBar = ({
     // Se quiser limpar os resultados quando o campo for limpo
     // onSearch("");
   };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    if (onInputChange) {
+      onInputChange(e);
+    }
+  };
+  
+  const handleFocus = () => {
+    setIsFocused(true);
+    if (propOnFocus) {
+      propOnFocus();
+    }
+  };
+  
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (propOnBlur) {
+      propOnBlur();
+    }
+  };
 
   return (
     <div className={`relative transition-all duration-300 neomorph ${
@@ -54,13 +81,14 @@ const SearchBar = ({
         <input
           type="text"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholder={placeholder}
           className="flex-1 bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground"
           autoComplete="off"
+          ref={ref}
         />
         
         {searchTerm && (
@@ -75,6 +103,8 @@ const SearchBar = ({
       </div>
     </div>
   );
-};
+});
+
+SearchBar.displayName = "SearchBar";
 
 export default SearchBar;

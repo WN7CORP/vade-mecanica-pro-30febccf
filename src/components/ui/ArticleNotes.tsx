@@ -171,7 +171,7 @@ const ArticleNotes = ({
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={onClose} className="animate-slide-in-right">
+    <Drawer open={isOpen} onOpenChange={onClose}>
       <DrawerContent className="max-h-[85vh] overflow-y-auto">
         <DrawerHeader>
           <DrawerTitle className="flex items-center justify-between">

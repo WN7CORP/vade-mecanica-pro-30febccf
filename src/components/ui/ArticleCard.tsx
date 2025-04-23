@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -48,6 +49,7 @@ const ArticleCard = ({
   const [showCustomExplanation, setShowCustomExplanation] = useState(false);
   const [explanationTitle, setExplanationTitle] = useState("");
   const { logUserActivity } = useUserActivity(userId);
+  const [showHighlightTools, setShowHighlightTools] = useState(false);
   
   useEffect(() => {
     const checkAuth = async () => {
@@ -173,10 +175,16 @@ const ArticleCard = ({
     }
     
     if (contentType === 'article') {
-      setReadingContent({ text: typeof content === 'string' ? content : JSON.stringify(content), title: 'Artigo' });
+      setReadingContent({ 
+        text: typeof content === 'string' ? content : (content ? JSON.stringify(content) : ''), 
+        title: 'Artigo' 
+      });
       if (userId) logUserActivity('narrate', lawName, articleNumber);
     } else if (contentType === 'example' && example) {
-      setReadingContent({ text: typeof example === 'string' ? example : JSON.stringify(example), title: 'Exemplo' });
+      setReadingContent({ 
+        text: typeof example === 'string' ? example : (example ? JSON.stringify(example) : ''), 
+        title: 'Exemplo' 
+      });
     } else if (contentType === 'explanation' && customExplanation) {
       setReadingContent({ text: customExplanation, title: `Narração: ${explanationTitle}` });
     }
@@ -208,13 +216,14 @@ const ArticleCard = ({
         articleNumber={shouldCenterContent ? "" : articleNumber}
         lawName={lawName}
         onCopy={copyArticle}
-        onToggleHighlight={() => {}}
+        onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
+        showHighlightTools={showHighlightTools}
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
       />
       
       <ArticleContent
-        content={content}
+        content={content || ""}
         example={undefined}
         fontSize={fontSize}
         onIncreaseFontSize={handleIncreaseFontSize}
@@ -287,7 +296,7 @@ const ArticleCard = ({
       {!shouldLeftAlign && (
         <ArticleInteractions 
           articleNumber={articleNumber}
-          content={content}
+          content={content || ""}
           example={example}
           onExplain={handleExplain}
           onAddComment={handleComment}
@@ -309,7 +318,7 @@ const ArticleCard = ({
         isOpen={showNotes}
         onClose={() => setShowNotes(false)}
         articleNumber={articleNumber}
-        articleContent={content}
+        articleContent={content || ""}
         lawName={lawName}
       />
 
@@ -319,7 +328,7 @@ const ArticleCard = ({
             className="mb-4 whitespace-pre-wrap transition-all duration-200 text-left text-white"
             style={{ fontSize: `${fontSize + 2}px` }}
           >
-            {content}
+            {content || ""}
           </p>
         </div>
       )}
