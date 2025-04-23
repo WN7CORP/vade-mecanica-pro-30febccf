@@ -31,7 +31,7 @@ export function useAdminAuth() {
           setIsAdmin(false);
           setAdminEmail(null);
         } else {
-          setIsAdmin(!!data);
+          setIsAdmin(!!data); // data will be null if no matching record
           setAdminEmail(data?.email || null);
           
           // Se é admin, atualizar último login
@@ -40,6 +40,12 @@ export function useAdminAuth() {
               .from('admin_users')
               .update({ last_login: new Date().toISOString() })
               .eq('id', session.user.id);
+              
+            // Log da ação de login
+            await supabase.rpc('log_admin_action', {
+              action_type: 'login',
+              details: { timestamp: new Date().toISOString() }
+            });
           }
         }
       } catch (error) {

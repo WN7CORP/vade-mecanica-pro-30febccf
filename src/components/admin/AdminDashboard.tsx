@@ -109,18 +109,23 @@ const AdminDashboard = () => {
       if (reportsError) throw reportsError;
 
       // 7. Dados para gráfico de distribuição de atividades
+      // Fix: Usando agregação manual em vez do método group
       const { data: activityData, error: activityError } = await supabase
         .from('user_statistics')
-        .select('action_type, count')
-        .select('action_type, count(*)')
-        .group('action_type');
+        .select('action_type');
       
       if (activityError) throw activityError;
       
-      const userActivity = activityData?.map(item => ({
-        name: item.action_type,
-        value: parseInt(item.count, 10)
-      })) || [];
+      // Processar dados manualmente para criar contagem por action_type
+      const activityCounts: Record<string, number> = {};
+      activityData?.forEach(item => {
+        activityCounts[item.action_type] = (activityCounts[item.action_type] || 0) + 1;
+      });
+      
+      const userActivity = Object.entries(activityCounts).map(([name, count]) => ({
+        name,
+        value: count
+      }));
 
       // 8. Logins diários para o gráfico de linha
       const { data: loginData, error: loginError } = await supabase

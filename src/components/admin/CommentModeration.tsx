@@ -58,8 +58,9 @@ const CommentModeration = () => {
     setIsLoading(true);
     
     try {
-      // Buscar denúncias com informações adicionais
-      const { data, error } = await supabase
+      // Modificação para buscar comentários e posts em queries separadas para evitar erro de relação
+      // Buscar denúncias primeiro
+      const { data: reportData, error: reportError } = await supabase
         .from('comment_reports')
         .select(`
           id,
@@ -67,21 +68,57 @@ const CommentModeration = () => {
           reason,
           status,
           reported_at,
-          reporter_id,
-          community_comments(content, author_id, post_id),
-          community_posts!community_comments(content)
+          reporter_id
         `)
         .order('reported_at', { ascending: false });
       
-      if (error) throw error;
+      if (reportError) throw reportError;
+      
+      if (!reportData || reportData.length === 0) {
+        setReports([]);
+        setFilteredReports([]);
+        return;
+      }
+      
+      // Buscar comentários relacionados
+      const commentIds = reportData.map(report => report.comment_id).filter(Boolean);
+      
+      const { data: commentData, error: commentError } = await supabase
+        .from('community_comments')
+        .select('id, content, author_id, post_id')
+        .in('id', commentIds);
+      
+      if (commentError) throw commentError;
+      
+      // Mapear comentários por ID para fácil acesso
+      const commentMap = new Map();
+      commentData?.forEach(comment => {
+        commentMap.set(comment.id, comment);
+      });
+      
+      // Buscar posts relacionados aos comentários
+      const postIds = commentData?.map(comment => comment.post_id).filter(Boolean) || [];
+      
+      const { data: postData, error: postError } = await supabase
+        .from('community_posts')
+        .select('id, content')
+        .in('id', postIds);
+      
+      if (postError) throw postError;
+      
+      // Mapear posts por ID
+      const postMap = new Map();
+      postData?.forEach(post => {
+        postMap.set(post.id, post);
+      });
       
       // Buscar informações de usuários
-      const userIds = data?.map(report => [
-        report.reporter_id, 
-        report.community_comments?.author_id
-      ]).flat().filter(Boolean) as string[];
+      const userIds = [
+        ...reportData.map(report => report.reporter_id),
+        ...(commentData?.map(comment => comment.author_id) || [])
+      ].filter(Boolean);
       
-      const uniqueUserIds = [...new Set(userIds)];
+      const uniqueUserIds = [...new Set(userIds)] as string[];
       
       const { data: userData, error: userError } = await supabase
         .from('user_profiles')
@@ -96,20 +133,25 @@ const CommentModeration = () => {
       });
       
       // Combinar os dados
-      const formattedReports = data?.map(report => ({
-        id: report.id,
-        comment_id: report.comment_id,
-        comment_content: report.community_comments?.content || 'Comentário excluído',
-        comment_author: userMap.get(report.community_comments?.author_id) || 'Usuário desconhecido',
-        author_id: report.community_comments?.author_id || '',
-        post_content: report.community_posts?.content || 'Post não encontrado',
-        post_id: report.community_comments?.post_id || '',
-        reporter_id: report.reporter_id || '',
-        reporter_name: userMap.get(report.reporter_id) || 'Usuário desconhecido',
-        reason: report.reason,
-        status: report.status as "pending" | "resolved" | "approved",
-        reported_at: report.reported_at,
-      }));
+      const formattedReports = reportData.map(report => {
+        const comment = commentMap.get(report.comment_id);
+        const post = comment ? postMap.get(comment.post_id) : null;
+        
+        return {
+          id: report.id,
+          comment_id: report.comment_id,
+          comment_content: comment?.content || 'Comentário excluído',
+          comment_author: userMap.get(comment?.author_id) || 'Usuário desconhecido',
+          author_id: comment?.author_id || '',
+          post_content: post?.content || 'Post não encontrado',
+          post_id: comment?.post_id || '',
+          reporter_id: report.reporter_id || '',
+          reporter_name: userMap.get(report.reporter_id) || 'Usuário desconhecido',
+          reason: report.reason,
+          status: report.status as "pending" | "resolved" | "approved",
+          reported_at: report.reported_at,
+        };
+      });
       
       setReports(formattedReports || []);
       filterReports(formattedReports || [], activeTab);
@@ -127,6 +169,8 @@ const CommentModeration = () => {
         description: "Não foi possível carregar as denúncias de comentários",
         variant: "destructive",
       });
+      setReports([]);
+      setFilteredReports([]);
     } finally {
       setIsLoading(false);
     }

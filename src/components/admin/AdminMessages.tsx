@@ -184,29 +184,45 @@ const AdminMessages = () => {
     setIsLoadingUsers(true);
     
     try {
-      const { data, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('id, full_name')
         .order('full_name');
       
-      if (error) throw error;
+      if (profileError) throw profileError;
       
-      const { data: emailData, error: emailError } = await supabase.auth.admin.listUsers();
+      // Fix: Get user emails from auth API but handle possible errors safely
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
-      if (emailError) throw emailError;
-      
-      const emailMap = new Map();
-      emailData.users.forEach(user => {
-        emailMap.set(user.id, user.email);
-      });
-      
-      const formattedUsers = data?.map(user => ({
-        id: user.id,
-        full_name: user.full_name || 'Sem nome',
-        email: emailMap.get(user.id) || 'Email não disponível',
-      }));
-      
-      setUsers(formattedUsers || []);
+      if (authError) {
+        console.error("Error fetching user emails:", authError);
+        // Proceed with profile data only
+        const formattedUsers = profileData?.map(user => ({
+          id: user.id,
+          full_name: user.full_name || 'Sem nome',
+          email: 'Email não disponível',
+        })) || [];
+        
+        setUsers(formattedUsers);
+      } else {
+        // Safe access with optional chaining and type checking
+        const emailMap = new Map();
+        if (authData && authData.users && Array.isArray(authData.users)) {
+          authData.users.forEach(user => {
+            if (user && user.id && user.email) {
+              emailMap.set(user.id, user.email);
+            }
+          });
+        }
+        
+        const formattedUsers = profileData?.map(user => ({
+          id: user.id,
+          full_name: user.full_name || 'Sem nome',
+          email: emailMap.get(user.id) || 'Email não disponível',
+        })) || [];
+        
+        setUsers(formattedUsers);
+      }
     } catch (error) {
       console.error("Erro ao buscar usuários:", error);
       toast({
@@ -214,6 +230,7 @@ const AdminMessages = () => {
         description: "Não foi possível carregar a lista de usuários",
         variant: "destructive",
       });
+      setUsers([]);
     } finally {
       setIsLoadingUsers(false);
     }

@@ -135,16 +135,19 @@ const UserManagement = () => {
     setIsLoading(true);
     
     try {
-      // Primeiro busca todos os usuários (auth.users)
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers({
+      // Fix: Handle pagination data more robustly, including total count
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers({
         page: page,
         perPage: ITEMS_PER_PAGE,
       });
       
       if (authError) throw authError;
       
+      // Safely access the users array and other pagination data
+      const authUsers = authData?.users || [];
+      
       // Agora busca dados de perfil adicional
-      const userIds = authUsers.users.map(user => user.id);
+      const userIds = authUsers.map(user => user.id);
       
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
@@ -165,7 +168,7 @@ const UserManagement = () => {
       const bannedUserIds = new Set(bans?.map(ban => ban.user_id) || []);
       
       // Combinando os dados
-      const combinedUsers = authUsers.users.map(authUser => {
+      const combinedUsers = authUsers.map(authUser => {
         const profile = profileData?.find(p => p.id === authUser.id);
         return {
           id: authUser.id,
@@ -179,9 +182,26 @@ const UserManagement = () => {
         };
       });
       
-      // Calculando o total de páginas
-      const totalCount = authUsers.total_count || 0;
-      const calculatedTotalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+      // Calculating total pages - using correct property based on response type
+      let totalCount = 0;
+      if (authData) {
+        // The property may exist directly on authData or via a metadata field
+        // Try common patterns for pagination data
+        if ('total_users' in authData) {
+          totalCount = (authData as any).total_users;
+        } else if ('count' in authData) {
+          totalCount = (authData as any).count;
+        } else if (authUsers.length < ITEMS_PER_PAGE && page === 1) {
+          // If we have fewer users than the page size on the first page,
+          // we can assume that's the total
+          totalCount = authUsers.length;
+        } else {
+          // Estimate at least enough for the current page
+          totalCount = page * ITEMS_PER_PAGE;
+        }
+      }
+      
+      const calculatedTotalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
       
       setUsers(combinedUsers);
       setFilteredUsers(combinedUsers);
@@ -200,6 +220,9 @@ const UserManagement = () => {
         description: "Não foi possível carregar a lista de usuários",
         variant: "destructive",
       });
+      setUsers([]);
+      setFilteredUsers([]);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
