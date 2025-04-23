@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -74,6 +73,18 @@ interface Message {
   content: string;
   is_read: boolean;
   created_at: string;
+}
+
+interface AuthUser {
+  id: string;
+  email?: string;
+  [key: string]: any;
+}
+
+interface ProfileData {
+  id: string;
+  full_name?: string;
+  [key: string]: any;
 }
 
 const messageSchema = z.object({
@@ -190,28 +201,28 @@ const AdminMessages = () => {
       
       if (authError) {
         console.error("Error fetching user emails:", authError);
-        const formattedUsers: User[] = profileData?.map(user => ({
-          id: user.id as string,
-          full_name: user.full_name as string || 'Sem nome',
+        const formattedUsers: User[] = (profileData || []).map((user: ProfileData) => ({
+          id: user.id,
+          full_name: user.full_name || 'Sem nome',
           email: 'Email não disponível',
-        })) || [];
+        }));
         
         setUsers(formattedUsers);
       } else {
         const emailMap = new Map<string, string>();
         if (authData && authData.users && Array.isArray(authData.users)) {
-          authData.users.forEach(user => {
+          authData.users.forEach((user: AuthUser) => {
             if (user && user.id && user.email) {
               emailMap.set(user.id, user.email);
             }
           });
         }
         
-        const formattedUsers: User[] = profileData?.map(user => ({
-          id: user.id as string,
-          full_name: user.full_name as string || 'Sem nome',
-          email: emailMap.get(user.id as string) || 'Email não disponível',
-        })) || [];
+        const formattedUsers: User[] = (profileData || []).map((user: ProfileData) => ({
+          id: user.id,
+          full_name: user.full_name || 'Sem nome',
+          email: emailMap.get(user.id) || 'Email não disponível',
+        }));
         
         setUsers(formattedUsers);
       }
