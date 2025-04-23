@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ChevronLeft } from "lucide-react";
 import CommunityHeader from "@/components/community/CommunityHeader";
 import CommunityFeed from "@/components/community/CommunityFeed";
@@ -11,7 +11,7 @@ import CommunityFeed from "@/components/community/CommunityFeed";
 const Community = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [showFilters, setShowFilters] = useState(false);
 
   const handleBackClick = () => {

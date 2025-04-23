@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { MainNav } from "@/components/layout/MainNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sun, Moon } from "lucide-react";
+import React from "react";
 
 // Add this import at the top with the other imports
 import NotificationCenter from "@/components/ui/NotificationCenter";
@@ -46,7 +48,7 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
 };
 
 const Header = () => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
   const { setTheme } = useTheme();
 
