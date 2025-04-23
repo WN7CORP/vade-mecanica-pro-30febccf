@@ -291,6 +291,7 @@ export type Database = {
         Row: {
           author_id: string
           best_tip_id: string | null
+          community_type: string
           content: string
           created_at: string
           id: string
@@ -301,6 +302,7 @@ export type Database = {
         Insert: {
           author_id: string
           best_tip_id?: string | null
+          community_type?: string
           content: string
           created_at?: string
           id?: string
@@ -311,6 +313,7 @@ export type Database = {
         Update: {
           author_id?: string
           best_tip_id?: string | null
+          community_type?: string
           content?: string
           created_at?: string
           id?: string

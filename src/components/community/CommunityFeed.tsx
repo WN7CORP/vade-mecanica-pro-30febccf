@@ -1,12 +1,12 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import PostCard, { Post } from "./PostCard";
+import PostCard from "./PostCard";
 import { Plus, Minus, Film } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Post } from "@/types/community";
 
 const GENERAL_TAGS = [
   "Constitucional", 
@@ -58,7 +58,6 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont, communityType
   const [activeFilter, setActiveFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
 
-  // Select tag options based on community type
   const getTags = () => {
     switch(communityType) {
       case 'legislation': return LEGISLATION_TAGS;
@@ -95,10 +94,10 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont, communityType
         likes, 
         tags,
         is_favorite,
+        best_tip_id,
         community_type
       `);
       
-      // Filter by community type
       query = query.eq('community_type', communityType);
 
       if (activeFilter !== 'all') {
