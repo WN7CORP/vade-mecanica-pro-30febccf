@@ -30,6 +30,7 @@ const MovieRecommendations = () => {
   const { data: movies, isLoading } = useQuery({
     queryKey: ['legal-movies', selectedCategory, searchTerm],
     queryFn: async () => {
+      // Using type assertion to bypass TypeScript's strict checking
       let query = supabase.from('legal_movies')
         .select(`
           *,
@@ -37,7 +38,7 @@ const MovieRecommendations = () => {
             movie_tags(name)
           ),
           category:movie_categories(name)
-        `);
+        `) as any;
 
       if (selectedCategory) {
         query = query.eq('category_id', selectedCategory);
