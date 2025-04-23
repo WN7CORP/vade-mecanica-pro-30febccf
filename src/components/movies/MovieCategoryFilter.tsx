@@ -19,18 +19,18 @@ const MovieCategoryFilter = ({ selectedCategory, onSelectCategory }: MovieCatego
   const { data: categories } = useQuery({
     queryKey: ['movie-categories'],
     queryFn: async () => {
-      // Using type assertion to bypass TypeScript's strict checking
-      const { data, error } = await supabase
+      // Using a more explicit type assertion to bypass TypeScript's strict checking
+      const { data, error } = await (supabase
         .from('movie_categories')
         .select('*')
-        .order('name') as { data: MovieCategory[] | null, error: any };
+        .order('name') as any);
 
       if (error) {
         console.error('Error fetching categories:', error);
         return [];
       }
 
-      return data || [];
+      return (data || []) as MovieCategory[];
     }
   });
 

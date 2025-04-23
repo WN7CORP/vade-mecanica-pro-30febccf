@@ -30,22 +30,22 @@ const MovieRecommendations = () => {
   const { data: movies, isLoading } = useQuery({
     queryKey: ['legal-movies', selectedCategory, searchTerm],
     queryFn: async () => {
-      // Using type assertion to bypass TypeScript's strict checking
-      let query = supabase.from('legal_movies')
+      // Using a more explicit type assertion approach
+      const query = supabase.from('legal_movies')
         .select(`
           *,
           movie_tag_relations(
             movie_tags(name)
           ),
           category:movie_categories(name)
-        `) as any;
+        `) as unknown as any;
 
       if (selectedCategory) {
-        query = query.eq('category_id', selectedCategory);
+        query.eq('category_id', selectedCategory);
       }
 
       if (searchTerm) {
-        query = query.ilike('title', `%${searchTerm}%`);
+        query.ilike('title', `%${searchTerm}%`);
       }
 
       const { data, error } = await query;
