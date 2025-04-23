@@ -245,6 +245,7 @@ export type Database = {
       constituicao_federal: {
         Row: {
           artigo: string | null
+          conteudo: string | null
           exemplo1: string | null
           exemplo2: string | null
           "explicacao formal": string | null
@@ -254,6 +255,7 @@ export type Database = {
         }
         Insert: {
           artigo?: string | null
+          conteudo?: string | null
           exemplo1?: string | null
           exemplo2?: string | null
           "explicacao formal"?: string | null
@@ -263,6 +265,7 @@ export type Database = {
         }
         Update: {
           artigo?: string | null
+          conteudo?: string | null
           exemplo1?: string | null
           exemplo2?: string | null
           "explicacao formal"?: string | null
