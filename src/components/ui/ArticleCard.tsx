@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -10,6 +9,7 @@ import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Minus } from "lucide-react";
+import { Button } from "./button";
 
 interface ArticleCardProps {
   articleNumber: string;
@@ -272,39 +272,37 @@ const ArticleCard = ({
       />
 
       {!showExample && safeExample && (
-        <button
-          className="shadow-button w-full max-w-xs mx-auto mt-2 mb-2 text-primary bg-primary/10 text-sm font-medium rounded transition-all 
-          hover:bg-primary/30 active:scale-95 animate-fade-in flex justify-center items-center"
+        <Button
+          variant="outline"
+          className="w-full max-w-xs mx-auto mt-4 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95 animate-fade-in"
           onClick={() => setShowExample(true)}
         >
-          Exibir Exemplo
-        </button>
+          Ver Exemplo
+        </Button>
       )}
+
       {showExample && safeExample && (
-        <div className="flex flex-col items-center mt-2 mb-2 animate-fade-in">
+        <div className="flex flex-col items-center mt-4 animate-fade-in">
           <div className="px-4 py-2 bg-primary-50/10 border-l-4 border-primary-200 rounded text-gray-400 text-left whitespace-pre-wrap w-full max-w-xl">
             {safeExample}
           </div>
           <div className="flex gap-2 mt-2">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => handleNarration('example')}
-              className="shadow-button px-3 py-1 text-primary-300 bg-primary/10 text-sm font-medium rounded transition-all 
-              hover:bg-primary/30 active:scale-95 flex items-center gap-1"
+              className="bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-volume-2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-              </svg>
               Narrar Exemplo
-            </button>
-            <button
-              className="shadow-button px-3 py-1 text-primary-300 bg-primary/10 text-sm font-medium rounded transition-all 
-              hover:bg-primary/30 active:scale-95"
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setShowExample(false)}
+              className="bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
             >
-              Voltar
-            </button>
+              Fechar
+            </Button>
           </div>
         </div>
       )}
