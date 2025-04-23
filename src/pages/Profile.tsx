@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +9,12 @@ import { useRankings, useLoginStreak, useUserRank } from "@/hooks/useRankings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
+
+interface UserStats {
+  totalSearches: number;
+  totalReads: number;
+  lastLogin: Date | null;
+}
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -58,7 +63,6 @@ const Profile = () => {
     refetchInterval: 15000 // Atualiza a cada 15 segundos
   });
 
-  // Registrar login ao carregar a página
   useEffect(() => {
     if (!userId || hasShownWelcomeToast) return;
     
@@ -84,7 +88,6 @@ const Profile = () => {
     
   }, [userId, recordLogin, calculateStreakLoss, queryClient, hasShownWelcomeToast]);
 
-  // Configurar um ouvinte de mudanças em tempo real para atualizações
   useEffect(() => {
     if (!userId) return;
 
