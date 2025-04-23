@@ -218,6 +218,108 @@ export type Database = {
         }
         Relationships: []
       }
+      community_comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          is_best_tip: boolean
+          likes: number
+          parent_comment_id: string | null
+          post_id: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_best_tip?: boolean
+          likes?: number
+          parent_comment_id?: string | null
+          post_id: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_best_tip?: boolean
+          likes?: number
+          parent_comment_id?: string | null
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_metrics: {
+        Row: {
+          id: string
+          metric_name: string
+          metric_value: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          metric_name: string
+          metric_value?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      community_posts: {
+        Row: {
+          author_id: string
+          best_tip_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_favorite: boolean
+          likes: number
+          tags: string[]
+        }
+        Insert: {
+          author_id: string
+          best_tip_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          likes?: number
+          tags?: string[]
+        }
+        Update: {
+          author_id?: string
+          best_tip_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          likes?: number
+          tags?: string[]
+        }
+        Relationships: []
+      }
       consolidacao_leis_trabalho: {
         Row: {
           conteudo: string | null
@@ -1635,6 +1737,10 @@ export type Database = {
         Returns: {
           tema: string
         }[]
+      }
+      update_active_users: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

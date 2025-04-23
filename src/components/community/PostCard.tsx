@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -6,84 +7,117 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Award, Bookmark, Heart, MessageSquare } from "lucide-react";
 import CommentList from "./CommentList";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface Post {
   id: string;
   content: string;
-  author: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  createdAt: Date;
+  author_id: string;
+  created_at: string;
   likes: number;
-  comments: Comment[];
   tags: string[];
-  bestTip?: string;
-  isFavorite?: boolean;
+  is_favorite?: boolean;
+  best_tip_id?: string;
 }
 
 export interface Comment {
   id: string;
   content: string;
-  author: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  createdAt: Date;
+  author_id: string;
+  post_id: string;
+  parent_comment_id?: string;
+  created_at: string;
   likes: number;
-  isBestTip?: boolean;
-  replies?: Comment[]; // Added replies property
+  is_best_tip?: boolean;
+  replies?: Comment[];
 }
 
-interface PostCardProps {
-  post: Post;
-  onLike: (postId: string) => void;
-  onComment: (postId: string, comment: string) => void;
-  onSetBestTip?: (postId: string, commentId: string) => void;
-  onToggleFavorite?: (postId: string) => void;
-}
-
-const PostCard = ({ post, onLike, onComment, onSetBestTip, onToggleFavorite }: PostCardProps) => {
+const PostCard = ({ post }: { post: Post }) => {
+  const queryClient = useQueryClient();
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
+
+  // Fetch comments for the post
+  const { data: comments } = useQuery({
+    queryKey: ['post-comments', post.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('community_comments')
+        .select('*')
+        .eq('post_id', post.id)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        toast.error("Erro ao carregar comentários", { description: error.message });
+        return [];
+      }
+
+      return data as Comment[];
+    },
+    enabled: showComments
+  });
+
+  // Create comment mutation
+  const createCommentMutation = useMutation({
+    mutationFn: async (commentContent: string) => {
+      const { data, error } = await supabase.from('community_comments').insert({
+        content: commentContent,
+        post_id: post.id,
+        author_id: (await supabase.auth.getUser()).data.user?.id
+      });
+
+      if (error) {
+        toast.error("Erro ao adicionar comentário", { description: error.message });
+        throw error;
+      }
+
+      toast.success("Comentário adicionado com sucesso!");
+      setNewComment("");
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['post-comments', post.id] });
+    }
+  });
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim()) {
-      onComment(post.id, newComment);
-      setNewComment("");
+      createCommentMutation.mutate(newComment);
     }
   };
 
   return (
     <Card className="mb-4 overflow-hidden border border-gray-800 bg-gray-900/50">
       <div className="p-4">
+        {/* Post header */}
         <div className="flex items-center gap-3 mb-3">
           <Avatar>
             <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
-              {post.author.avatar ? (
-                <img src={post.author.avatar} alt={post.author.name} className="h-full w-full rounded-full object-cover" />
-              ) : (
-                <span className="text-lg font-medium text-gray-300">
-                  {post.author.name.charAt(0).toUpperCase()}
-                </span>
-              )}
+              <span className="text-lg font-medium text-gray-300">
+                {/* TODO: Fetch and display author's avatar or initial */}
+              </span>
             </div>
           </Avatar>
           <div>
-            <h3 className="font-medium text-gray-200">{post.author.name}</h3>
+            <h3 className="font-medium text-gray-200">
+              {/* TODO: Fetch author's name */}
+              Nome do Autor
+            </h3>
             <p className="text-xs text-gray-400">
-              {formatDistanceToNow(post.createdAt, { locale: ptBR, addSuffix: true })}
+              {formatDistanceToNow(new Date(post.created_at), { locale: ptBR, addSuffix: true })}
             </p>
           </div>
         </div>
 
+        {/* Post content */}
         <div className="mb-3">
           <p className="text-gray-300 whitespace-pre-wrap">{post.content}</p>
         </div>
 
+        {/* Tags */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {post.tags.map((tag) => (
@@ -97,22 +131,12 @@ const PostCard = ({ post, onLike, onComment, onSetBestTip, onToggleFavorite }: P
           </div>
         )}
 
-        {post.bestTip && (
-          <div className="bg-primary-900/30 border-l-4 border-primary-300 p-3 rounded mb-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Award size={16} className="text-primary-300" />
-              <span className="text-sm font-medium text-primary-300">Melhor Dica</span>
-            </div>
-            <p className="text-gray-300 text-sm">{post.bestTip}</p>
-          </div>
-        )}
-
+        {/* Interaction buttons */}
         <div className="flex items-center gap-2 mt-4">
           <Button
             variant="ghost"
             size="sm"
             className="text-gray-400 hover:text-primary-300 hover:bg-gray-800"
-            onClick={() => onLike(post.id)}
           >
             <Heart size={16} className="mr-1" />
             <span>{post.likes}</span>
@@ -125,30 +149,30 @@ const PostCard = ({ post, onLike, onComment, onSetBestTip, onToggleFavorite }: P
             onClick={() => setShowComments(!showComments)}
           >
             <MessageSquare size={16} className="mr-1" />
-            <span>{post.comments.length}</span>
+            <span>{comments?.length || 0}</span>
           </Button>
           
-          {onToggleFavorite && (
+          {/* Bookmark/favorite button */}
+          {post.is_favorite !== undefined && (
             <Button
               variant="ghost"
               size="sm"
               className={`${
-                post.isFavorite ? "text-primary-300" : "text-gray-400 hover:text-primary-300"
+                post.is_favorite ? "text-primary-300" : "text-gray-400 hover:text-primary-300"
               } hover:bg-gray-800 ml-auto`}
-              onClick={() => onToggleFavorite(post.id)}
             >
-              <Bookmark size={16} className={post.isFavorite ? "fill-current" : ""} />
+              <Bookmark size={16} className={post.is_favorite ? "fill-current" : ""} />
             </Button>
           )}
         </div>
       </div>
 
+      {/* Comments section */}
       {showComments && (
         <div className="border-t border-gray-800 p-4">
           <CommentList 
-            comments={post.comments} 
+            comments={comments || []} 
             postId={post.id}
-            onSetBestTip={onSetBestTip}
           />
           
           <form onSubmit={handleSubmitComment} className="mt-4">
@@ -165,7 +189,11 @@ const PostCard = ({ post, onLike, onComment, onSetBestTip, onToggleFavorite }: P
                 placeholder="Escreva um comentário..."
                 className="flex-1 bg-gray-800/50 rounded-full px-4 py-2 text-sm text-gray-300 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-primary-300"
               />
-              <Button type="submit" size="sm" className="bg-primary-300 hover:bg-primary-400 text-gray-900">
+              <Button 
+                type="submit" 
+                size="sm" 
+                className="bg-primary-300 hover:bg-primary-400 text-gray-900"
+              >
                 Enviar
               </Button>
             </div>
