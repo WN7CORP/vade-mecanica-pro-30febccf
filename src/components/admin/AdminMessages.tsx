@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -189,15 +190,15 @@ const AdminMessages = () => {
       
       if (authError) {
         console.error("Error fetching user emails:", authError);
-        const formattedUsers = profileData?.map(user => ({
-          id: user.id,
-          full_name: user.full_name || 'Sem nome',
+        const formattedUsers: User[] = profileData?.map(user => ({
+          id: user.id as string,
+          full_name: user.full_name as string || 'Sem nome',
           email: 'Email não disponível',
         })) || [];
         
         setUsers(formattedUsers);
       } else {
-        const emailMap = new Map();
+        const emailMap = new Map<string, string>();
         if (authData && authData.users && Array.isArray(authData.users)) {
           authData.users.forEach(user => {
             if (user && user.id && user.email) {
@@ -206,10 +207,10 @@ const AdminMessages = () => {
           });
         }
         
-        const formattedUsers = profileData?.map(user => ({
-          id: user.id,
-          full_name: user.full_name || 'Sem nome',
-          email: emailMap.get(user.id) || 'Email não disponível',
+        const formattedUsers: User[] = profileData?.map(user => ({
+          id: user.id as string,
+          full_name: user.full_name as string || 'Sem nome',
+          email: emailMap.get(user.id as string) || 'Email não disponível',
         })) || [];
         
         setUsers(formattedUsers);
