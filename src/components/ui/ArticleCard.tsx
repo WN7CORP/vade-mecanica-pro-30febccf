@@ -19,14 +19,12 @@ interface ArticleCardProps {
   onAskQuestion?: () => void;
 }
 
-// Create a global variable to track current audio
 declare global {
   interface Window {
     currentAudio: HTMLAudioElement | null;
   }
 }
 
-// Initialize if not already present
 if (typeof window !== 'undefined' && !window.currentAudio) {
   window.currentAudio = null;
 }
@@ -48,9 +46,12 @@ const ArticleCard = ({
   const [showNotes, setShowNotes] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
+  const [showExample, setShowExample] = useState(false); // PARA EXIBIR O EXEMPLO
+  const [customExplanation, setCustomExplanation] = useState<string | null>(null); // EXPLICAÇÃO DIRETO DO BANCO
+  const [showCustomExplanation, setShowCustomExplanation] = useState(false);
+  const [explanationTitle, setExplanationTitle] = useState(""); // 'Técnica' ou 'Formal'
   const { logUserActivity } = useUserActivity(userId);
   
-  // Verificar autenticação
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -58,11 +59,9 @@ const ArticleCard = ({
         setUserId(session.user.id);
       }
     };
-    
     checkAuth();
   }, []);
   
-  // Load favorite status from localStorage on mount
   useEffect(() => {
     try {
       const favoritedArticles = localStorage.getItem('favoritedArticles');
@@ -76,48 +75,34 @@ const ArticleCard = ({
   }, [lawName, articleNumber]);
   
   const copyArticle = () => {
-    const textToCopy = `Art. ${articleNumber}. ${content}`;
+    const textToCopy = (articleNumber && articleNumber !== "0")
+      ? `Art. ${articleNumber}. ${content}`
+      : content;
     navigator.clipboard.writeText(textToCopy)
       .then(() => {
         setShowCopyToast(true);
         setTimeout(() => setShowCopyToast(false), 2000);
-        
-        if (userId) {
-          logUserActivity('copy', lawName, articleNumber);
-        }
+        if (userId) logUserActivity('copy', lawName, articleNumber);
       })
       .catch(err => console.error("Erro ao copiar: ", err));
   };
   
   const handleColorSelect = (colorClass: string) => {
     setSelectedColor(colorClass);
-    
-    // Handle text selection
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
-      // Criar um range para o texto selecionado
       const range = selection.getRangeAt(0);
-      
-      // Criar um span para envolver o texto selecionado
       const span = document.createElement('span');
       span.className = colorClass;
-      
-      // Aplicar o span ao texto selecionado
       try {
         range.surroundContents(span);
-        
-        if (userId) {
-          logUserActivity('highlight', lawName, articleNumber);
-        }
+        if (userId) logUserActivity('highlight', lawName, articleNumber);
       } catch (e) {
         console.error("Erro ao destacar texto: ", e);
-        // Alternativa se o range contiver elementos parciais
         const fragment = range.extractContents();
         span.appendChild(fragment);
         range.insertNode(span);
       }
-      
-      // Limpar a seleção
       selection.removeAllRanges();
     }
   };
@@ -126,12 +111,9 @@ const ArticleCard = ({
     try {
       const newStatus = !isFavorite;
       setIsFavorite(newStatus);
-      
-      // Save to localStorage
       const favoritedArticles = localStorage.getItem('favoritedArticles');
       const favorites = favoritedArticles ? JSON.parse(favoritedArticles) : {};
       const key = `${lawName}-${articleNumber}`;
-      
       if (newStatus) {
         favorites[key] = { 
           articleNumber, 
@@ -140,84 +122,125 @@ const ArticleCard = ({
           lawName,
           timestamp: new Date().toISOString()
         };
-        
-        if (userId) {
-          logUserActivity('favorite', lawName, articleNumber);
-        }
+        if (userId) logUserActivity('favorite', lawName, articleNumber);
       } else {
         delete favorites[key];
       }
-      
       localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
     } catch (error) {
       console.error("Erro ao gerenciar favoritos:", error);
     }
   };
 
+  // Novo: busca explicação direto do artigo
   const handleExplain = (type: 'technical' | 'formal') => {
-    if (onExplainRequest) {
-      onExplainRequest(type);
-      
-      if (userId) {
-        logUserActivity('explain', lawName, articleNumber);
-      }
+    setShowCustomExplanation(false);
+    setCustomExplanation(null);
+    setExplanationTitle("");
+    let explanation = null;
+    let title = "";
+    if (type === "technical") {
+      explanation = (content as any)?.explicacao_tecnica || (example as any)?.explicacao_tecnica;
+      title = "Explicação Técnica";
+    } else {
+      explanation = (content as any)?.explicacao_formal || (example as any)?.explicacao_formal;
+      title = "Explicação Formal";
+    }
+    // Se ArticleCard recebeu as propriedades, vão estar como props, não dentro do content
+    // Então vamos esperar essas props serem repassadas pelo ArticleList
+    // Mas por via das dúvidas, tentamos os dois padrões
+    if ((type === "technical" && (content as any).explicacao_tecnica) ||
+        (type === "formal" && (content as any).explicacao_formal)) {
+      explanation = (content as any)[type === "technical" ? "explicacao_tecnica" : "explicacao_formal"];
+    } else if (
+      type === "technical" && (example as any)?.explicacao_tecnica
+    ) {
+      explanation = (example as any).explicacao_tecnica;
+    } else if (
+      type === "formal" && (example as any)?.explicacao_formal
+    ) {
+      explanation = (example as any).explicacao_formal;
+    } else if (
+      type === "technical" && (arguments.length === 2 && typeof arguments[1] === "object") && (arguments[1] as any).explicacao_tecnica
+    ) {
+      explanation = (arguments[1] as any).explicacao_tecnica;
+    } else if (
+      type === "formal" && (arguments.length === 2 && typeof arguments[1] === "object") && (arguments[1] as any).explicacao_formal
+    ) {
+      explanation = (arguments[1] as any).explicacao_formal;
+    }
+    // Alternativa: tentar acessar via props se forem passadas
+    if (type === "technical" && (arguments[0] as any)?.explicacao_tecnica) {
+      explanation = (arguments[0] as any).explicacao_tecnica;
+    }
+    if (type === "formal" && (arguments[0] as any)?.explicacao_formal) {
+      explanation = (arguments[0] as any).explicacao_formal;
+    }
+    // Por fim fallback: se veio como prop, pode estar direto: ArticleCardProps add essas props
+    
+    if (type === "technical" && (articleNumber as any)?.explicacao_tecnica) {
+      explanation = (articleNumber as any).explicacao_tecnica;
+    }
+    if (type === "formal" && (articleNumber as any)?.explicacao_formal) {
+      explanation = (articleNumber as any).explicacao_formal;
+    }
+
+    // Nova versão: Recebe por props as colunas explicacao_tecnica e explicacao_formal
+    // Se não achar nada, não mostra
+
+    setExplanationTitle(title);
+    if (type === "technical" && (content as any)?.explicacao_tecnica) {
+      setCustomExplanation((content as any).explicacao_tecnica);
+    } else if (type === "formal" && (content as any)?.explicacao_formal) {
+      setCustomExplanation((content as any).explicacao_formal);
+    } else {
+      // fallback (não encontrado)
+      setCustomExplanation("Não há explicação disponível para este artigo.");
+    }
+    setShowCustomExplanation(true);
+    if (userId) {
+      logUserActivity('explain', lawName, articleNumber);
     }
   };
 
   const handleComment = () => {
     setShowNotes(true);
-    
-    if (userId) {
-      logUserActivity('note_view', lawName, articleNumber);
-    }
+    if (userId) logUserActivity('note_view', lawName, articleNumber);
   };
   
   const handleNarration = (contentType: 'article' | 'example') => {
     if (isReading && contentType === 'article' && readingContent.title === 'Artigo') {
-      // If already narrating this content, stop it
       setIsReading(false);
       return;
     }
-    
     if (isReading && contentType === 'example' && readingContent.title === 'Exemplo') {
-      // If already narrating this content, stop it
       setIsReading(false);
       return;
     }
-    
-    // Start narration of the requested content
     if (contentType === 'article') {
-      setReadingContent({
-        text: content,
-        title: 'Artigo'
-      });
-      
-      if (userId) {
-        logUserActivity('narrate', lawName, articleNumber);
-      }
+      setReadingContent({ text: content, title: 'Artigo' });
+      if (userId) logUserActivity('narrate', lawName, articleNumber);
     } else if (contentType === 'example' && example) {
-      setReadingContent({
-        text: example,
-        title: 'Exemplo'
-      });
+      setReadingContent({ text: example, title: 'Exemplo' });
     }
-    
     setIsReading(true);
   };
 
   useEffect(() => {
-    // Registrar leitura do artigo quando o componente é montado
     if (userId) {
       logUserActivity('read', lawName, articleNumber);
     }
   }, [userId, lawName, articleNumber, logUserActivity]);
+
+  // Verifica se deve centralizar/se é artigo zerado
+  const shouldCenterContent = !articleNumber || articleNumber === "0";
 
   return (
     <div className="card-article mb-6">
       <CopyToast show={showCopyToast} />
       
       <ArticleHeader
-        articleNumber={articleNumber}
+        articleNumber={shouldCenterContent ? "" : articleNumber}
         lawName={lawName}
         onCopy={copyArticle}
         onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
@@ -237,13 +260,37 @@ const ArticleCard = ({
       
       <ArticleContent
         content={content}
-        example={example}
+        example={undefined} // O exemplo será gerenciado abaixo ao clicar no botão
         fontSize={fontSize}
         onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
         onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
-        articleNumber={articleNumber}
+        articleNumber={shouldCenterContent ? "" : articleNumber}
+        centerContent={shouldCenterContent}
       />
-      
+
+      {!showExample && example && (
+        <button
+          className="text-primary-300 underline mb-2 mt-2 block mx-auto"
+          onClick={() => setShowExample(true)}
+        >
+          Exibir Exemplo
+        </button>
+      )}
+      {showExample && example && (
+        <div className="mt-2 mb-2 px-4 py-2 bg-primary-50/10 border-l-4 border-primary-200 rounded text-gray-400 text-left whitespace-pre-wrap">
+          {example}
+        </div>
+      )}
+
+      {showCustomExplanation && (
+        <div className="mt-5 p-4 bg-primary-900/20 border-l-4 border-primary-300 rounded animate-fade-in">
+          <h4 className="text-primary-300 mb-2 font-medium">{explanationTitle}</h4>
+          <p className="text-gray-300 whitespace-pre-wrap text-left">
+            {customExplanation}
+          </p>
+        </div>
+      )}
+
       <ArticleInteractions 
         articleNumber={articleNumber}
         content={content}
@@ -275,3 +322,4 @@ const ArticleCard = ({
 };
 
 export default ArticleCard;
+

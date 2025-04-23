@@ -8,6 +8,7 @@ interface ArticleContentProps {
   onDecreaseFontSize: () => void;
   articleNumber?: string;
   example?: string;
+  centerContent?: boolean; // NOVO: se o texto deve ser centralizado
 }
 
 const ArticleContent = ({
@@ -16,13 +17,22 @@ const ArticleContent = ({
   onIncreaseFontSize,
   onDecreaseFontSize,
   articleNumber,
-  example
+  centerContent = false
 }: ArticleContentProps) => {
   const renderContent = () => {
     return content.split('\n').map((line, i) => {
-      // Always left-align text, use normal font weight for all lines
       const shouldShowAsHeader = !articleNumber && (i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.'));
-      
+      if (centerContent) {
+        return (
+          <p 
+            key={i}
+            className="mb-4 whitespace-pre-wrap transition-all duration-200 text-center text-white"
+            style={{ fontSize: `${fontSize + 2}px`, fontWeight: 'normal' }}
+          >
+            {line}
+          </p>
+        );
+      }
       return (
         <p 
           key={i} 
@@ -31,7 +41,7 @@ const ArticleContent = ({
           }`}
           style={{ 
             fontSize: `${fontSize + 2}px`,
-            fontWeight: 'normal' // Use normal font weight
+            fontWeight: 'normal'
           }}
         >
           {line}
@@ -44,21 +54,6 @@ const ArticleContent = ({
     <div className="relative mt-8 mb-12 animate-fade-in">
       {renderContent()}
       
-      {example && (
-        <div className="mt-6 p-4 bg-primary-50/10 border-l-4 border-primary-200 rounded">
-          <h4 className="text-primary-300 mb-2 font-medium">Exemplo:</h4>
-          <p 
-            className="text-gray-400 whitespace-pre-wrap text-left" 
-            style={{ 
-              fontSize: `${fontSize}px`,
-              fontWeight: 'normal' // Use normal font weight for example text
-            }}
-          >
-            {example}
-          </p>
-        </div>
-      )}
-      
       <div className="fixed left-4 bottom-24 flex flex-col space-y-2 z-10">
         <button 
           onClick={onIncreaseFontSize}
@@ -67,7 +62,6 @@ const ArticleContent = ({
         >
           <ZoomIn size={18} />
         </button>
-        
         <button 
           onClick={onDecreaseFontSize}
           className="p-2 neomorph-sm text-primary-300 hover:text-primary hover:scale-105 transition-all"
