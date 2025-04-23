@@ -1,7 +1,8 @@
+
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, TrendingUp, Medal, ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -21,6 +22,14 @@ interface RankingListProps {
   userRank?: number;
 }
 
+interface CurrentUserData {
+  id?: string;
+  full_name: string | null;
+  total_points: number | null;
+  weekly_points?: number | null;
+  streak_change?: number | null;
+}
+
 export function RankingList({ rankings, currentUserId, userRank }: RankingListProps) {
   const [showAllRankings, setShowAllRankings] = useState(false);
   const [activeTab, setActiveTab] = useState<'total' | 'weekly'>('total');
@@ -33,7 +42,7 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
     return "text-primary-300";
   };
 
-  const sortedRankings = React.useMemo(() => {
+  const sortedRankings = useMemo(() => {
     return [...rankings].sort((a, b) => {
       const pointsA = activeTab === 'total' ? (a.total_points || 0) : (a.weekly_points || 0);
       const pointsB = activeTab === 'total' ? (b.total_points || 0) : (b.weekly_points || 0);
@@ -42,6 +51,13 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
   }, [rankings, activeTab]);
 
   const displayedRankings = showAllRankings ? sortedRankings.slice(0, 100) : sortedRankings.slice(0, 20);
+  
+  // Check if current user is in the displayed rankings
+  const isUserInRankings = currentUserId ? displayedRankings.some(rank => rank.id === currentUserId) : false;
+  
+  // Get current user data from rankings
+  const currentUserData: CurrentUserData | undefined = currentUserId ?
+    rankings.find(rank => rank.id === currentUserId) : undefined;
   
   return (
     <Card className="h-full">
@@ -109,13 +125,13 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
                   <TableCell className={`text-right ${isMobile ? "py-2 px-1" : ""}`}>
                     <div className="flex items-center justify-end gap-1">
                       <TrendingUp className="h-4 w-4 text-primary-300" />
-                      <span>{rank.total_points || 0}</span>
+                      <span>{activeTab === 'total' ? (rank.total_points || 0) : (rank.weekly_points || 0)}</span>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
               
-              {!isUserInRankings && currentUser && userRank && userRank > (showAllRankings ? 100 : 20) && (
+              {!isUserInRankings && currentUserData && userRank && userRank > (showAllRankings ? 100 : 20) && (
                 <>
                   <TableRow className="border-t-2 border-dashed border-gray-700/20">
                     <TableCell colSpan={3} className="text-center text-xs text-muted-foreground py-1">
@@ -131,14 +147,14 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
                     <TableCell className={`font-medium ${isMobile ? "py-2 px-1" : ""}`}>
                       <div className={`flex items-center ${isMobile ? "flex-wrap" : ""}`}>
                         <span className={isMobile ? "truncate max-w-[80px]" : ""}>
-                          {currentUser.full_name}
+                          {currentUserData.full_name}
                         </span>
                         <span className={`${isMobile ? "ml-1" : "ml-2"} px-1.5 py-0.5 text-xs rounded bg-primary-300/20 text-primary-300`}>
                           Você
                         </span>
-                        {currentUser.streak_change && currentUser.streak_change < 0 && (
+                        {currentUserData.streak_change && currentUserData.streak_change < 0 && (
                           <span className={`${isMobile ? "ml-1" : "ml-2"} px-1.5 py-0.5 text-xs rounded bg-red-500/20 text-red-500`}>
-                            {currentUser.streak_change} pts
+                            {currentUserData.streak_change} pts
                           </span>
                         )}
                       </div>
@@ -146,7 +162,7 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
                     <TableCell className={`text-right ${isMobile ? "py-2 px-1" : ""}`}>
                       <div className="flex items-center justify-end gap-1">
                         <TrendingUp className="h-4 w-4 text-primary-300" />
-                        <span>{currentUser.total_points || 0}</span>
+                        <span>{activeTab === 'total' ? (currentUserData.total_points || 0) : (currentUserData.weekly_points || 0)}</span>
                       </div>
                     </TableCell>
                   </TableRow>
