@@ -1,13 +1,14 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Award, Heart } from "lucide-react";
+import { Award, Heart, SmilePlus } from "lucide-react";
 import { Comment } from "./PostCard";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface CommentListProps {
   comments: Comment[];
@@ -48,6 +49,38 @@ const CommentItem = ({
   postId: string; 
   onSetBestTip?: (postId: string, commentId: string) => void; 
 }) => {
+  const queryClient = useQueryClient();
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const likeCommentMutation = useMutation({
+    mutationFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      // Fixed TypeScript error - Check if session exists before accessing user
+      if (!sessionData.session) {
+        toast.error("Você precisa estar logado para curtir um comentário");
+        throw new Error("User not authenticated");
+      }
+
+      const { data, error } = await supabase
+        .from('community_comments')
+        .update({ likes: comment.likes + 1 })
+        .eq('id', comment.id)
+        .select();
+
+      if (error) {
+        toast.error("Erro ao curtir comentário", { description: error.message });
+        throw error;
+      }
+
+      toast.success("Comentário curtido!");
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['post-comments', postId] });
+    }
+  });
+
   // Fetch user profile data including avatar
   const { data: userData } = useQuery({
     queryKey: ['user', comment.author_id],
@@ -84,6 +117,12 @@ const CommentItem = ({
   const userInitial = userName.charAt(0).toUpperCase();
   const avatarUrl = userData?.avatar_url;
 
+  const handleLikeComment = () => {
+    likeCommentMutation.mutate();
+  };
+
+  const emojis = ['👍', '❤️', '😂', '👏', '🎉', '👀', '🔥'];
+
   return (
     <div className={`flex gap-3 ${comment.is_best_tip ? 'bg-primary-900/20 p-3 rounded border-l-2 border-primary-300' : ''} ${depth > 0 ? `ml-${Math.min(depth * 4, 12)} border-l-2 border-gray-800 pl-3 mt-2` : ''}`}>
       <Avatar>
@@ -118,9 +157,21 @@ const CommentItem = ({
             variant="ghost"
             size="sm"
             className="text-gray-400 hover:text-primary-300 hover:bg-transparent px-2 py-1 h-auto min-h-0"
+            onClick={handleLikeComment}
+            disabled={likeCommentMutation.isPending}
           >
             <Heart size={14} className="mr-1" />
             <span className="text-xs">{comment.likes}</span>
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-400 hover:text-primary-300 hover:bg-transparent px-2 py-1 h-auto min-h-0"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          >
+            <SmilePlus size={14} className="mr-1" />
+            <span className="text-xs">Emoji</span>
           </Button>
           
           {onSetBestTip && !comment.is_best_tip && (
@@ -135,6 +186,27 @@ const CommentItem = ({
             </Button>
           )}
         </div>
+        
+        {showEmojiPicker && (
+          <div className="flex mt-2 space-x-2 flex-wrap">
+            {emojis.map(emoji => (
+              <Button
+                key={emoji}
+                variant="ghost"
+                size="sm"
+                className="text-lg hover:bg-primary-900/30 p-1 h-8 w-8"
+                onClick={() => {
+                  setShowEmojiPicker(false);
+                  toast.success(`Emoji ${emoji} selecionado`, { 
+                    description: "A inserção de emojis será implementada em breve!" 
+                  });
+                }}
+              >
+                {emoji}
+              </Button>
+            ))}
+          </div>
+        )}
         
         {/* We need to modify this once we have proper reply structure */}
         {comment.replies && comment.replies.length > 0 && (
