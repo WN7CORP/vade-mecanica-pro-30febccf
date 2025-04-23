@@ -88,7 +88,7 @@ const Index = () => {
               <ScrollText size={28} className="text-primary-300 mb-3" />
               <span className="text-gray-300 font-medium">Anotações</span>
               <span className="text-xs text-gray-400 mt-1">
-                Suas anotações e estudos
+                Anotações de estudos
               </span>
             </button>
             
