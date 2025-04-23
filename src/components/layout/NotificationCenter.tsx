@@ -1,12 +1,10 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Bell, Heart, MessageSquare, User, Award } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 interface Notification {
   id: string;
@@ -22,100 +20,54 @@ interface Notification {
   read: boolean;
 }
 
+// Mock notifications for demonstration
+const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: "1",
+    type: "like",
+    content: "curtiu sua publicação sobre Direito Civil",
+    from: {
+      id: "user1",
+      name: "João Silva",
+      avatar: undefined
+    },
+    postId: "post1",
+    createdAt: new Date(Date.now() - 3600000), // 1 hour ago
+    read: false
+  },
+  {
+    id: "2",
+    type: "comment",
+    content: "comentou em sua publicação sobre Direito Constitucional",
+    from: {
+      id: "user2",
+      name: "Maria Oliveira",
+      avatar: undefined
+    },
+    postId: "post2",
+    createdAt: new Date(Date.now() - 86400000), // 1 day ago
+    read: false
+  },
+  {
+    id: "3",
+    type: "bestTip",
+    content: "marcou seu comentário como Melhor Dica",
+    from: {
+      id: "user3",
+      name: "Carlos Santos",
+      avatar: undefined
+    },
+    postId: "post3",
+    createdAt: new Date(Date.now() - 172800000), // 2 days ago
+    read: true
+  }
+];
+
 const NotificationCenter = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [isOpen, setIsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { data: commentsData, error: commentsError } = await supabase
-        .from('community_comments')
-        .select(`
-          id,
-          content,
-          created_at,
-          post:community_posts!inner(
-            id,
-            author_id
-          ),
-          author_id
-        `)
-        .eq('post.author_id', session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (commentsError) {
-        console.error('Error fetching notifications:', commentsError);
-        return;
-      }
-
-      // Get user profiles for each author
-      const authorIds = commentsData.map(comment => comment.author_id);
-      const { data: userProfiles, error: userError } = await supabase
-        .from('user_profiles')
-        .select('id, full_name')
-        .in('id', authorIds);
-
-      if (userError) {
-        console.error('Error fetching user profiles:', userError);
-        return;
-      }
-
-      // Create a map for quick lookup
-      const userMap = new Map();
-      userProfiles?.forEach(profile => {
-        userMap.set(profile.id, profile);
-      });
-
-      const notificationsData = commentsData.map(comment => {
-        const userProfile = userMap.get(comment.author_id) || { full_name: 'Usuário' };
-        
-        return {
-          id: comment.id,
-          type: 'comment' as const,
-          content: 'comentou em sua publicação',
-          from: {
-            id: comment.author_id,
-            name: userProfile?.full_name || 'Usuário',
-          },
-          postId: comment.post?.id,
-          createdAt: new Date(comment.created_at),
-          read: false
-        };
-      });
-
-      setNotifications(notificationsData);
-      setUnreadCount(notificationsData.filter(n => !n.read).length);
-    };
-
-    fetchNotifications();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('comment-notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'community_comments'
-        },
-        (payload) => {
-          // Add new notification
-          toast.info('Novo comentário recebido!');
-          fetchNotifications();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAsRead = (notificationId: string) => {
     setNotifications(

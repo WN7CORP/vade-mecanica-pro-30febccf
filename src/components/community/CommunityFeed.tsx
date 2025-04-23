@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import PostCard from "./PostCard";
-import { Plus, Minus, Film } from "lucide-react";
+import PostCard, { Post } from "./PostCard";
+import { Plus, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Post } from "@/types/community";
 
-const GENERAL_TAGS = [
+const TAGS = [
   "Constitucional", 
   "Civil", 
   "Penal", 
@@ -20,70 +19,15 @@ const GENERAL_TAGS = [
   "Internacional"
 ];
 
-const LEGISLATION_TAGS = [
-  "Leis Federais",
-  "Códigos",
-  "Estatutos", 
-  "Portarias",
-  "Resoluções",
-  "Decretos",
-  "Projetos de Lei",
-  "Jurisprudência",
-  "Direito Comparado"
-];
-
-const MOVIE_TAGS = [
-  "Drama Judicial",
-  "Biografias",
-  "Documentários",
-  "Direito Penal",
-  "Direito Civil",
-  "Direitos Humanos",
-  "Advocacia",
-  "Casos Históricos",
-  "Série Jurídica"
-];
-
-interface CommunityFeedProps {
-  fontSize: number;
-  onIncreaseFont: () => void;
-  onDecreaseFont: () => void;
-  communityType: 'general' | 'legislation' | 'movies';
-  filter: string;
-}
-
-const CommunityFeed = ({ 
-  fontSize, 
-  onIncreaseFont, 
-  onDecreaseFont, 
-  communityType = 'general',
-  filter = 'recent'
-}: CommunityFeedProps) => {
+const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
   const queryClient = useQueryClient();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newPostContent, setNewPostContent] = useState("");
-
-  const getTags = () => {
-    switch(communityType) {
-      case 'legislation': return LEGISLATION_TAGS;
-      case 'movies': return MOVIE_TAGS;
-      default: return GENERAL_TAGS;
-    }
-  };
-
-  const getPlaceholderText = () => {
-    switch(communityType) {
-      case 'legislation':
-        return "Compartilhe dúvidas ou comentários sobre legislação, códigos ou projetos de lei...";
-      case 'movies':
-        return "Recomende um filme jurídico ou comente sobre algum que você assistiu...";
-      default:
-        return "Compartilhe seus pensamentos, dúvidas ou insights sobre o mundo jurídico...";
-    }
-  };
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
 
   const { data: posts, isLoading } = useQuery({
-    queryKey: ['community-posts', filter, communityType],
+    queryKey: ['community-posts', activeFilter, sortBy],
     queryFn: async () => {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
@@ -91,23 +35,24 @@ const CommunityFeed = ({
         return [];
       }
 
-      let query = supabase
-        .from('community_posts')
-        .select(`
-          *,
-          author:user_profiles!community_posts_author_id_fkey(
-            id,
-            full_name
-          ),
-          comments:community_comments(count)
-        `);
-      
-      query = query.eq('community_type', communityType);
+      let query = supabase.from('community_posts').select(`
+        id, 
+        content, 
+        author_id, 
+        created_at, 
+        likes, 
+        tags,
+        is_favorite
+      `);
 
-      if (filter === 'engagement') {
-        query = query.order('likes', { ascending: false });
-      } else {
+      if (activeFilter !== 'all') {
+        query = query.contains('tags', [activeFilter]);
+      }
+
+      if (sortBy === 'recent') {
         query = query.order('created_at', { ascending: false });
+      } else {
+        query = query.order('likes', { ascending: false });
       }
 
       const { data, error } = await query;
@@ -117,16 +62,12 @@ const CommunityFeed = ({
         return [];
       }
 
-      return data.map(post => ({
-        ...post,
-        commentCount: post.comments?.[0]?.count || 0,
-        community_type: post.community_type as 'general' | 'legislation' | 'movies'
-      }));
+      return data as Post[];
     }
   });
 
   const createPostMutation = useMutation({
-    mutationFn: async (newPost: { content: string, tags: string[], community_type: string }) => {
+    mutationFn: async (newPost: { content: string, tags: string[] }) => {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
@@ -149,8 +90,7 @@ const CommunityFeed = ({
         tags: newPost.tags,
         author_id: sessionData.session.user.id,
         likes: 0,
-        is_favorite: false,
-        community_type: newPost.community_type
+        is_favorite: false
       }).select();
 
       if (error) {
@@ -190,12 +130,9 @@ const CommunityFeed = ({
 
     createPostMutation.mutate({ 
       content: newPostContent, 
-      tags: selectedTags,
-      community_type: communityType
+      tags: selectedTags 
     });
   };
-
-  const tags = getTags();
 
   return (
     <div>
@@ -224,7 +161,7 @@ const CommunityFeed = ({
       <div className="p-4 mb-6 border border-primary-300/30 rounded-lg bg-primary-300/5">
         <h3 className="text-primary-300 font-medium mb-2">Selecione pelo menos uma tag para seu post:</h3>
         <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
+          {TAGS.map((tag) => (
             <Button
               key={tag}
               variant={selectedTags.includes(tag) ? "default" : "outline"}
@@ -246,7 +183,7 @@ const CommunityFeed = ({
         <textarea
           value={newPostContent}
           onChange={(e) => setNewPostContent(e.target.value)}
-          placeholder={getPlaceholderText()}
+          placeholder="Compartilhe uma dúvida ou dica com a comunidade..."
           className="w-full p-3 bg-gray-800/80 border border-gray-700 rounded-md text-gray-300 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-primary-300 min-h-[100px]"
           style={{ fontSize }}
         />
@@ -261,39 +198,16 @@ const CommunityFeed = ({
         </div>
       </Card>
 
-      {communityType === 'movies' && (
-        <div className="mb-4 p-4 rounded-lg bg-gray-800/50 border border-gray-700">
-          <div className="flex items-center gap-2 mb-4">
-            <Film className="text-primary-300" size={24} />
-            <h2 className="text-lg font-medium text-primary-300">Filmes Jurídicos Recomendados</h2>
-          </div>
-          <p className="text-gray-300 mb-3">
-            Compartilhe e descubra filmes que abordam temas jurídicos, como dramas de tribunal, 
-            biografias de advogados e documentários sobre casos reais.
-          </p>
-          <p className="text-sm text-gray-400">
-            Ao recomendar um filme, procure incluir detalhes como onde assistir, 
-            ano de lançamento e os temas jurídicos abordados.
-          </p>
-        </div>
-      )}
-
       <div className="space-y-4">
         {isLoading ? (
           <div>Carregando posts...</div>
-        ) : posts && posts.length > 0 ? (
-          posts.map((post) => (
+        ) : (
+          posts?.map((post) => (
             <PostCard 
               key={post.id} 
               post={post}
             />
           ))
-        ) : (
-          <div className="text-center py-10">
-            <p className="text-gray-400">
-              Nenhum post encontrado nesta comunidade. Seja o primeiro a compartilhar algo!
-            </p>
-          </div>
         )}
       </div>
     </div>

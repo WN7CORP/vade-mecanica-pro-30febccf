@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,8 +15,6 @@ import Notes from "./pages/Notes";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Community from "./pages/Community";
-import MovieRecommendations from "./pages/MovieRecommendations";
-import MovieDetails from "./pages/MovieDetails";
 
 const queryClient = new QueryClient();
 
@@ -36,8 +35,6 @@ const App = () => (
           <Route path="/anotacoes" element={<Notes />} />
           <Route path="/perfil" element={<Profile />} />
           <Route path="/comunidade" element={<Community />} />
-          <Route path="/filmes" element={<MovieRecommendations />} />
-          <Route path="/filmes/:id" element={<MovieDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

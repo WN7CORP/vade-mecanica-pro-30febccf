@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
-import { Book, Search, Scale, BookOpen, Bookmark, ScrollText, Film } from "lucide-react";
+import { Book, Search, Scale, BookOpen, Bookmark, ScrollText } from "lucide-react";
 import { fetchAvailableLaws, LAW_OPTIONS } from "@/services/lawService";
 
 const Index = () => {
@@ -100,17 +100,6 @@ const Index = () => {
               <span className="text-gray-300 font-medium">Pesquisar</span>
               <span className="text-xs text-gray-400 mt-1">
                 Buscar artigos e termos
-              </span>
-            </button>
-
-            <button 
-              onClick={() => navigate("/filmes")}
-              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
-            >
-              <Film size={28} className="text-primary-300 mb-3" />
-              <span className="text-gray-300 font-medium">Filmes Jurídicos</span>
-              <span className="text-xs text-gray-400 mt-1">
-                Recomendações de filmes
               </span>
             </button>
           </div>
