@@ -1,114 +1,32 @@
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, User, Camera } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Avatar } from "@/components/ui/avatar";
+import { LogOut, User } from "lucide-react";
 import { toast } from "sonner";
 
 const ProfileMenu = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(false);
+  const [selectedGender, setSelectedGender] = useState<'male' | 'female'>('male');
+  const [selectedTone, setSelectedTone] = useState('light');
+  const [avatars, setAvatars] = useState<any[]>([]);
 
-  // Fetch user's current profile photo
-  useEffect(() => {
-    const fetchProfilePhoto = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // First check if we can get the user profile
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('avatar_url')
-            .eq('id', user.id)
-            .single();
-            
-          if (profile?.avatar_url) {
-            setProfileImage(profile.avatar_url);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      }
-    };
-    fetchProfilePhoto();
-  }, []);
+  React.useEffect(() => {
+    fetchAvatars();
+  }, [selectedGender]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    setLoading(true);
-
-    try {
-      // First check if bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'profile_photos');
-      
-      if (!bucketExists) {
-        toast.error("Bucket de armazenamento não encontrado", { 
-          description: "Entre em contato com o suporte técnico." 
-        });
-        setLoading(false);
-        return;
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Você precisa estar logado para atualizar a foto");
-        setLoading(false);
-        return;
-      }
-
-      // Create folder for user if it doesn't exist
-      const folderPath = `${user.id}`;
-      const fileName = 'profile.jpg';
-      const filePath = `${folderPath}/${fileName}`;
-
-      // Upload file to Supabase storage
-      const { error: uploadError } = await supabase.storage
-        .from('profile_photos')
-        .upload(filePath, file, {
-          upsert: true,
-          contentType: file.type
-        });
-
-      if (uploadError) {
-        toast.error("Erro ao fazer upload da foto", { description: uploadError.message });
-        setLoading(false);
-        return;
-      }
-
-      // Get public URL
-      const { data } = supabase.storage.from('profile_photos').getPublicUrl(filePath);
-      
-      // Update user profile with new avatar URL
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ avatar_url: data.publicUrl })
-        .eq('id', user.id);
-
-      if (updateError) {
-        toast.error("Erro ao atualizar perfil", { description: updateError.message });
-        setLoading(false);
-        return;
-      }
-
-      setProfileImage(data.publicUrl);
-      toast.success("Foto de perfil atualizada com sucesso!");
-    } catch (error: any) {
-      toast.error("Erro ao atualizar foto de perfil", { 
-        description: error.message || "Tente novamente mais tarde" 
-      });
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+  const fetchAvatars = async () => {
+    const { data } = await supabase
+      .from('default_avatars')
+      .select('*')
+      .eq('gender', selectedGender);
+    setAvatars(data || []);
   };
 
   const handleSignOut = async () => {
@@ -117,64 +35,80 @@ const ProfileMenu = () => {
     toast.success('Logout realizado com sucesso');
   };
 
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
+  const updateAvatar = async (avatarId: string) => {
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ default_avatar_id: avatarId })
+      .eq('id', (await supabase.auth.getUser()).data.user?.id);
+
+    if (error) {
+      toast.error('Erro ao atualizar avatar');
+      return;
+    }
+
+    toast.success('Avatar atualizado com sucesso');
+    setIsOpen(false);
   };
 
   return (
-    <>
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        style={{ display: 'none' }} 
-        accept="image/*"
-        onChange={handleFileUpload}
-      />
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <User className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Perfil</SheetTitle>
-          </SheetHeader>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <User className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Perfil</SheetTitle>
+        </SheetHeader>
 
-          <div className="py-6 flex flex-col items-center">
-            <div className="relative mb-4">
-              <Avatar className="w-24 h-24">
-                {profileImage ? (
-                  <AvatarImage src={profileImage} alt="Foto de perfil" />
-                ) : (
-                  <AvatarFallback>
-                    <User className="w-12 h-12" />
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="absolute bottom-0 right-0 bg-primary text-background"
-                onClick={triggerFileInput}
-                disabled={loading}
-              >
-                <Camera className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <Button
-              variant="destructive"
-              className="w-full mt-4"
-              onClick={handleSignOut}
+        <div className="py-6">
+          <div className="mb-6">
+            <h4 className="text-sm font-medium mb-3">Escolha seu Avatar</h4>
+            <RadioGroup
+              defaultValue="male"
+              onValueChange={(v) => setSelectedGender(v as 'male' | 'female')}
+              className="flex gap-4 mb-4"
             >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </Button>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="male" id="male" />
+                <Label htmlFor="male">Masculino</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="female" id="female" />
+                <Label htmlFor="female">Feminino</Label>
+              </div>
+            </RadioGroup>
+
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {avatars.map((avatar) => (
+                <button
+                  key={avatar.id}
+                  onClick={() => updateAvatar(avatar.id)}
+                  className="p-2 rounded-lg hover:bg-primary-300/10 transition-colors"
+                >
+                  <Avatar className="w-16 h-16">
+                    <img src={avatar.url} alt={`Avatar ${avatar.skin_tone}`} className="w-full h-full" />
+                  </Avatar>
+                  <span className="text-xs mt-1 block">
+                    {avatar.skin_tone.replace('-', ' ')}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
-        </SheetContent>
-      </Sheet>
-    </>
+
+          <Button
+            variant="destructive"
+            className="w-full"
+            onClick={handleSignOut}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 
