@@ -100,8 +100,6 @@ export const fetchLawArticles = async (
     throw new Error(`Lei inválida: "${lawDisplayName}"`);
   }
 
-  // Define as colunas a serem retornadas
-  // Para Constituição Federal, traz todos os campos que possam interessar à tipagem nova
   let selectCols = "*";
   
   console.log(`Buscando artigos da tabela: ${tableName}`);
@@ -110,7 +108,8 @@ export const fetchLawArticles = async (
   try {
     const { data, error } = await supabase
       .from(tableName as any)
-      .select(selectCols);
+      .select(selectCols)
+      .order('id', { ascending: true }); // Add explicit ordering by ID
 
     if (error) {
       console.error("Erro ao buscar artigos:", error);
