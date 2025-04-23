@@ -1,19 +1,21 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Mail, Key, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
-const AuthForm = () => {
+interface AuthFormProps {
+  onLoginSuccess?: (email: string) => void;
+}
+
+const AuthForm = ({ onLoginSuccess }: AuthFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -22,14 +24,15 @@ const AuthForm = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
 
-        navigate("/");
+        // Call onLoginSuccess with the email if provided
+        onLoginSuccess?.(email);
       } else {
         // Verificar se o nome foi fornecido
         if (!fullName.trim()) {
