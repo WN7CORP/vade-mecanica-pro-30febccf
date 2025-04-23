@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,12 +9,7 @@ import { ActivityChart } from "@/components/profile/ActivityChart";
 import { useRankings, useLoginStreak, useUserRank } from "@/hooks/useRankings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-
-interface UserStats {
-  totalSearches: number;
-  totalReads: number;
-  lastLogin?: Date | null;
-}
+import { BackButton } from "@/components/ui/BackButton";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -145,6 +141,15 @@ const Profile = () => {
       <Header />
       
       <main className="flex-1 container max-w-screen-lg mx-auto px-4 py-8 mt-16">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <BackButton />
+            <h1 className="text-2xl font-heading font-bold text-primary-300">
+              Meu Perfil
+            </h1>
+          </div>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2">
           <div className="order-2 md:order-1">
             <ActivityChart />
@@ -160,7 +165,7 @@ const Profile = () => {
           </div>
         </div>
       </main>
-
+      
       <Footer />
     </div>
   );

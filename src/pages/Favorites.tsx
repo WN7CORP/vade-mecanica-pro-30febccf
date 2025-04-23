@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import { Loader2, Bookmark, PieChart } from "lucide-react";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { toast } from "@/hooks/use-toast";
+import { BackButton } from "@/components/ui/BackButton";
 
 const Favorites = () => {
   const navigate = useNavigate();
@@ -62,9 +63,12 @@ const Favorites = () => {
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-heading font-bold text-primary-300">
-            Seus Favoritos
-          </h1>
+          <div className="flex items-center gap-3">
+            <BackButton />
+            <h1 className="text-2xl font-heading font-bold text-primary-300">
+              Seus Favoritos
+            </h1>
+          </div>
           
           <div className="neomorph p-3 text-primary-300">
             <PieChart size={20} />

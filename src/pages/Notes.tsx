@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollText, Search, ChartBar, FileDown, Loader2 } from "lucide-react";
 import PDFExporter from "@/components/ui/PDFExporter";
+import { BackButton } from "@/components/ui/BackButton";
 
 const Notes = () => {
   const navigate = useNavigate();
@@ -49,9 +50,12 @@ const Notes = () => {
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-heading font-bold text-primary-300">
-            Suas Anotações
-          </h1>
+          <div className="flex items-center gap-3">
+            <BackButton />
+            <h1 className="text-2xl font-heading font-bold text-primary-300">
+              Suas Anotações
+            </h1>
+          </div>
           
           <div className="flex gap-2">
             <div className="neomorph p-3 text-primary-300">
