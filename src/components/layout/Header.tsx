@@ -1,71 +1,96 @@
-
-import { Search, Book, Menu, User, LogOut } from "lucide-react";
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Search } from "lucide-react";
+import { MainNav } from "@/components/layout/MainNav";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { useMobile } from "@/hooks/use-mobile";
+import { useTheme } from "next-themes";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sun, Moon } from "lucide-react";
 
-const Header = () => {
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { toast } = useToast();
-  
-  const isSearchPage = location.pathname === "/pesquisa";
-  const isAllLawsPage = location.pathname === "/leis";
+// Add this import at the top with the other imports
+import NotificationCenter from "@/components/ui/NotificationCenter";
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Desconectado com sucesso",
-        description: "Você foi desconectado da sua conta."
-      });
-      navigate("/auth");
-    } catch (error) {
-      console.error("Erro ao desconectar:", error);
-      toast({
-        title: "Erro ao desconectar",
-        description: "Ocorreu um erro ao tentar desconectar da sua conta.",
-        variant: "destructive"
-      });
-    }
+interface SearchBarProps {
+  onSearch: (query: string) => void;
+}
+
+const SearchBar = ({ onSearch }: SearchBarProps) => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleSearch = () => {
+    onSearch(searchQuery);
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 py-3 px-4 bg-background/80 backdrop-blur-sm border-b">
-      <div className="max-w-screen-md mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="font-bold text-primary text-xl"
-          >
-            <Book className="h-5 w-5 mr-1" />
-            VM Pro
-          </Button>
-        </div>
+    <div className="relative">
+      <Input
+        type="text"
+        placeholder="Pesquisar..."
+        value={searchQuery}
+        onChange={handleInputChange}
+        className="pr-10 shadow-none"
+      />
+      <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground peer-focus:text-primary" />
+    </div>
+  );
+};
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/perfil")}
-            className="text-primary-300"
-          >
-            <User className="h-5 w-5" />
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="text-primary-300"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+const Header = () => {
+  const isMobile = useMobile();
+  const [mounted, setMounted] = useState(false);
+  const { setTheme } = useTheme();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleSearch = (query: string) => {
+    console.log("Searching for:", query);
+  };
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center">
+        <MainNav />
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            {!isMobile && <SearchBar onSearch={handleSearch} />}
+          </div>
+          <nav className="flex items-center gap-2">
+            <NotificationCenter />
+            {mounted ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span className="sr-only">Toggle theme</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setTheme("light")}>
+                    Light
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("dark")}>
+                    Dark
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("system")}>
+                    System
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </nav>
         </div>
       </div>
     </header>

@@ -1,0 +1,83 @@
+
+import React from "react";
+import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Award, Heart } from "lucide-react";
+import { Comment } from "./PostCard";
+
+interface CommentListProps {
+  comments: Comment[];
+  postId: string;
+  onSetBestTip?: (postId: string, commentId: string) => void;
+}
+
+const CommentList = ({ comments, postId, onSetBestTip }: CommentListProps) => {
+  if (comments.length === 0) {
+    return <p className="text-sm text-gray-400">Nenhum comentário ainda. Seja o primeiro a comentar!</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {comments.map((comment) => (
+        <div key={comment.id} className={`flex gap-3 ${comment.isBestTip ? 'bg-primary-900/20 p-3 rounded border-l-2 border-primary-300' : ''}`}>
+          <Avatar>
+            <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center">
+              {comment.author.avatar ? (
+                <img src={comment.author.avatar} alt={comment.author.name} className="h-full w-full rounded-full object-cover" />
+              ) : (
+                <span className="text-sm font-medium text-gray-300">
+                  {comment.author.name.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+          </Avatar>
+          
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm text-gray-300">{comment.author.name}</span>
+              <span className="text-xs text-gray-500">
+                {formatDistanceToNow(comment.createdAt, { locale: ptBR, addSuffix: true })}
+              </span>
+              
+              {comment.isBestTip && (
+                <div className="flex items-center gap-1 bg-primary-900/30 text-primary-300 text-xs px-2 py-0.5 rounded-full">
+                  <Award size={12} />
+                  <span>Melhor Dica</span>
+                </div>
+              )}
+            </div>
+            
+            <p className="text-sm text-gray-300 mt-1">{comment.content}</p>
+            
+            <div className="flex items-center gap-2 mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-400 hover:text-primary-300 hover:bg-transparent px-2 py-1 h-auto min-h-0"
+              >
+                <Heart size={14} className="mr-1" />
+                <span className="text-xs">{comment.likes}</span>
+              </Button>
+              
+              {onSetBestTip && !comment.isBestTip && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-primary-300 hover:bg-transparent px-2 py-1 h-auto min-h-0"
+                  onClick={() => onSetBestTip(postId, comment.id)}
+                >
+                  <Award size={14} className="mr-1" />
+                  <span className="text-xs">Marcar como Melhor Dica</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default CommentList;
