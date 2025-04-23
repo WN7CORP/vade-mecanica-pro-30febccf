@@ -36,7 +36,7 @@ const ArticleCard = ({
   onExplainRequest,
   onAskQuestion
 }: ArticleCardProps) => {
-  const [fontSize, setFontSize] = useState(16);
+  const [fontSize, setFontSize] = useState(14);
   const [isReading, setIsReading] = useState(false);
   const [readingContent, setReadingContent] = useState<{text: string, title: string}>({text: '', title: ''});
   const [showHighlightTools, setShowHighlightTools] = useState(false);
@@ -194,6 +194,14 @@ const ArticleCard = ({
     setIsReading(true);
   };
 
+  const handleIncreaseFontSize = () => {
+    setFontSize(prev => Math.min(prev + 1, 24));
+  };
+
+  const handleDecreaseFontSize = () => {
+    setFontSize(prev => Math.max(prev - 1, 12));
+  };
+
   useEffect(() => {
     if (userId) {
       logUserActivity('read', lawName, articleNumber);
@@ -229,8 +237,8 @@ const ArticleCard = ({
         content={content}
         example={undefined}
         fontSize={fontSize}
-        onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 2, 24))}
-        onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 2, 14))}
+        onIncreaseFontSize={handleIncreaseFontSize}
+        onDecreaseFontSize={handleDecreaseFontSize}
         articleNumber={shouldCenterContent ? "" : articleNumber}
         centerContent={shouldCenterContent}
       />

@@ -8,7 +8,7 @@ interface ArticleContentProps {
   onDecreaseFontSize: () => void;
   articleNumber?: string;
   example?: string;
-  centerContent?: boolean; // NOVO: se o texto deve ser centralizado
+  centerContent?: boolean;
 }
 
 const ArticleContent = ({
@@ -27,7 +27,7 @@ const ArticleContent = ({
           <p 
             key={i}
             className="mb-4 whitespace-pre-wrap transition-all duration-200 text-center text-white"
-            style={{ fontSize: `${fontSize + 2}px`, fontWeight: 'normal' }}
+            style={{ fontSize: `${fontSize}px`, fontWeight: 'normal' }}
           >
             {line}
           </p>
@@ -40,7 +40,7 @@ const ArticleContent = ({
             shouldShowAsHeader ? "text-sm text-gray-400" : "text-white"
           }`}
           style={{ 
-            fontSize: `${fontSize + 2}px`,
+            fontSize: `${fontSize}px`,
             fontWeight: 'normal'
           }}
         >
@@ -75,4 +75,3 @@ const ArticleContent = ({
 };
 
 export default ArticleContent;
-
