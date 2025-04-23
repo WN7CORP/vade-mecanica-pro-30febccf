@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Home, LogOut } from "lucide-react";
+import { Home, LogOut, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
@@ -10,9 +10,17 @@ interface AdminHeaderProps {
   activeTab: string;
   onNavigateHome: () => void;
   adminEmail?: string | null;
+  onRetry?: () => void;
+  error?: string | null;
 }
 
-const AdminHeader: React.FC<AdminHeaderProps> = ({ activeTab, onNavigateHome, adminEmail }) => {
+const AdminHeader: React.FC<AdminHeaderProps> = ({ 
+  activeTab, 
+  onNavigateHome, 
+  adminEmail,
+  onRetry,
+  error 
+}) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -42,6 +50,21 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ activeTab, onNavigateHome, ad
             <span className="text-sm bg-primary-foreground/20 px-2 py-1 rounded">
               {adminEmail}
             </span>
+          )}
+          {error && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-red-200">{error}</span>
+              {onRetry && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={onRetry} 
+                  className="h-7 px-2"
+                >
+                  <RefreshCw className="h-4 w-4 mr-1" /> Tentar novamente
+                </Button>
+              )}
+            </div>
           )}
         </div>
 

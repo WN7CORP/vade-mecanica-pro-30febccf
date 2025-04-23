@@ -12,11 +12,15 @@ import AdminMessages from "@/components/admin/AdminMessages";
 import AdminLogs from "@/components/admin/AdminLogs";
 import AdminLogin from "@/components/admin/AdminLogin";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const navigate = useNavigate();
-  const { isAdmin, isLoading, adminEmail } = useAdminAuth();
+  const { isAdmin, isLoading, adminEmail, error, retryAdminCheck } = useAdminAuth();
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check session exists
@@ -25,6 +29,7 @@ const Admin = () => {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Session check error:", error);
+          setSessionError("Sessão expirada. Por favor, faça login novamente.");
           toast({
             title: "Sessão expirada",
             description: "Você precisa fazer login novamente.",
@@ -35,6 +40,7 @@ const Admin = () => {
         }
         
         if (!data.session) {
+          setSessionError("Você precisa fazer login para acessar essa página.");
           toast({
             title: "Acesso restrito",
             description: "Faça login para continuar.",
@@ -44,6 +50,7 @@ const Admin = () => {
         }
       } catch (err) {
         console.error("Error checking session:", err);
+        setSessionError("Erro ao verificar sessão. Por favor, tente novamente.");
         navigate("/auth");
       }
     };
@@ -61,6 +68,31 @@ const Admin = () => {
 
   // Check if user has admin privileges
   if (!isAdmin) {
+    if (error) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="w-full max-w-md space-y-4">
+            <Alert variant="destructive" className="border-red-500">
+              <AlertCircle className="h-5 w-5" />
+              <AlertTitle>Erro ao verificar permissões</AlertTitle>
+              <AlertDescription className="mt-2">
+                {error}
+              </AlertDescription>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={retryAdminCheck} 
+                className="mt-4 flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>Tentar novamente</span>
+              </Button>
+            </Alert>
+          </div>
+        </div>
+      );
+    }
+    
     return <AdminLogin onLoginSuccess={() => window.location.reload()} />;
   }
 
@@ -70,9 +102,30 @@ const Admin = () => {
         activeTab={activeTab} 
         onNavigateHome={() => navigate("/")} 
         adminEmail={adminEmail}
+        error={error}
+        onRetry={retryAdminCheck}
       />
       
       <main className="flex-grow p-4 md:p-6 container max-w-7xl mx-auto">
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-5 w-5" />
+            <AlertTitle>Erro nas permissões administrativas</AlertTitle>
+            <AlertDescription>
+              {error}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={retryAdminCheck} 
+                className="ml-4"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                <span>Tentar novamente</span>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Tabs 
           defaultValue="dashboard" 
           className="w-full"

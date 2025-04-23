@@ -8,6 +8,7 @@ export function useAdminAuth() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -24,8 +25,7 @@ export function useAdminAuth() {
           return;
         }
 
-        // Hard-coded admin check as temporary solution until proper admin table access is fixed
-        // This avoids recursive RLS policy issues
+        // Hardcoded admin check as first fallback
         if (session.user.email === "wesleyhard@hotmail.com") {
           setIsAdmin(true);
           setAdminEmail(session.user.email);
@@ -33,7 +33,25 @@ export function useAdminAuth() {
           return;
         }
 
-        // Check admin status using the is_admin function we just created
+        // Try direct query to admin_users table as second fallback
+        try {
+          const { data: directAdminCheck, error: directError } = await supabase
+            .from('admin_users')
+            .select('email')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!directError && directAdminCheck) {
+            setIsAdmin(true);
+            setAdminEmail(directAdminCheck.email);
+            setIsLoading(false);
+            return;
+          }
+        } catch (directCheckError) {
+          console.log("Direct admin check failed, trying RPC function");
+        }
+
+        // Use the is_admin RPC function as final approach
         const { data, error } = await supabase.rpc('is_admin', {
           user_id: session.user.id
         });
@@ -78,7 +96,11 @@ export function useAdminAuth() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [retryCount]);
+  
+  const retryAdminCheck = () => {
+    setRetryCount(prev => prev + 1);
+  };
 
-  return { isAdmin, isLoading, adminEmail, error };
+  return { isAdmin, isLoading, adminEmail, error, retryAdminCheck };
 }

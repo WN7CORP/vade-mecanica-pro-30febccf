@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
+import { RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface MetricItem {
   label: string;
@@ -11,39 +14,43 @@ interface MetricItem {
 const CommunityMetricsTable = () => {
   const [metrics, setMetrics] = useState<MetricItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const fetchMetrics = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('community_metrics')
+        .select('metric_name, metric_value');
+      
+      if (error) {
+        console.error("Error fetching community metrics:", error);
+        setError(error.message);
+        return;
+      }
+      
+      if (data) {
+        const formattedMetrics = data.map(item => ({
+          key: item.metric_name,
+          label: formatMetricName(item.metric_name),
+          value: item.metric_value
+        }));
+        
+        // Sort by label
+        formattedMetrics.sort((a, b) => a.label.localeCompare(b.label));
+        setMetrics(formattedMetrics);
+      }
+    } catch (err: any) {
+      console.error("Error processing metrics data:", err);
+      setError(err?.message || "Erro ao carregar métricas");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   useEffect(() => {
-    const fetchMetrics = async () => {
-      setIsLoading(true);
-      
-      try {
-        const { data, error } = await supabase
-          .from('community_metrics')
-          .select('metric_name, metric_value');
-        
-        if (error) {
-          console.error("Error fetching community metrics:", error);
-          return;
-        }
-        
-        if (data) {
-          const formattedMetrics = data.map(item => ({
-            key: item.metric_name,
-            label: formatMetricName(item.metric_name),
-            value: item.metric_value
-          }));
-          
-          // Sort by label
-          formattedMetrics.sort((a, b) => a.label.localeCompare(b.label));
-          setMetrics(formattedMetrics);
-        }
-      } catch (err) {
-        console.error("Error processing metrics data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchMetrics();
   }, []);
   
@@ -80,8 +87,25 @@ const CommunityMetricsTable = () => {
 
   return (
     <div className="bg-gray-900/40 rounded-lg border border-gray-800 p-4">
-      <h3 className="font-semibold text-primary-300 mb-3">Métricas da Comunidade</h3>
-      {isLoading ? (
+      <div className="flex justify-between mb-3">
+        <h3 className="font-semibold text-primary-300">Métricas da Comunidade</h3>
+        {error && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={fetchMetrics} 
+            className="h-7 px-2 text-xs"
+          >
+            <RefreshCw className="h-3 w-3 mr-1" /> Recarregar
+          </Button>
+        )}
+      </div>
+      
+      {error ? (
+        <div className="text-red-400 text-xs mb-2">
+          <p>Erro ao carregar métricas: {error}</p>
+        </div>
+      ) : isLoading ? (
         <div className="py-4 flex justify-center">
           <div className="animate-spin h-5 w-5 border-2 border-primary-300 rounded-full border-t-transparent"></div>
         </div>
