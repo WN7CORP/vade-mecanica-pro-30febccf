@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
+import { FloatingSearchButton } from "@/components/ui/FloatingSearchButton";
 import LawHeader from "@/components/law/LawHeader";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
@@ -15,6 +16,7 @@ const LawView = () => {
   const { lawName } = useParams<{ lawName: string }>();
   const [showChat, setShowChat] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [showSearchBar, setShowSearchBar] = useState(false);
   const isMobile = useIsMobile();
   
   const {
@@ -31,6 +33,11 @@ const LawView = () => {
     loadingExplanation,
     handleExplainArticle
   } = useAIExplanation(lawName);
+
+  const handleOpenSearch = () => {
+    setShowSearchBar(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   
   // Ensure all audio is stopped when navigating
   useEffect(() => {
@@ -60,7 +67,7 @@ const LawView = () => {
       <main className="flex-1 max-w-screen-md mx-auto w-full">
         <LawHeader lawName={lawName} />
         
-        <div className="mb-6">
+        <div className={`mb-6 transition-all duration-300 ${showSearchBar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
           <SearchBar 
             onSearch={handleSearch} 
             initialValue={searchTerm}
@@ -83,6 +90,8 @@ const LawView = () => {
           onCloseChat={() => setShowChat(false)}
           onCloseExplanation={() => setShowExplanation(false)}
         />
+
+        <FloatingSearchButton onOpenSearch={handleOpenSearch} />
       </main>
       
       <Footer />
