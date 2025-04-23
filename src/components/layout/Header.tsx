@@ -9,7 +9,7 @@ import { useTheme } from "next-themes";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sun, Moon } from "lucide-react";
 import ProfileMenu from "./ProfileMenu";
-import NotificationCenter from "./NotificationCenter";
+import NotificationCenter from "@/components/layout/NotificationCenter";
 import React from "react";
 
 interface SearchBarProps {
