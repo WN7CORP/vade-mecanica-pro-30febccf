@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
@@ -208,6 +207,9 @@ const ArticleCard = ({
   const shouldLeftAlign = articleNumber === "esquerda nas linhas";
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
+  const safeContent = content ?? "";
+  const safeExample = example ?? "";
+
   return (
     <div className="card-article mb-6 hover:shadow-lg transition-all duration-300">
       <CopyToast show={showCopyToast} />
@@ -223,7 +225,7 @@ const ArticleCard = ({
       />
       
       <ArticleContent
-        content={content || ""}
+        content={safeContent}
         example={undefined}
         fontSize={fontSize}
         onIncreaseFontSize={handleIncreaseFontSize}
@@ -232,7 +234,7 @@ const ArticleCard = ({
         centerContent={shouldCenterContent}
       />
 
-      {!showExample && example && (
+      {!showExample && safeExample && (
         <button
           className="shadow-button w-full max-w-xs mx-auto mt-2 mb-2 text-primary bg-primary/10 text-sm font-medium rounded transition-all 
           hover:bg-primary/30 active:scale-95 animate-fade-in flex justify-center items-center"
@@ -241,10 +243,10 @@ const ArticleCard = ({
           Exibir Exemplo
         </button>
       )}
-      {showExample && example && (
+      {showExample && safeExample && (
         <div className="flex flex-col items-center mt-2 mb-2 animate-fade-in">
           <div className="px-4 py-2 bg-primary-50/10 border-l-4 border-primary-200 rounded text-gray-400 text-left whitespace-pre-wrap w-full max-w-xl">
-            {example}
+            {safeExample}
           </div>
           <div className="flex gap-2 mt-2">
             <button
@@ -296,8 +298,8 @@ const ArticleCard = ({
       {!shouldLeftAlign && (
         <ArticleInteractions 
           articleNumber={articleNumber}
-          content={content || ""}
-          example={example || ""}
+          content={safeContent}
+          example={safeExample}
           onExplain={handleExplain}
           onAddComment={handleComment}
           onStartNarration={handleNarration}
