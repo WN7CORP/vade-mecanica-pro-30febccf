@@ -40,7 +40,7 @@ const PostCard = ({ post }: { post: Post }) => {
   const [newComment, setNewComment] = useState("");
 
   // Fetch comments for the post
-  const { data: comments } = useQuery({
+  const { data: comments, isLoading } = useQuery({
     queryKey: ['post-comments', post.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -54,7 +54,35 @@ const PostCard = ({ post }: { post: Post }) => {
         return [];
       }
 
-      return data as Comment[];
+      // Process comments to build thread structure
+      const threadedComments = [];
+      const commentMap = new Map();
+      
+      // First pass: Add all comments to the map
+      data.forEach(comment => {
+        commentMap.set(comment.id, {...comment, replies: []});
+      });
+      
+      // Second pass: Create the threaded structure
+      data.forEach(comment => {
+        const commentWithReplies = commentMap.get(comment.id);
+        
+        if (comment.parent_comment_id) {
+          // This is a reply - add it to its parent
+          const parent = commentMap.get(comment.parent_comment_id);
+          if (parent) {
+            parent.replies.push(commentWithReplies);
+          } else {
+            // Fallback if parent doesn't exist
+            threadedComments.push(commentWithReplies);
+          }
+        } else {
+          // This is a top-level comment
+          threadedComments.push(commentWithReplies);
+        }
+      });
+      
+      return threadedComments as Comment[];
     },
     enabled: showComments
   });
@@ -82,6 +110,32 @@ const PostCard = ({ post }: { post: Post }) => {
     }
   });
 
+  // Function to mark a comment as the best tip
+  const handleSetBestTip = async (postId: string, commentId: string) => {
+    const { error: updateCommentError } = await supabase
+      .from('community_comments')
+      .update({ is_best_tip: true })
+      .eq('id', commentId);
+
+    if (updateCommentError) {
+      toast.error("Erro ao marcar melhor dica", { description: updateCommentError.message });
+      return;
+    }
+
+    const { error: updatePostError } = await supabase
+      .from('community_posts')
+      .update({ best_tip_id: commentId })
+      .eq('id', postId);
+
+    if (updatePostError) {
+      toast.error("Erro ao atualizar post", { description: updatePostError.message });
+      return;
+    }
+
+    toast.success("Dica marcada como melhor resposta!");
+    queryClient.invalidateQueries({ queryKey: ['post-comments', post.id] });
+  };
+
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim()) {
@@ -97,7 +151,8 @@ const PostCard = ({ post }: { post: Post }) => {
           <Avatar>
             <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
               <span className="text-lg font-medium text-gray-300">
-                {/* TODO: Fetch and display author's avatar or initial */}
+                {/* We'll need to fetch the author's info separately */}
+                {post.author_id ? post.author_id.substring(0, 1).toUpperCase() : 'U'}
               </span>
             </div>
           </Avatar>
@@ -173,6 +228,7 @@ const PostCard = ({ post }: { post: Post }) => {
           <CommentList 
             comments={comments || []} 
             postId={post.id}
+            onSetBestTip={handleSetBestTip}
           />
           
           <form onSubmit={handleSubmitComment} className="mt-4">
