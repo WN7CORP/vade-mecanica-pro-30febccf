@@ -8,6 +8,7 @@ import { Moon, Sun, Bell } from "lucide-react";
 import NotificationCenter from "@/components/ui/NotificationCenter";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
+import Footer from "@/components/layout/Footer";
 
 // Cabeçalho compacto só com notificações e botão tema
 const CommunityHeaderCompact = () => {
@@ -39,32 +40,35 @@ const Community = () => {
   const [fontSize, setFontSize] = useState(16);
 
   return (
-    <div className="container max-w-3xl mx-auto pt-0 pb-32 px-0 sm:px-2">
-      <CommunityHeaderCompact />
-      <Tabs defaultValue="feed" className="w-full">
-        <TabsList className="mb-4 mt-1 w-full flex bg-gray-900">
-          <TabsTrigger value="feed" className="flex-1">
-            Feed
-          </TabsTrigger>
-          <TabsTrigger value="ranking" className="flex-1">
-            Ranking & Métricas
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="feed" className="p-0">
-          <CommunityFeed
-            fontSize={fontSize}
-            onIncreaseFont={() => setFontSize((s) => Math.min(26, s + 2))}
-            onDecreaseFont={() => setFontSize((s) => Math.max(12, s - 2))}
-          />
-        </TabsContent>
-        <TabsContent value="ranking" className="p-0">
-          <div className="mb-6">
-            <CommunityRanking />
-          </div>
-          <CommunityMetricsTable />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <>
+      <div className="container max-w-3xl mx-auto pt-0 pb-32 px-0 sm:px-2">
+        <CommunityHeaderCompact />
+        <Tabs defaultValue="feed" className="w-full">
+          <TabsList className="mb-4 mt-1 w-full flex bg-gray-900">
+            <TabsTrigger value="feed" className="flex-1">
+              Feed
+            </TabsTrigger>
+            <TabsTrigger value="ranking" className="flex-1">
+              Ranking & Métricas
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="feed" className="p-0">
+            <CommunityFeed
+              fontSize={fontSize}
+              onIncreaseFont={() => setFontSize((s) => Math.min(26, s + 2))}
+              onDecreaseFont={() => setFontSize((s) => Math.max(12, s - 2))}
+            />
+          </TabsContent>
+          <TabsContent value="ranking" className="p-0">
+            <div className="mb-6">
+              <CommunityRanking />
+            </div>
+            <CommunityMetricsTable />
+          </TabsContent>
+        </Tabs>
+      </div>
+      <Footer />
+    </>
   );
 };
 

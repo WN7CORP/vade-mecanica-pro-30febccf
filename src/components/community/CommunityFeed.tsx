@@ -79,13 +79,26 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         throw new Error("Empty post content");
       }
 
+      // Get current user from session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        toast.error("Você precisa estar logado para criar um post");
+        throw new Error("User not authenticated");
+      }
+      
+      const userId = sessionData.session.user.id;
+
       const { data, error } = await supabase.from('community_posts').insert({
         content: newPost.content,
         tags: newPost.tags,
-        author_id: (await supabase.auth.getUser()).data.user?.id
+        author_id: userId,
+        likes: 0,
+        is_favorite: false
       });
 
       if (error) {
+        console.error("Post creation error:", error);
         toast.error("Erro ao criar post", { description: error.message });
         throw error;
       }

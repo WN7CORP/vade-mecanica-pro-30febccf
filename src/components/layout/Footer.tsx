@@ -1,5 +1,5 @@
 
-import { Search, BookOpen, MessageCircle, Home, User, List } from "lucide-react";
+import { Home, BookOpen, MessageCircle, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Footer = () => {
@@ -16,25 +16,13 @@ const Footer = () => {
       active: isActive("/")
     },
     {
-      icon: <Search size={20} />,
-      label: "Pesquisar",
-      path: "/pesquisa",
-      active: isActive("/pesquisa")
-    },
-    {
-      icon: <BookOpen size={20} />,
-      label: "Leis",
-      path: "/leis",
-      active: isActive("/leis")
-    },
-    {
       icon: <MessageCircle size={20} />,
       label: "Dúvidas",
       path: "/duvidas",
       active: isActive("/duvidas")
     },
     {
-      icon: <List size={20} />, // ÚNICO ícone diferente
+      icon: <BookOpen size={20} />,
       label: "Comunidade",
       path: "/comunidade",
       active: isActive("/comunidade"),
