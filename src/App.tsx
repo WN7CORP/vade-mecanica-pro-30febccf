@@ -15,8 +15,31 @@ import Notes from "./pages/Notes";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Community from "./pages/Community";
+import Admin from "./pages/Admin";
+import { useSessionTracking } from "./hooks/useSessionTracking";
 
 const queryClient = new QueryClient();
+
+function AppContent() {
+  useSessionTracking();
+  
+  return (
+    <Routes>
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/" element={<Index />} />
+      <Route path="/pesquisa" element={<Search />} />
+      <Route path="/leis" element={<AllLaws />} />
+      <Route path="/lei/:lawName" element={<LawView />} />
+      <Route path="/duvidas" element={<AIChat />} />
+      <Route path="/favoritos" element={<Favorites />} />
+      <Route path="/anotacoes" element={<Notes />} />
+      <Route path="/perfil" element={<Profile />} />
+      <Route path="/comunidade" element={<Community />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,19 +47,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Index />} />
-          <Route path="/pesquisa" element={<Search />} />
-          <Route path="/leis" element={<AllLaws />} />
-          <Route path="/lei/:lawName" element={<LawView />} />
-          <Route path="/duvidas" element={<AIChat />} />
-          <Route path="/favoritos" element={<Favorites />} />
-          <Route path="/anotacoes" element={<Notes />} />
-          <Route path="/perfil" element={<Profile />} />
-          <Route path="/comunidade" element={<Community />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AppContent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

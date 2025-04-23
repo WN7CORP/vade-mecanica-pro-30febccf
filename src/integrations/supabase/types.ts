@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          action_type: string
+          admin_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+        }
+        Insert: {
+          action_type: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+        }
+        Relationships: []
+      }
+      admin_messages: {
+        Row: {
+          admin_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      admin_users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          is_super_admin: boolean | null
+          last_login: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          is_super_admin?: boolean | null
+          last_login?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_super_admin?: boolean | null
+          last_login?: string | null
+        }
+        Relationships: []
+      }
       banco_erros: {
         Row: {
           created_at: string | null
@@ -218,6 +293,47 @@ export type Database = {
         }
         Relationships: []
       }
+      comment_reports: {
+        Row: {
+          comment_id: string | null
+          id: string
+          reason: string
+          reported_at: string | null
+          reporter_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string | null
+        }
+        Insert: {
+          comment_id?: string | null
+          id?: string
+          reason: string
+          reported_at?: string | null
+          reporter_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          comment_id?: string | null
+          id?: string
+          reason?: string
+          reported_at?: string | null
+          reporter_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_comments: {
         Row: {
           author_id: string
@@ -350,8 +466,7 @@ export type Database = {
       constituicao_federal: {
         Row: {
           artigo: string | null
-          exemplo1: string | null
-          exemplo2: string | null
+          exemplo: string | null
           "explicacao formal": string | null
           "explicacao tecnica": string | null
           id: number
@@ -359,8 +474,7 @@ export type Database = {
         }
         Insert: {
           artigo?: string | null
-          exemplo1?: string | null
-          exemplo2?: string | null
+          exemplo?: string | null
           "explicacao formal"?: string | null
           "explicacao tecnica"?: string | null
           id?: number
@@ -368,8 +482,7 @@ export type Database = {
         }
         Update: {
           artigo?: string | null
-          exemplo1?: string | null
-          exemplo2?: string | null
+          exemplo?: string | null
           "explicacao formal"?: string | null
           "explicacao tecnica"?: string | null
           id?: number
@@ -1687,6 +1800,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bans: {
+        Row: {
+          admin_id: string | null
+          banned_at: string | null
+          expires_at: string | null
+          id: string
+          reason: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          banned_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          banned_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_favorites: {
         Row: {
           article_content: string
@@ -1827,6 +1967,30 @@ export type Database = {
           },
         ]
       }
+      user_sessions: {
+        Row: {
+          duration: number | null
+          id: string
+          login_time: string | null
+          logout_time: string | null
+          user_id: string | null
+        }
+        Insert: {
+          duration?: number | null
+          id?: string
+          login_time?: string | null
+          logout_time?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          duration?: number | null
+          id?: string
+          login_time?: string | null
+          logout_time?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string | null
@@ -1932,6 +2096,14 @@ export type Database = {
         Returns: {
           tema: string
         }[]
+      }
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      log_admin_action: {
+        Args: { action_type: string; details: Json }
+        Returns: string
       }
       reset_weekly_points: {
         Args: Record<PropertyKey, never>
