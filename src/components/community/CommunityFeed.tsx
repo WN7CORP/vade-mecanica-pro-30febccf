@@ -1,14 +1,12 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import PostCard, { Post, Comment } from "./PostCard";
+import PostCard, { Post } from "./PostCard";
 import { Plus, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// Predefined list of tags (expanded to include more areas)
 const TAGS = [
   "Constitucional", 
   "Civil", 
@@ -28,10 +26,15 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
 
-  // Fetch posts from Supabase
   const { data: posts, isLoading } = useQuery({
     queryKey: ['community-posts', activeFilter, sortBy],
     queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        toast.error("Você precisa estar logado para ver os posts");
+        return [];
+      }
+
       let query = supabase.from('community_posts').select(`
         id, 
         content, 
@@ -42,12 +45,10 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         is_favorite
       `);
 
-      // Apply tag filter if not 'all'
       if (activeFilter !== 'all') {
         query = query.contains('tags', [activeFilter]);
       }
 
-      // Sort posts
       if (sortBy === 'recent') {
         query = query.order('created_at', { ascending: false });
       } else {
@@ -65,37 +66,32 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
     }
   });
 
-  // Create post mutation
   const createPostMutation = useMutation({
     mutationFn: async (newPost: { content: string, tags: string[] }) => {
-      // Validate tags and content
-      if (newPost.tags.length === 0) {
-        toast.error("Adicione pelo menos uma tag");
-        throw new Error("No tags selected");
-      }
-
-      if (newPost.content.trim() === '') {
-        toast.error("O conteúdo do post não pode estar vazio");
-        throw new Error("Empty post content");
-      }
-
-      // Get current user from session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
         toast.error("Você precisa estar logado para criar um post");
         throw new Error("User not authenticated");
       }
-      
-      const userId = sessionData.session.user.id;
+
+      if (newPost.tags.length === 0) {
+        toast.error("Adicione pelo menos uma tag ao post");
+        throw new Error("No tags selected");
+      }
+
+      if (newPost.content.trim().length < 10) {
+        toast.error("O conteúdo do post é muito curto");
+        throw new Error("Post content too short");
+      }
 
       const { data, error } = await supabase.from('community_posts').insert({
         content: newPost.content,
         tags: newPost.tags,
-        author_id: userId,
+        author_id: sessionData.session.user.id,
         likes: 0,
         is_favorite: false
-      });
+      }).select();
 
       if (error) {
         console.error("Post creation error:", error);
@@ -113,7 +109,6 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
     }
   });
 
-  // Tag selection handler
   const handleTagToggle = (tag: string) => {
     setSelectedTags(prev => 
       prev.includes(tag) 
@@ -122,8 +117,17 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
     );
   };
 
-  // Post creation handler
   const handleCreatePost = () => {
+    if (newPostContent.trim().length < 10) {
+      toast.error("O conteúdo do post é muito curto");
+      return;
+    }
+
+    if (selectedTags.length === 0) {
+      toast.error("Selecione pelo menos uma tag");
+      return;
+    }
+
     createPostMutation.mutate({ 
       content: newPostContent, 
       tags: selectedTags 
@@ -132,7 +136,6 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
 
   return (
     <div>
-      {/* Font size controls */}
       <div className="flex justify-end gap-2 mb-2">
         <Button size="icon" variant="outline" onClick={onDecreaseFont}>
           <Minus />
@@ -143,7 +146,6 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         </Button>
       </div>
 
-      {/* Tags Selection */}
       <div className="flex flex-wrap gap-2 mb-4">
         {TAGS.map((tag) => (
           <Button
@@ -162,7 +164,6 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         ))}
       </div>
 
-      {/* New Post Card */}
       <Card className="p-4 mb-4 border border-gray-800 bg-gray-900/50">
         <textarea
           value={newPostContent}
@@ -182,7 +183,6 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
         </div>
       </Card>
 
-      {/* Posts List */}
       <div className="space-y-4">
         {isLoading ? (
           <div>Carregando posts...</div>

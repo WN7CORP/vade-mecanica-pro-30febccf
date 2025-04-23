@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -39,10 +38,15 @@ const PostCard = ({ post }: { post: Post }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
 
-  // Fetch comments for the post
   const { data: comments, isLoading } = useQuery({
     queryKey: ['post-comments', post.id],
     queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        toast.error("Você precisa estar logado para ver os comentários");
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('community_comments')
         .select('*')
@@ -54,30 +58,24 @@ const PostCard = ({ post }: { post: Post }) => {
         return [];
       }
 
-      // Process comments to build thread structure
       const threadedComments = [];
       const commentMap = new Map();
       
-      // First pass: Add all comments to the map
       data.forEach(comment => {
         commentMap.set(comment.id, {...comment, replies: []});
       });
       
-      // Second pass: Create the threaded structure
       data.forEach(comment => {
         const commentWithReplies = commentMap.get(comment.id);
         
         if (comment.parent_comment_id) {
-          // This is a reply - add it to its parent
           const parent = commentMap.get(comment.parent_comment_id);
           if (parent) {
             parent.replies.push(commentWithReplies);
           } else {
-            // Fallback if parent doesn't exist
             threadedComments.push(commentWithReplies);
           }
         } else {
-          // This is a top-level comment
           threadedComments.push(commentWithReplies);
         }
       });
@@ -87,15 +85,18 @@ const PostCard = ({ post }: { post: Post }) => {
     enabled: showComments
   });
 
-  // Create comment mutation
   const createCommentMutation = useMutation({
     mutationFn: async (commentContent: string) => {
-      // Get current user from session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
         toast.error("Você precisa estar logado para adicionar um comentário");
         throw new Error("User not authenticated");
+      }
+
+      if (commentContent.trim().length < 5) {
+        toast.error("O comentário é muito curto");
+        throw new Error("Comment too short");
       }
       
       const userId = sessionData.session.user.id;
@@ -104,8 +105,9 @@ const PostCard = ({ post }: { post: Post }) => {
         content: commentContent,
         post_id: post.id,
         author_id: userId,
-        likes: 0 // Only add fields that exist in the database table
-      });
+        likes: 0,
+        is_best_tip: false
+      }).select();
 
       if (error) {
         toast.error("Erro ao adicionar comentário", { description: error.message });
@@ -121,9 +123,7 @@ const PostCard = ({ post }: { post: Post }) => {
     }
   });
 
-  // Function to mark a comment as the best tip
   const handleSetBestTip = async (postId: string, commentId: string) => {
-    // First update the comment to mark as best tip
     const { error: updateCommentError } = await supabase
       .from('community_comments')
       .update({ is_best_tip: true })
@@ -134,7 +134,6 @@ const PostCard = ({ post }: { post: Post }) => {
       return;
     }
 
-    // Then update the post to reference this comment
     const { error: updatePostError } = await supabase
       .from('community_posts')
       .update({ best_tip_id: commentId })
@@ -151,27 +150,26 @@ const PostCard = ({ post }: { post: Post }) => {
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newComment.trim()) {
-      createCommentMutation.mutate(newComment);
+    if (newComment.trim().length < 5) {
+      toast.error("O comentário é muito curto");
+      return;
     }
+    createCommentMutation.mutate(newComment);
   };
 
   return (
     <Card className="mb-4 overflow-hidden border border-gray-800 bg-gray-900/50">
       <div className="p-4">
-        {/* Post header */}
         <div className="flex items-center gap-3 mb-3">
           <Avatar>
             <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
               <span className="text-lg font-medium text-gray-300">
-                {/* We'll need to fetch the author's info separately */}
                 {post.author_id ? post.author_id.substring(0, 1).toUpperCase() : 'U'}
               </span>
             </div>
           </Avatar>
           <div>
             <h3 className="font-medium text-gray-200">
-              {/* TODO: Fetch author's name */}
               Nome do Autor
             </h3>
             <p className="text-xs text-gray-400">
@@ -180,12 +178,10 @@ const PostCard = ({ post }: { post: Post }) => {
           </div>
         </div>
 
-        {/* Post content */}
         <div className="mb-3">
           <p className="text-gray-300 whitespace-pre-wrap">{post.content}</p>
         </div>
 
-        {/* Tags */}
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {post.tags.map((tag) => (
@@ -199,7 +195,6 @@ const PostCard = ({ post }: { post: Post }) => {
           </div>
         )}
 
-        {/* Interaction buttons */}
         <div className="flex items-center gap-2 mt-4">
           <Button
             variant="ghost"
@@ -220,7 +215,6 @@ const PostCard = ({ post }: { post: Post }) => {
             <span>{comments?.length || 0}</span>
           </Button>
           
-          {/* Bookmark/favorite button */}
           {post.is_favorite !== undefined && (
             <Button
               variant="ghost"
@@ -235,7 +229,6 @@ const PostCard = ({ post }: { post: Post }) => {
         </div>
       </div>
 
-      {/* Comments section */}
       {showComments && (
         <div className="border-t border-gray-800 p-4">
           <CommentList 
