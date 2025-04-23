@@ -5,7 +5,7 @@ import CommunityFeed from "@/components/community/CommunityFeed";
 import CommunityRanking from "@/components/community/CommunityRanking";
 import CommunityMetricsTable from "@/components/community/CommunityMetricsTable";
 import { Moon, Sun, Bell } from "lucide-react";
-import NotificationCenter from "@/components/ui/NotificationCenter";
+import NotificationCenter from "@/components/layout/NotificationCenter"; // Corrected import path
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import Footer from "@/components/layout/Footer";
