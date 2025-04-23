@@ -2091,6 +2091,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      check_if_user_is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       get_unique_themes: {
         Args: { table_name: string }
         Returns: {

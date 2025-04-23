@@ -1,6 +1,6 @@
 
 import AuthForm from "@/components/auth/AuthForm";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -8,28 +8,41 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 const Auth = () => {
   const navigate = useNavigate();
   const { isAdmin, isLoading } = useAdminAuth();
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
     // Check for authenticated session and admin status
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      
-      if (data.session) {
-        if (data.session.user.email === "wesleyhard@hotmail.com") {
-          navigate("/admin");
-        } else if (isAdmin) {
-          navigate("/admin");
-        } else {
-          navigate("/");
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error checking session:", error);
+          setCheckingSession(false);
+          return;
         }
+        
+        if (data.session) {
+          // Special case for hardcoded admin email
+          if (data.session.user.email === "wesleyhard@hotmail.com") {
+            navigate("/admin");
+          } else if (isAdmin) {
+            navigate("/admin");
+          } else {
+            navigate("/");
+          }
+        }
+        setCheckingSession(false);
+      } catch (err) {
+        console.error("Error in session check:", err);
+        setCheckingSession(false);
       }
     };
     
     checkSession();
   }, [navigate, isAdmin]);
 
-  // Show loading state while checking admin status
-  if (isLoading) {
+  // Show loading state while checking admin status and session
+  if (isLoading || checkingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>

@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 export function useAdminAuth() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -16,6 +17,7 @@ export function useAdminAuth() {
         
         if (!session) {
           setIsAdmin(false);
+          setAdminEmail(null);
           setIsLoading(false);
           return;
         }
@@ -25,31 +27,29 @@ export function useAdminAuth() {
         if (session.user.email === "wesleyhard@hotmail.com") {
           setIsAdmin(true);
           setAdminEmail(session.user.email);
-        } else {
-          // Still try the regular check but catch and handle errors
-          try {
-            const { data, error } = await supabase
-              .from('admin_users')
-              .select('is_super_admin, email')
-              .eq('id', session.user.id)
-              .single();
+          setIsLoading(false);
+          return;
+        }
 
-            if (error) {
-              console.error("Error checking admin status in database:", error);
-              setIsAdmin(false);
-              setAdminEmail(null);
-            } else {
-              setIsAdmin(!!data && data.is_super_admin);
-              setAdminEmail(data?.email || null);
-            }
-          } catch (error) {
-            console.error("Error in admin status check:", error);
-            setIsAdmin(false);
+        // Check admin status using the is_admin function we just created
+        const { data, error } = await supabase.rpc('is_admin', {
+          user_id: session.user.id
+        });
+        
+        if (error) {
+          console.error("Error checking admin status:", error);
+          setIsAdmin(false);
+          setAdminEmail(null);
+        } else {
+          setIsAdmin(!!data);
+          if (data) {
+            setAdminEmail(session.user.email);
+          } else {
             setAdminEmail(null);
           }
         }
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        console.error("Error in admin status check:", error);
         setIsAdmin(false);
         setAdminEmail(null);
       } finally {

@@ -21,8 +21,19 @@ const Admin = () => {
   useEffect(() => {
     // Check session exists
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Session check error:", error);
+          navigate("/auth");
+          return;
+        }
+        
+        if (!data.session) {
+          navigate("/auth");
+        }
+      } catch (err) {
+        console.error("Error checking session:", err);
         navigate("/auth");
       }
     };
@@ -38,7 +49,7 @@ const Admin = () => {
     );
   }
 
-  // Check if user has admin privileges (either hard-coded admin or from database)
+  // Check if user has admin privileges
   if (!isAdmin) {
     return <AdminLogin onLoginSuccess={() => window.location.reload()} />;
   }
