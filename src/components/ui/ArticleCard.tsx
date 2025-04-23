@@ -38,7 +38,7 @@ const ArticleCard = ({
   onExplainRequest,
   onAskQuestion
 }: ArticleCardProps) => {
-  const [fontSize, setFontSize] = useState(15);
+  const [fontSize, setFontSize] = useState(16);
   const [isReading, setIsReading] = useState(false);
   const [readingContent, setReadingContent] = useState<{text: string, title: string}>({text: '', title: ''});
   const [showCopyToast, setShowCopyToast] = useState(false);
