@@ -17,7 +17,7 @@ interface Movie {
   average_rating: number;
   rating_count: number;
   year: number;
-  movie_tag_relations?: any[];
+  category_id: string;
   category?: {
     name: string;
   };
@@ -27,19 +27,13 @@ const MovieRecommendations = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { data: movies, isLoading } = useQuery({
+  const { data: movies, isLoading, isError } = useQuery({
     queryKey: ['legal-movies', selectedCategory, searchTerm],
     queryFn: async () => {
-      // Cast the entire supabase instance to any to bypass type checking
-      const supabaseAny = supabase as any;
-      
-      // Build the query
-      let query = supabaseAny.from('legal_movies')
+      let query = supabase
+        .from('legal_movies')
         .select(`
           *,
-          movie_tag_relations(
-            movie_tags(name)
-          ),
           category:movie_categories(name)
         `);
 
@@ -55,10 +49,10 @@ const MovieRecommendations = () => {
 
       if (error) {
         console.error('Error fetching movies:', error);
-        return [];
+        throw error;
       }
 
-      return (data as unknown as Movie[]) || [];
+      return (data || []) as Movie[];
     }
   });
 
@@ -98,7 +92,11 @@ const MovieRecommendations = () => {
               </div>
             </div>
 
-            {isLoading ? (
+            {isError ? (
+              <div className="text-center text-red-500">
+                Erro ao carregar os filmes. Por favor, tente novamente.
+              </div>
+            ) : isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((n) => (
                   <Card key={n} className="h-[300px] animate-pulse bg-gray-800/50" />

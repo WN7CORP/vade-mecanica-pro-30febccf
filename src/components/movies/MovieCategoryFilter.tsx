@@ -16,24 +16,26 @@ interface MovieCategory {
 }
 
 const MovieCategoryFilter = ({ selectedCategory, onSelectCategory }: MovieCategoryFilterProps) => {
-  const { data: categories } = useQuery({
+  const { data: categories, isError } = useQuery({
     queryKey: ['movie-categories'],
     queryFn: async () => {
-      // Cast the entire supabase instance to any to bypass type checking
-      const supabaseAny = supabase as any;
-      const { data, error } = await supabaseAny
+      const { data, error } = await supabase
         .from('movie_categories')
         .select('*')
         .order('name');
 
       if (error) {
         console.error('Error fetching categories:', error);
-        return [];
+        throw error;
       }
 
       return (data || []) as MovieCategory[];
     }
   });
+
+  if (isError) {
+    return <div>Error loading categories</div>;
+  }
 
   return (
     <div className="space-y-2">

@@ -1093,6 +1093,47 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_movies: {
+        Row: {
+          average_rating: number | null
+          category_id: string | null
+          created_at: string | null
+          id: string
+          poster_url: string
+          rating_count: number | null
+          title: string
+          year: number
+        }
+        Insert: {
+          average_rating?: number | null
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          poster_url: string
+          rating_count?: number | null
+          title: string
+          year: number
+        }
+        Update: {
+          average_rating?: number | null
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          poster_url?: string
+          rating_count?: number | null
+          title?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_movies_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "movie_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lei_penal_especial_flashcards: {
         Row: {
           created_at: string
@@ -1154,6 +1195,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      movie_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       perfis: {
         Row: {
