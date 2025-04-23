@@ -1,5 +1,5 @@
 
-import { Home, BookOpen, MessageCircle, User } from "lucide-react";
+import { Home, BookOpen, MessageCircle, Award } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Footer = () => {
@@ -29,8 +29,8 @@ const Footer = () => {
       className: "text-primary-300 font-bold border-t-2 border-primary-300"
     },
     {
-      icon: <User size={20} />,
-      label: "Perfil",
+      icon: <Award size={20} />,
+      label: "Rank",
       path: "/perfil",
       active: isActive("/perfil")
     }

@@ -38,6 +38,24 @@ const PostCard = ({ post }: { post: Post }) => {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
 
+  const { data: authorData } = useQuery({
+    queryKey: ['user', post.author_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', post.author_id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching author:', error);
+        return { full_name: 'Usuário' };
+      }
+
+      return data;
+    }
+  });
+
   const { data: comments, isLoading } = useQuery({
     queryKey: ['post-comments', post.id],
     queryFn: async () => {
@@ -164,13 +182,13 @@ const PostCard = ({ post }: { post: Post }) => {
           <Avatar>
             <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
               <span className="text-lg font-medium text-gray-300">
-                {post.author_id ? post.author_id.substring(0, 1).toUpperCase() : 'U'}
+                {authorData?.full_name?.charAt(0) || 'U'}
               </span>
             </div>
           </Avatar>
           <div>
             <h3 className="font-medium text-gray-200">
-              Nome do Autor
+              {authorData?.full_name || 'Usuário'}
             </h3>
             <p className="text-xs text-gray-400">
               {formatDistanceToNow(new Date(post.created_at), { locale: ptBR, addSuffix: true })}

@@ -14,7 +14,6 @@ const Index = () => {
   useEffect(() => {
     const loadRecentLaws = async () => {
       try {
-        // Carregar algumas leis para exibição rápida
         const sheets = await fetchAvailableLaws();
         setRecentLaws(sheets.slice(0, 4));
       } catch (error) {
@@ -54,7 +53,6 @@ const Index = () => {
           />
         </div>
         
-        {/* Acesso rápido */}
         <div className="mb-8">
           <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4">
             Acesso rápido
@@ -62,13 +60,13 @@ const Index = () => {
           
           <div className="grid grid-cols-2 gap-4">
             <button 
-              onClick={() => navigate("/pesquisa")}
+              onClick={() => navigate("/leis")}
               className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
             >
-              <Search size={28} className="text-primary-300 mb-3" />
-              <span className="text-gray-300 font-medium">Pesquisar</span>
+              <BookOpen size={28} className="text-primary-300 mb-3" />
+              <span className="text-gray-300 font-medium">Ver Tudo</span>
               <span className="text-xs text-gray-400 mt-1">
-                Buscar artigos e termos
+                Navegar entre leis
               </span>
             </button>
             
@@ -95,19 +93,18 @@ const Index = () => {
             </button>
             
             <button 
-              onClick={() => navigate("/leis")}
+              onClick={() => navigate("/pesquisa")}
               className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
             >
-              <BookOpen size={28} className="text-primary-300 mb-3" />
-              <span className="text-gray-300 font-medium">Ver Tudo</span>
+              <Search size={28} className="text-primary-300 mb-3" />
+              <span className="text-gray-300 font-medium">Pesquisar</span>
               <span className="text-xs text-gray-400 mt-1">
-                Navegar entre leis
+                Buscar artigos e termos
               </span>
             </button>
           </div>
         </div>
         
-        {/* Leis recentes */}
         <div>
           <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4">
             Leis recentes

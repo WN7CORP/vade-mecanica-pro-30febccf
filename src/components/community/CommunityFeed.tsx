@@ -137,31 +137,46 @@ const CommunityFeed = ({ fontSize, onIncreaseFont, onDecreaseFont }) => {
   return (
     <div>
       <div className="flex justify-end gap-2 mb-2">
-        <Button size="icon" variant="outline" onClick={onDecreaseFont}>
-          <Minus />
+        <Button 
+          size="icon" 
+          variant="outline" 
+          onClick={onDecreaseFont}
+          className="hover:bg-primary-300/10"
+        >
+          <Minus className="text-primary-300" />
         </Button>
-        <span className="inline-block text-sm text-primary-200 mt-1">Ajustar fonte</span>
-        <Button size="icon" variant="outline" onClick={onIncreaseFont}>
-          <Plus />
+        <span className="inline-block text-sm text-primary-300 mt-1">
+          Ajustar fonte ({fontSize}px)
+        </span>
+        <Button 
+          size="icon" 
+          variant="outline" 
+          onClick={onIncreaseFont}
+          className="hover:bg-primary-300/10"
+        >
+          <Plus className="text-primary-300" />
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {TAGS.map((tag) => (
-          <Button
-            key={tag}
-            variant={selectedTags.includes(tag) ? "default" : "outline"}
-            size="sm"
-            onClick={() => handleTagToggle(tag)}
-            className={
-              selectedTags.includes(tag)
-                ? "bg-primary-300 text-gray-900 hover:bg-primary-400"
-                : "border-gray-700 text-gray-400 hover:text-primary-300"
-            }
-          >
-            {tag}
-          </Button>
-        ))}
+      <div className="p-4 mb-6 border border-primary-300/30 rounded-lg bg-primary-300/5">
+        <h3 className="text-primary-300 font-medium mb-2">Selecione pelo menos uma tag para seu post:</h3>
+        <div className="flex flex-wrap gap-2">
+          {TAGS.map((tag) => (
+            <Button
+              key={tag}
+              variant={selectedTags.includes(tag) ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleTagToggle(tag)}
+              className={
+                selectedTags.includes(tag)
+                  ? "bg-primary-300 text-gray-900 hover:bg-primary-400"
+                  : "border-primary-300/30 text-primary-300 hover:bg-primary-300/10"
+              }
+            >
+              {tag}
+            </Button>
+          ))}
+        </div>
       </div>
 
       <Card className="p-4 mb-4 border border-gray-800 bg-gray-900/50">
