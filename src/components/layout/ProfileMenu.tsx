@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,27 @@ const ProfileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
 
   // Fetch user's current profile photo
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchProfilePhoto = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = supabase.storage.from('profile_photos').getPublicUrl(`${user.id}/profile.jpg`);
-        setProfileImage(data.publicUrl);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // First check if we can get the user profile
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .single();
+            
+          if (profile?.avatar_url) {
+            setProfileImage(profile.avatar_url);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
       }
     };
     fetchProfilePhoto();
@@ -29,28 +42,50 @@ const ProfileMenu = () => {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    
+    setLoading(true);
 
     try {
+      // First check if bucket exists
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'profile_photos');
+      
+      if (!bucketExists) {
+        toast.error("Bucket de armazenamento não encontrado", { 
+          description: "Entre em contato com o suporte técnico." 
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Você precisa estar logado para atualizar a foto");
+        setLoading(false);
         return;
       }
+
+      // Create folder for user if it doesn't exist
+      const folderPath = `${user.id}`;
+      const fileName = 'profile.jpg';
+      const filePath = `${folderPath}/${fileName}`;
 
       // Upload file to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('profile_photos')
-        .upload(`${user.id}/profile.jpg`, file, {
-          upsert: true
+        .upload(filePath, file, {
+          upsert: true,
+          contentType: file.type
         });
 
       if (uploadError) {
         toast.error("Erro ao fazer upload da foto", { description: uploadError.message });
+        setLoading(false);
         return;
       }
 
       // Get public URL
-      const { data } = supabase.storage.from('profile_photos').getPublicUrl(`${user.id}/profile.jpg`);
+      const { data } = supabase.storage.from('profile_photos').getPublicUrl(filePath);
       
       // Update user profile with new avatar URL
       const { error: updateError } = await supabase
@@ -60,14 +95,19 @@ const ProfileMenu = () => {
 
       if (updateError) {
         toast.error("Erro ao atualizar perfil", { description: updateError.message });
+        setLoading(false);
         return;
       }
 
       setProfileImage(data.publicUrl);
       toast.success("Foto de perfil atualizada com sucesso!");
-    } catch (error) {
-      toast.error("Erro ao atualizar foto de perfil");
+    } catch (error: any) {
+      toast.error("Erro ao atualizar foto de perfil", { 
+        description: error.message || "Tente novamente mais tarde" 
+      });
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -117,6 +157,7 @@ const ProfileMenu = () => {
                 size="icon" 
                 className="absolute bottom-0 right-0 bg-primary text-background"
                 onClick={triggerFileInput}
+                disabled={loading}
               >
                 <Camera className="w-4 h-4" />
               </Button>
