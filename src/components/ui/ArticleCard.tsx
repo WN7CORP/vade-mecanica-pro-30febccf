@@ -4,11 +4,12 @@ import ArticleHeader from "./article/ArticleHeader";
 import HighlightTools from "./article/HighlightTools";
 import ArticleContent from "./article/ArticleContent";
 import CopyToast from "./article/CopyToast";
-import VoiceNarration from "./VoiceNarration";
+import VoiceNarration from "./ui/VoiceNarration";
 import ArticleInteractions from "./ArticleInteractions";
 import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
+import { Plus, Minus } from "lucide-react";
 
 interface ArticleCardProps {
   articleNumber: string;
@@ -127,8 +128,14 @@ const ArticleCard = ({
       if (typeof content === 'object' && content !== null && 'explicacao_tecnica' in content) {
         setCustomExplanation((content as any).explicacao_tecnica);
       } 
+      else if (typeof content === 'object' && content !== null && 'explicacao tecnica' in content) {
+        setCustomExplanation((content as any)["explicacao tecnica"]);
+      }
       else if (example && typeof example === 'object' && 'explicacao_tecnica' in example) {
         setCustomExplanation((example as any).explicacao_tecnica);
+      }
+      else if (example && typeof example === 'object' && 'explicacao tecnica' in example) {
+        setCustomExplanation((example as any)["explicacao tecnica"]);
       }
       else {
         if (onExplainRequest) {
@@ -143,8 +150,14 @@ const ArticleCard = ({
       if (typeof content === 'object' && content !== null && 'explicacao_formal' in content) {
         setCustomExplanation((content as any).explicacao_formal);
       }
+      else if (typeof content === 'object' && content !== null && 'explicacao formal' in content) {
+        setCustomExplanation((content as any)["explicacao formal"]);
+      }
       else if (example && typeof example === 'object' && 'explicacao_formal' in example) {
         setCustomExplanation((example as any).explicacao_formal);
+      }
+      else if (example && typeof example === 'object' && 'explicacao formal' in example) {
+        setCustomExplanation((example as any)["explicacao formal"]);
       }
       else {
         if (onExplainRequest) {
@@ -169,11 +182,16 @@ const ArticleCard = ({
   };
   
   const handleNarration = (contentType: 'article' | 'example' | 'explanation') => {
+    // If already playing this content, stop it
     if (isReading) {
       if ((contentType === 'article' && readingContent.title === 'Artigo') ||
           (contentType === 'example' && readingContent.title === 'Exemplo') ||
           (contentType === 'explanation' && readingContent.title.includes('Explicação'))) {
         setIsReading(false);
+        if (window.currentAudio) {
+          window.currentAudio.pause();
+          window.currentAudio.currentTime = 0;
+        }
         return;
       }
     }
@@ -213,8 +231,25 @@ const ArticleCard = ({
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
   return (
-    <div className="card-article mb-6 hover:shadow-lg transition-all duration-300">
+    <div className="card-article mb-6 hover:shadow-lg transition-all duration-300 animate-fade-in">
       <CopyToast show={showCopyToast} />
+      
+      <div className="flex justify-end gap-2 mb-2">
+        <button 
+          onClick={handleDecreaseFontSize}
+          className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200 hover:scale-105 active:scale-95 animate-fade-in"
+          aria-label="Diminuir fonte"
+        >
+          <Minus size={16} />
+        </button>
+        <button 
+          onClick={handleIncreaseFontSize}
+          className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200 hover:scale-105 active:scale-95 animate-fade-in"
+          aria-label="Aumentar fonte"
+        >
+          <Plus size={16} />
+        </button>
+      </div>
       
       <ArticleHeader
         articleNumber={shouldCenterContent ? "" : articleNumber}

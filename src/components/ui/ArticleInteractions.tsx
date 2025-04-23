@@ -36,7 +36,7 @@ const ArticleInteractions = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-2 mt-6">
+    <div className="flex flex-wrap gap-2 mt-6 animate-fade-in">
       <div className="relative">
         <Button
           variant="outline"
@@ -107,18 +107,6 @@ const ArticleInteractions = ({
         <Volume2 size={16} />
         Narrar Artigo
       </Button>
-
-      {example && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onStartNarration('example')}
-          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
-        >
-          <Volume2 size={16} />
-          Narrar Exemplo
-        </Button>
-      )}
 
       {onToggleFavorite && (
         <Button

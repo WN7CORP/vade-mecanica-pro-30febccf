@@ -172,7 +172,7 @@ const ArticleNotes = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="max-h-[85vh] overflow-y-auto">
+      <DrawerContent className="max-h-[85vh] overflow-y-auto animate-slide-in">
         <DrawerHeader>
           <DrawerTitle className="flex items-center justify-between">
             <span className="text-primary-300">Anotações - Art. {articleNumber}</span>
@@ -193,6 +193,7 @@ const ArticleNotes = ({
                     variant="destructive"
                     size="sm"
                     onClick={handleDeleteNotes}
+                    className="animate-pulse"
                   >
                     Sim, excluir
                   </Button>
@@ -227,7 +228,7 @@ const ArticleNotes = ({
                 </div>
                 
                 {aiResponse && (
-                  <div className="mt-4 p-3 bg-muted/40 rounded-md text-sm">
+                  <div className="mt-4 p-3 bg-muted/40 rounded-md text-sm animate-fade-in">
                     <p className="mb-2 font-medium text-primary-300">Sugestão da IA:</p>
                     <p className="whitespace-pre-wrap">{aiResponse}</p>
                   </div>
@@ -238,7 +239,7 @@ const ArticleNotes = ({
                   <Button 
                     size="sm" 
                     onClick={useAISuggestion}
-                    className="bg-primary/80 hover:bg-primary transition-all"
+                    className="bg-primary/80 hover:bg-primary transition-all hover:scale-105 active:scale-95"
                   >
                     Usar esta sugestão
                   </Button>
@@ -247,7 +248,7 @@ const ArticleNotes = ({
                     size="sm" 
                     onClick={handleAskAI} 
                     disabled={loading}
-                    className="bg-primary/80 hover:bg-primary transition-all"
+                    className="bg-primary/80 hover:bg-primary transition-all hover:scale-105 active:scale-95"
                   >
                     {loading ? "Consultando IA..." : "Obter sugestão"}
                   </Button>
@@ -256,7 +257,7 @@ const ArticleNotes = ({
             </Card>
           )}
 
-          <div className="flex flex-wrap gap-2 mb-3">
+          <div className="flex flex-wrap gap-2 mb-3 animate-slide-in">
             {topics.map((topic, index) => (
               <Badge 
                 key={index} 
@@ -285,7 +286,7 @@ const ArticleNotes = ({
                 variant="ghost" 
                 size="sm" 
                 onClick={addTopic} 
-                className="hover:bg-primary/10 hover:text-primary-300 transition-all"
+                className="hover:bg-primary/10 hover:text-primary-300 transition-all hover:scale-110 active:scale-95"
               >
                 +
               </Button>
@@ -305,7 +306,7 @@ const ArticleNotes = ({
               <>
                 <Button 
                   onClick={() => setIsEditing(true)} 
-                  className="text-primary-foreground bg-primary/90 hover:bg-primary flex items-center gap-2 transition-all hover:scale-[1.02]"
+                  className="text-primary-foreground bg-primary/90 hover:bg-primary flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-95"
                 >
                   <Edit size={16} />
                   Editar anotações
@@ -314,7 +315,7 @@ const ArticleNotes = ({
                 <Button 
                   variant="outline" 
                   onClick={handleDeleteNotes}
-                  className="flex items-center gap-2 text-primary border-primary/20 hover:bg-primary/10 transition-all"
+                  className="flex items-center gap-2 text-primary border-primary/20 hover:bg-primary/10 transition-all hover:scale-[1.02] active:scale-95"
                 >
                   <Trash2 size={16} />
                   Excluir
@@ -323,7 +324,7 @@ const ArticleNotes = ({
             ) : (
               <Button 
                 onClick={saveNotes} 
-                className="text-primary-foreground bg-primary/90 hover:bg-primary flex items-center gap-2 transition-all hover:scale-[1.02]"
+                className="text-primary-foreground bg-primary/90 hover:bg-primary flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-95"
               >
                 <BookmarkPlus size={16} />
                 {isEditing ? "Salvar alterações" : "Salvar anotações"}
@@ -333,7 +334,7 @@ const ArticleNotes = ({
             <Button 
               variant="outline" 
               onClick={() => setShowAiHelp(!showAiHelp)}
-              className="flex items-center gap-2 text-primary border-primary/20 hover:bg-primary/10 transition-all"
+              className="flex items-center gap-2 text-primary border-primary/20 hover:bg-primary/10 transition-all hover:scale-[1.02] active:scale-95"
             >
               <MessageSquareText size={16} />
               Ajuda da IA
