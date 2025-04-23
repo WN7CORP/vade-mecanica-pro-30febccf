@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, TrendingUp, Medal, ChevronDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,6 +10,7 @@ interface RankingListProps {
     id?: string;
     full_name: string | null;
     total_points: number | null;
+    weekly_points?: number | null;
     global_rank: number | null;
     position?: number;
     activity_points?: number | null;
@@ -23,9 +23,9 @@ interface RankingListProps {
 
 export function RankingList({ rankings, currentUserId, userRank }: RankingListProps) {
   const [showAllRankings, setShowAllRankings] = useState(false);
+  const [activeTab, setActiveTab] = useState<'total' | 'weekly'>('total');
   const isMobile = useIsMobile();
   
-  // Função para determinar a cor com base na posição
   const getPositionColor = (position: number) => {
     if (position === 1) return "text-amber-500"; // Ouro
     if (position === 2) return "text-gray-400"; // Prata
@@ -33,12 +33,15 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
     return "text-primary-300";
   };
 
-  // Verificar se o usuário atual está na lista de rankings
-  const isUserInRankings = rankings.some(rank => rank.id === currentUserId);
-  const currentUser = rankings.find(rank => rank.id === currentUserId);
-  
-  // Limitar a lista de rankings exibidos na visualização padrão
-  const displayedRankings = showAllRankings ? rankings.slice(0, 100) : rankings.slice(0, 20);
+  const sortedRankings = React.useMemo(() => {
+    return [...rankings].sort((a, b) => {
+      const pointsA = activeTab === 'total' ? (a.total_points || 0) : (a.weekly_points || 0);
+      const pointsB = activeTab === 'total' ? (b.total_points || 0) : (b.weekly_points || 0);
+      return pointsB - pointsA;
+    });
+  }, [rankings, activeTab]);
+
+  const displayedRankings = showAllRankings ? sortedRankings.slice(0, 100) : sortedRankings.slice(0, 20);
   
   return (
     <Card className="h-full">
@@ -47,7 +50,22 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
           <Star className="h-5 w-5 text-primary-300" />
           Ranking da Justiça
         </CardTitle>
-        <p className="text-sm text-muted-foreground">Seu esforço começa aqui</p>
+        <div className="flex gap-4 mt-2">
+          <Button
+            variant={activeTab === 'total' ? "default" : "ghost"}
+            onClick={() => setActiveTab('total')}
+            size="sm"
+          >
+            Ranking Total
+          </Button>
+          <Button
+            variant={activeTab === 'weekly' ? "default" : "ghost"}
+            onClick={() => setActiveTab('weekly')}
+            size="sm"
+          >
+            Ranking Semanal
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-auto max-h-[350px]">
@@ -97,7 +115,6 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
                 </TableRow>
               ))}
               
-              {/* Mostrar o usuário atual mesmo que não esteja nos primeiros colocados */}
               {!isUserInRankings && currentUser && userRank && userRank > (showAllRankings ? 100 : 20) && (
                 <>
                   <TableRow className="border-t-2 border-dashed border-gray-700/20">

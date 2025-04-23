@@ -502,6 +502,30 @@ export type Database = {
           },
         ]
       }
+      default_avatars: {
+        Row: {
+          created_at: string | null
+          gender: string | null
+          id: string
+          skin_tone: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          gender?: string | null
+          id?: string
+          skin_tone?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          gender?: string | null
+          id?: string
+          skin_tone?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       direito_administrativo_flashcards: {
         Row: {
           created_at: string
@@ -1630,6 +1654,7 @@ export type Database = {
           activity_points: number | null
           avatar_url: string | null
           created_at: string
+          default_avatar_id: string | null
           full_name: string | null
           id: string
           points: number | null
@@ -1641,6 +1666,7 @@ export type Database = {
           activity_points?: number | null
           avatar_url?: string | null
           created_at?: string
+          default_avatar_id?: string | null
           full_name?: string | null
           id: string
           points?: number | null
@@ -1652,6 +1678,7 @@ export type Database = {
           activity_points?: number | null
           avatar_url?: string | null
           created_at?: string
+          default_avatar_id?: string | null
           full_name?: string | null
           id?: string
           points?: number | null
@@ -1659,7 +1686,15 @@ export type Database = {
           updated_at?: string
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_default_avatar_id_fkey"
+            columns: ["default_avatar_id"]
+            isOneToOne: false
+            referencedRelation: "default_avatars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_settings: {
         Row: {
@@ -1709,6 +1744,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_weekly_rankings: {
+        Row: {
+          id: string
+          updated_at: string | null
+          user_id: string
+          weekly_points: number | null
+        }
+        Insert: {
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          weekly_points?: number | null
+        }
+        Update: {
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          weekly_points?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       user_rankings: {
@@ -1737,6 +1793,10 @@ export type Database = {
         Returns: {
           tema: string
         }[]
+      }
+      reset_weekly_points: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       update_active_users: {
         Args: Record<PropertyKey, never>
