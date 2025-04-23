@@ -1,14 +1,24 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Clock, MessageSquare, ThumbsUp, UserX, Flag, RefreshCw } from "lucide-react";
+import { Users, Clock, MessageSquare, ThumbsUp, UserX, Flag, RefreshCw, AlertCircle } from "lucide-react";
 import { MetricsCard } from "./dashboard/MetricsCard";
 import { LoginChart } from "./dashboard/LoginChart";
 import { ActivityDistributionChart } from "./dashboard/ActivityDistributionChart";
 import { useAdminMetrics } from "@/hooks/useAdminMetrics";
+import { toast } from "@/components/ui/use-toast";
 
 const AdminDashboard = () => {
-  const { metrics, isLoading, refreshing, handleRefresh } = useAdminMetrics();
+  const { metrics, isLoading, refreshing, handleRefresh, error } = useAdminMetrics();
+
+  // Function to handle retry when metrics loading fails
+  const handleRetry = () => {
+    toast({
+      title: "Tentando novamente",
+      description: "Recarregando as métricas do dashboard.",
+    });
+    handleRefresh();
+  };
 
   return (
     <div className="space-y-6">
@@ -25,6 +35,24 @@ const AdminDashboard = () => {
           <span>Atualizar</span>
         </Button>
       </div>
+      
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/30 p-4 rounded-md mb-4">
+          <div className="flex items-center gap-2 text-destructive">
+            <AlertCircle size={18} />
+            <h3 className="font-medium">Erro ao carregar métricas</h3>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRetry}
+            className="mt-2"
+          >
+            Tentar Novamente
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricsCard

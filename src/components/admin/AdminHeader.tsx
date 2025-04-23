@@ -1,70 +1,68 @@
 
-import { LogOut, Home, ShieldCheck } from "lucide-react";
+import React from "react";
 import { Button } from "@/components/ui/button";
+import { Home, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 
 interface AdminHeaderProps {
   activeTab: string;
   onNavigateHome: () => void;
+  adminEmail?: string | null;
 }
 
-const AdminHeader = ({ activeTab, onNavigateHome }: AdminHeaderProps) => {
+const AdminHeader: React.FC<AdminHeaderProps> = ({ activeTab, onNavigateHome, adminEmail }) => {
+  const navigate = useNavigate();
+
   const handleLogout = async () => {
     try {
-      await supabase.rpc('log_admin_action', {
-        action_type: 'logout',
-        details: { timestamp: new Date().toISOString() }
-      });
-      
       await supabase.auth.signOut();
-      
       toast({
         title: "Logout realizado",
-        description: "Você saiu do painel administrativo com sucesso",
+        description: "Você foi desconectado do painel administrativo.",
       });
-      
-      window.location.reload();
+      navigate("/auth");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível realizar o logout",
+        description: "Não foi possível realizar o logout.",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <header className="bg-primary text-primary-foreground py-4 px-6 shadow-lg">
-      <div className="container max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <ShieldCheck size={28} />
-          <h1 className="text-xl font-bold">
-            Dashboard Administrativo {activeTab && `- ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
-          </h1>
+    <header className="bg-primary text-white py-4 px-6 shadow-md">
+      <div className="container max-w-7xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Painel Administrativo</h1>
+          {adminEmail && (
+            <span className="text-sm bg-primary-foreground/20 px-2 py-1 rounded">
+              {adminEmail}
+            </span>
+          )}
         </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            onClick={onNavigateHome}
-            className="flex items-center gap-1"
-          >
-            <Home size={18} />
-            <span className="hidden md:inline">Início</span>
+
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={onNavigateHome}>
+            <Home className="h-5 w-5 text-white" />
           </Button>
-          
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            onClick={handleLogout}
-            className="flex items-center gap-1"
-          >
-            <LogOut size={18} />
-            <span className="hidden md:inline">Sair</span>
+          <Button variant="ghost" size="icon" onClick={handleLogout}>
+            <LogOut className="h-5 w-5 text-white" />
           </Button>
+        </div>
+      </div>
+      
+      <div className="container max-w-7xl mx-auto mt-2">
+        <div className="text-sm text-white/80">
+          <span className="font-medium">Área: </span>
+          {activeTab === "dashboard" && "Dashboard"}
+          {activeTab === "users" && "Gerenciamento de Usuários"}
+          {activeTab === "moderation" && "Moderação de Conteúdo"}
+          {activeTab === "messages" && "Mensagens"}
+          {activeTab === "logs" && "Logs do Sistema"}
         </div>
       </div>
     </header>

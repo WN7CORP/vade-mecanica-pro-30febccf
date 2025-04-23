@@ -16,7 +16,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 const Admin = () => {
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const navigate = useNavigate();
-  const { isAdmin, isLoading } = useAdminAuth();
+  const { isAdmin, isLoading, adminEmail } = useAdminAuth();
 
   useEffect(() => {
     // Check session exists
@@ -35,6 +35,11 @@ const Admin = () => {
         }
         
         if (!data.session) {
+          toast({
+            title: "Acesso restrito",
+            description: "Faça login para continuar.",
+            variant: "destructive",
+          });
           navigate("/auth");
         }
       } catch (err) {
@@ -61,7 +66,11 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <AdminHeader activeTab={activeTab} onNavigateHome={() => navigate("/")} />
+      <AdminHeader 
+        activeTab={activeTab} 
+        onNavigateHome={() => navigate("/")} 
+        adminEmail={adminEmail}
+      />
       
       <main className="flex-grow p-4 md:p-6 container max-w-7xl mx-auto">
         <Tabs 

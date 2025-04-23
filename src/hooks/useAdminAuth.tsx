@@ -7,10 +7,12 @@ export function useAdminAuth() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
       setIsLoading(true);
+      setError(null);
       
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -38,6 +40,7 @@ export function useAdminAuth() {
         
         if (error) {
           console.error("Error checking admin status:", error);
+          setError(error.message);
           setIsAdmin(false);
           setAdminEmail(null);
         } else {
@@ -48,8 +51,9 @@ export function useAdminAuth() {
             setAdminEmail(null);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error in admin status check:", error);
+        setError(error?.message || "Erro ao verificar status de administrador");
         setIsAdmin(false);
         setAdminEmail(null);
       } finally {
@@ -61,9 +65,9 @@ export function useAdminAuth() {
 
     // Set up listener for authentication state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          checkAdminStatus();
+          await checkAdminStatus();
         } else if (event === 'SIGNED_OUT') {
           setIsAdmin(false);
           setAdminEmail(null);
@@ -76,5 +80,5 @@ export function useAdminAuth() {
     };
   }, []);
 
-  return { isAdmin, isLoading, adminEmail };
+  return { isAdmin, isLoading, adminEmail, error };
 }

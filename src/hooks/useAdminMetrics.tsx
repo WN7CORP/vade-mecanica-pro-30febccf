@@ -14,15 +14,36 @@ export interface AdminMetrics {
   dailyLogins: { date: string; count: number }[];
 }
 
+const DEFAULT_METRICS: AdminMetrics = {
+  totalUsers: 0,
+  averageSessionTime: 0,
+  totalComments: 0,
+  totalLikes: 0,
+  activeBans: 0,
+  pendingReports: 0,
+  userActivity: [],
+  dailyLogins: []
+};
+
 export function useAdminMetrics() {
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchMetrics = async () => {
     setIsLoading(true);
+    setError(null);
     
     try {
+      // Check admin status first to avoid unnecessary queries
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError("No active session");
+        setIsLoading(false);
+        return;
+      }
+      
       // 1. Total de usuários - usando contagem da tabela user_profiles
       const { count: totalUsers, error: usersError } = await supabase
         .from('user_profiles')
@@ -30,7 +51,7 @@ export function useAdminMetrics() {
       
       if (usersError) {
         console.error("Erro ao buscar total de usuários:", usersError);
-        // Continuar mesmo com erro para tentar obter outras métricas
+        // Continue anyway to get other metrics
       }
       
       // 2. Tempo médio de sessão
@@ -59,31 +80,33 @@ export function useAdminMetrics() {
       }
       
       // 4. Total de curtidas - buscando diretamente da tabela de métricas
-      const { data: likesData, error: likesError } = await supabase
-        .from('community_metrics')
-        .select('metric_value')
-        .eq('metric_name', 'curtidas_geral')
-        .single();
-      
-      if (likesError && likesError.code !== 'PGRST116') { // Ignorar erro de não encontrado
-        console.error("Erro ao buscar total de curtidas:", likesError);
-      }
-      
-      // Se não encontrar a métrica, calcula diretamente
-      let totalLikes = likesData?.metric_value || 0;
-      if (!likesData) {
-        const { data: postsLikes } = await supabase
-          .from('community_posts')
-          .select('likes');
-          
-        const { data: commentsLikes } = await supabase
-          .from('community_comments')
-          .select('likes');
-          
-        const postLikesSum = postsLikes?.reduce((sum, post) => sum + (post.likes || 0), 0) || 0;
-        const commentLikesSum = commentsLikes?.reduce((sum, comment) => sum + (comment.likes || 0), 0) || 0;
+      let totalLikes = 0;
+      try {
+        const { data: likesData, error: likesError } = await supabase
+          .from('community_metrics')
+          .select('metric_value')
+          .eq('metric_name', 'curtidas_geral')
+          .single();
         
-        totalLikes = postLikesSum + commentLikesSum;
+        if (!likesError && likesData) {
+          totalLikes = likesData.metric_value;
+        } else {
+          // Fallback: calcular diretamente
+          const { data: postsLikes } = await supabase
+            .from('community_posts')
+            .select('likes');
+            
+          const { data: commentsLikes } = await supabase
+            .from('community_comments')
+            .select('likes');
+            
+          const postLikesSum = postsLikes?.reduce((sum, post) => sum + (post.likes || 0), 0) || 0;
+          const commentLikesSum = commentsLikes?.reduce((sum, comment) => sum + (comment.likes || 0), 0) || 0;
+          
+          totalLikes = postLikesSum + commentLikesSum;
+        }
+      } catch (err) {
+        console.error("Erro ao calcular total de curtidas:", err);
       }
       
       // 5. Banimentos ativos
@@ -107,57 +130,70 @@ export function useAdminMetrics() {
       }
 
       // 7. Dados para gráfico de distribuição de atividades
-      const { data: activityData, error: activityError } = await supabase
-        .from('user_statistics')
-        .select('action_type');
-      
-      if (activityError) {
-        console.error("Erro ao buscar dados de atividade:", activityError);
+      let userActivity: { name: string; value: number }[] = [];
+      try {
+        const { data: activityData, error: activityError } = await supabase
+          .from('user_statistics')
+          .select('action_type');
+        
+        if (!activityError && activityData && activityData.length > 0) {
+          // Processar dados manualmente para criar contagem por action_type
+          const activityCounts: Record<string, number> = {};
+          activityData.forEach(item => {
+            activityCounts[item.action_type] = (activityCounts[item.action_type] || 0) + 1;
+          });
+          
+          userActivity = Object.entries(activityCounts).map(([name, count]) => ({
+            name,
+            value: count
+          }));
+        }
+      } catch (err) {
+        console.error("Erro ao processar dados de atividade:", err);
+        userActivity = [];
       }
-      
-      // Processar dados manualmente para criar contagem por action_type
-      const activityCounts: Record<string, number> = {};
-      activityData?.forEach(item => {
-        activityCounts[item.action_type] = (activityCounts[item.action_type] || 0) + 1;
-      });
-      
-      const userActivity = Object.entries(activityCounts).map(([name, count]) => ({
-        name,
-        value: count
-      }));
 
       // 8. Logins diários para o gráfico de linha
-      const { data: loginData, error: loginError } = await supabase
-        .from('user_sessions')
-        .select('login_time')
-        .order('login_time', { ascending: false })
-        .limit(100);
-      
-      if (loginError) {
-        console.error("Erro ao buscar dados de login:", loginError);
-      }
-      
-      // Agrupar por dia
-      const dailyLoginMap = new Map();
-      
-      loginData?.forEach(session => {
-        if (session.login_time) {
-          const date = new Date(session.login_time).toISOString().split('T')[0];
-          dailyLoginMap.set(date, (dailyLoginMap.get(date) || 0) + 1);
+      let dailyLogins: { date: string; count: number }[] = [];
+      try {
+        const { data: loginData, error: loginError } = await supabase
+          .from('user_sessions')
+          .select('login_time')
+          .order('login_time', { ascending: false })
+          .limit(100);
+        
+        if (!loginError && loginData && loginData.length > 0) {
+          // Agrupar por dia
+          const dailyLoginMap = new Map();
+          
+          loginData.forEach(session => {
+            if (session.login_time) {
+              const date = new Date(session.login_time).toISOString().split('T')[0];
+              dailyLoginMap.set(date, (dailyLoginMap.get(date) || 0) + 1);
+            }
+          });
+          
+          // Últimos 7 dias
+          dailyLogins = Array.from(dailyLoginMap.entries())
+            .map(([date, count]) => ({ date, count: count as number }))
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .slice(-7);
         }
-      });
-      
-      // Ultimos 7 dias
-      const dailyLogins = Array.from(dailyLoginMap.entries())
-        .map(([date, count]) => ({ date, count }))
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(-7);
+      } catch (err) {
+        console.error("Erro ao processar dados de login:", err);
+        dailyLogins = [];
+      }
 
       // Registrar log da visualização das métricas
-      await supabase.rpc('log_admin_action', {
-        action_type: 'view_dashboard',
-        details: { timestamp: new Date().toISOString() }
-      });
+      try {
+        await supabase.rpc('log_admin_action', {
+          action_type: 'view_dashboard',
+          details: { timestamp: new Date().toISOString() }
+        });
+      } catch (logError) {
+        console.error("Erro ao registrar visualização:", logError);
+        // Don't fail the entire operation if logging fails
+      }
 
       setMetrics({
         totalUsers: totalUsers || 0,
@@ -169,11 +205,16 @@ export function useAdminMetrics() {
         userActivity,
         dailyLogins
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao carregar métricas:", error);
+      setError(error?.message || "Erro ao carregar métricas");
+      
+      // Set default metrics to avoid UI breaking
+      setMetrics(DEFAULT_METRICS);
+      
       toast({
         title: "Erro",
-        description: "Não foi possível carregar as métricas do dashboard",
+        description: "Não foi possível carregar todas as métricas do dashboard",
         variant: "destructive",
       });
     } finally {
@@ -190,6 +231,7 @@ export function useAdminMetrics() {
     metrics,
     isLoading,
     refreshing,
+    error,
     handleRefresh: () => {
       setRefreshing(true);
       fetchMetrics();
