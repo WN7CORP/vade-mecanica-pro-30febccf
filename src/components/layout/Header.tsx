@@ -20,8 +20,9 @@ const Header = () => {
           <span className="font-heading font-bold text-xl">JurisAI</span>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <NotificationCenter />
+          <div className="h-6 w-px bg-border/40" />
           <ProfileMenu />
         </div>
       </div>

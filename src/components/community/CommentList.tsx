@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,6 @@ const CommentList = ({ comments, postId, onSetBestTip }: CommentListProps) => {
     return <p className="text-sm text-gray-400">Nenhum comentário ainda. Seja o primeiro a comentar!</p>;
   }
 
-  // Function to render comments and their replies recursively
   const renderComments = (comments: Comment[], depth: number = 0) => {
     return comments.map((comment) => (
       <CommentItem 
@@ -37,7 +35,6 @@ const CommentList = ({ comments, postId, onSetBestTip }: CommentListProps) => {
   return <div className="space-y-4">{renderComments(comments)}</div>;
 };
 
-// Separate component for individual comments to better manage user data fetching
 const CommentItem = ({ 
   comment, 
   depth, 
@@ -56,7 +53,6 @@ const CommentItem = ({
     mutationFn: async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       
-      // Fixed TypeScript error - Check if session exists before accessing user
       if (!sessionData.session) {
         toast.error("Você precisa estar logado para curtir um comentário");
         throw new Error("User not authenticated");
@@ -73,7 +69,6 @@ const CommentItem = ({
         throw error;
       }
 
-      toast.success("Comentário curtido!");
       return data;
     },
     onSuccess: () => {
@@ -81,7 +76,6 @@ const CommentItem = ({
     }
   });
 
-  // Fetch user profile data including avatar
   const { data: userData } = useQuery({
     queryKey: ['user', comment.author_id],
     queryFn: async () => {
@@ -96,7 +90,6 @@ const CommentItem = ({
         return { full_name: 'Usuário', avatar_url: null, default_avatar_id: null };
       }
 
-      // If user has default avatar, fetch it
       if (data.default_avatar_id && !data.avatar_url) {
         const { data: avatarData } = await supabase
           .from('default_avatars')
@@ -208,7 +201,6 @@ const CommentItem = ({
           </div>
         )}
         
-        {/* We need to modify this once we have proper reply structure */}
         {comment.replies && comment.replies.length > 0 && (
           <div className="mt-2">
             {comment.replies.map(reply => (
