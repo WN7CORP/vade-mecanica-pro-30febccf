@@ -10,6 +10,19 @@ import Footer from "@/components/layout/Footer";
 import MovieCard from "@/components/movies/MovieCard";
 import MovieCategoryFilter from "@/components/movies/MovieCategoryFilter";
 
+interface Movie {
+  id: string;
+  title: string;
+  poster_url: string;
+  average_rating: number;
+  rating_count: number;
+  year: number;
+  movie_tag_relations?: any[];
+  category?: {
+    name: string;
+  };
+}
+
 const MovieRecommendations = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -24,8 +37,7 @@ const MovieRecommendations = () => {
             movie_tags(name)
           ),
           category:movie_categories(name)
-        `)
-        .order('average_rating', { ascending: false });
+        `);
 
       if (selectedCategory) {
         query = query.eq('category_id', selectedCategory);
@@ -42,7 +54,7 @@ const MovieRecommendations = () => {
         return [];
       }
 
-      return data;
+      return (data as unknown as Movie[]) || [];
     }
   });
 

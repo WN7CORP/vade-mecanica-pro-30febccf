@@ -9,6 +9,12 @@ interface MovieCategoryFilterProps {
   onSelectCategory: (categoryId: string | null) => void;
 }
 
+interface MovieCategory {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
 const MovieCategoryFilter = ({ selectedCategory, onSelectCategory }: MovieCategoryFilterProps) => {
   const { data: categories } = useQuery({
     queryKey: ['movie-categories'],
@@ -16,14 +22,14 @@ const MovieCategoryFilter = ({ selectedCategory, onSelectCategory }: MovieCatego
       const { data, error } = await supabase
         .from('movie_categories')
         .select('*')
-        .order('name');
+        .order('name') as { data: MovieCategory[] | null, error: any };
 
       if (error) {
         console.error('Error fetching categories:', error);
         return [];
       }
 
-      return data;
+      return data || [];
     }
   });
 

@@ -36,6 +36,7 @@ const App = () => (
           <Route path="/perfil" element={<Profile />} />
           <Route path="/comunidade" element={<Community />} />
           <Route path="/filmes" element={<MovieRecommendations />} />
+          <Route path="/filmes/:id" element={<MovieRecommendations />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
