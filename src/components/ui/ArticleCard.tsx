@@ -11,8 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ArticleCardProps {
   articleNumber: string;
-  content: string;
-  example?: string;
+  content?: string | { [key: string]: any };
+  example?: string | { [key: string]: any };
   lawName: string;
   onExplainRequest?: (type: 'technical' | 'formal') => void;
   onAskQuestion?: () => void;
@@ -30,8 +30,8 @@ if (typeof window !== 'undefined' && !window.currentAudio) {
 
 const ArticleCard = ({
   articleNumber,
-  content,
-  example,
+  content = "",
+  example = "",
   lawName,
   onExplainRequest,
   onAskQuestion
@@ -207,8 +207,8 @@ const ArticleCard = ({
   const shouldLeftAlign = articleNumber === "esquerda nas linhas";
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
-  const safeContent = content ?? "";
-  const safeExample = example ?? "";
+  const safeContent = typeof content === 'string' ? content : (content ? JSON.stringify(content) : '');
+  const safeExample = typeof example === 'string' ? example : (example ? JSON.stringify(example) : '');
 
   return (
     <div className="card-article mb-6 hover:shadow-lg transition-all duration-300">
