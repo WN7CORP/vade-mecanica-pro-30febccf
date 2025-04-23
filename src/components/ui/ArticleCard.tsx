@@ -36,7 +36,7 @@ const ArticleCard = ({
   onExplainRequest,
   onAskQuestion
 }: ArticleCardProps) => {
-  const [fontSize, setFontSize] = useState(14);
+  const [fontSize, setFontSize] = useState(15);
   const [isReading, setIsReading] = useState(false);
   const [readingContent, setReadingContent] = useState<{text: string, title: string}>({text: '', title: ''});
   const [showHighlightTools, setShowHighlightTools] = useState(false);
