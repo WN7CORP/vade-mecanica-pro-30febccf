@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PricingCard } from "@/components/subscription/PricingCard";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Plan {
   id: string;
@@ -11,18 +14,35 @@ interface Plan {
   price: number;
   interval: string;
   features: string[];
+  is_popular?: boolean;
 }
 
 interface SubscriptionStatus {
-  subscribed: boolean;
+  active: boolean;
   subscription_tier?: string;
-  subscription_end?: number;
+  current_period_end?: number;
+  cancel_at_period_end?: boolean;
 }
 
 export function SubscriptionPlans() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const checkSubscription = async () => {
+    try {
+      setIsRefreshing(true);
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (error) throw error;
+      setSubscriptionStatus(data);
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+      toast.error("Erro ao verificar assinatura");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -42,15 +62,14 @@ export function SubscriptionPlans() {
           price: Number(plan.price),
           interval: plan.interval,
           features: Array.isArray(plan.features) ? plan.features : 
-                   typeof plan.features === 'string' ? JSON.parse(plan.features) : []
+                   typeof plan.features === 'string' ? JSON.parse(plan.features) : [],
+          is_popular: plan.is_popular || false
         })) || [];
 
         setPlans(formattedPlans);
 
         // Check subscription status
-        const { data: subData, error: subError } = await supabase.functions.invoke('check-subscription');
-        if (subError) throw subError;
-        setSubscriptionStatus(subData);
+        await checkSubscription();
 
       } catch (error) {
         console.error("Error loading subscription data:", error);
@@ -61,7 +80,25 @@ export function SubscriptionPlans() {
     };
 
     loadData();
+
+    // Set up polling to check subscription status periodically
+    const intervalId = setInterval(() => {
+      checkSubscription();
+    }, 15000); // Check every 15 seconds
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
+
+  const formatDate = (timestamp: number) => {
+    if (!timestamp) return 'Data não disponível';
+    return new Date(timestamp * 1000).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
 
   if (isLoading) {
     return (
@@ -73,24 +110,50 @@ export function SubscriptionPlans() {
 
   return (
     <div className="w-full">
-      <div className="text-center mb-6">
+      <div className="text-center mb-8">
         <h2 className="text-2xl font-bold mb-2">Planos de Assinatura</h2>
         <p className="text-muted-foreground">
           Escolha o plano ideal para suas necessidades
         </p>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-6">
+      {subscriptionStatus?.active && (
+        <Alert className="mb-8 bg-green-50 border-green-200 animate-fade-in">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <AlertDescription className="text-green-800 flex items-center justify-between">
+            <div>
+              <p className="font-medium">Você tem uma assinatura ativa</p>
+              <p className="text-sm">
+                Próxima cobrança em: {formatDate(subscriptionStatus.current_period_end || 0)}
+                {subscriptionStatus.cancel_at_period_end && " (Cancelamento agendado)"}
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="ml-4 flex items-center gap-1"
+              onClick={checkSubscription}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>Atualizar</span>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex flex-wrap justify-center gap-6 py-4">
         {plans.map((plan) => (
           <PricingCard
             key={plan.id}
             planId={plan.id}
             name={plan.name}
             description={plan.description}
-            price={plan.price}
+            price={Number(plan.price)}
             interval={plan.interval}
-            features={plan.features}
+            features={plan.features || []}
             isCurrentPlan={subscriptionStatus?.subscription_tier === plan.name}
+            isPopular={plan.is_popular}
           />
         ))}
       </div>

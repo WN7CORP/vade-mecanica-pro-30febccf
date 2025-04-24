@@ -18,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    // Create Supabase client
+    // Create Supabase client with service role key
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -106,6 +106,9 @@ serve(async (req) => {
         user_id: user.id,
         plan_id: planId,
       },
+      allow_promotion_codes: true,
+      billing_address_collection: 'auto',
+      client_reference_id: user.id,
     });
 
     logStep("Created checkout session", { 

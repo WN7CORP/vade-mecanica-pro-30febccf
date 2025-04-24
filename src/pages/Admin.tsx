@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import UserManagement from "@/components/admin/UserManagement";
 import CommentModeration from "@/components/admin/CommentModeration";
 import AdminMessages from "@/components/admin/AdminMessages";
 import AdminLogs from "@/components/admin/AdminLogs";
+import SubscriptionDashboard from "@/components/admin/SubscriptionDashboard";
 import AdminLogin from "@/components/admin/AdminLogin";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -30,10 +31,8 @@ const Admin = () => {
         if (error) {
           console.error("Session check error:", error);
           setSessionError("Sessão expirada. Por favor, faça login novamente.");
-          toast({
-            title: "Sessão expirada",
-            description: "Você precisa fazer login novamente.",
-            variant: "destructive",
+          toast.error("Sessão expirada", {
+            description: "Você precisa fazer login novamente."
           });
           navigate("/auth");
           return;
@@ -41,10 +40,8 @@ const Admin = () => {
         
         if (!data.session) {
           setSessionError("Você precisa fazer login para acessar essa página.");
-          toast({
-            title: "Acesso restrito",
-            description: "Faça login para continuar.",
-            variant: "destructive",
+          toast.error("Acesso restrito", {
+            description: "Faça login para continuar."
           });
           navigate("/auth");
         }
@@ -131,9 +128,10 @@ const Admin = () => {
           className="w-full"
           onValueChange={(value) => setActiveTab(value)}
         >
-          <TabsList className="grid grid-cols-5 mb-8">
+          <TabsList className="grid grid-cols-6 mb-8">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="subscriptions">Assinaturas</TabsTrigger>
             <TabsTrigger value="moderation">Moderação</TabsTrigger>
             <TabsTrigger value="messages">Mensagens</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
@@ -145,6 +143,10 @@ const Admin = () => {
           
           <TabsContent value="users">
             <UserManagement />
+          </TabsContent>
+          
+          <TabsContent value="subscriptions">
+            <SubscriptionDashboard />
           </TabsContent>
           
           <TabsContent value="moderation">
