@@ -8,6 +8,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Enhanced logging for better debugging
+const logWebhookEvent = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   // Handle preflight CORS
   if (req.method === "OPTIONS") {
@@ -15,14 +21,18 @@ serve(async (req) => {
   }
 
   try {
+    logWebhookEvent("Processing webhook request");
+    
     // Get the stripe signature from headers
     const signature = req.headers.get("stripe-signature");
     if (!signature) {
+      logWebhookEvent("Error: No stripe signature found in request");
       throw new Error("No stripe signature found in request");
     }
 
     // Get the raw body as text
     const body = await req.text();
+    logWebhookEvent("Request body received", { bodyLength: body.length });
     
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
@@ -40,17 +50,20 @@ serve(async (req) => {
     
     try {
       if (webhookSecret) {
+        logWebhookEvent("Verifying webhook signature with secret");
         event = stripe.webhooks.constructEvent(
           body, 
           signature, 
           webhookSecret
         );
+        logWebhookEvent("Webhook signature verified successfully");
       } else {
         // Fallback for environments without signature verification
-        console.warn("Processing webhook without signature verification");
+        logWebhookEvent("WARNING: Processing webhook without signature verification");
         event = JSON.parse(body);
       }
     } catch (err) {
+      logWebhookEvent("Webhook signature verification failed", { error: err.message });
       console.error(`Webhook signature verification failed: ${err.message}`);
       return new Response(JSON.stringify({ error: "Webhook signature verification failed" }), {
         status: 400,
@@ -59,15 +72,22 @@ serve(async (req) => {
     }
 
     // Log the event type for debugging
-    console.log(`Processing webhook event: ${event.type}`);
+    logWebhookEvent("Processing event", { type: event.type });
 
     // Process subscription-related events
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
+        logWebhookEvent("Checkout session completed", { 
+          sessionId: session.id, 
+          customerId: session.customer,
+          hasMetadata: !!session.metadata,
+          metadata: session.metadata
+        });
         
         // Ensure we have user and plan metadata
         if (!session.metadata || !session.metadata.user_id || !session.metadata.plan_id) {
+          logWebhookEvent("Error: Missing metadata", { metadata: session.metadata });
           console.error("Missing user_id or plan_id in session metadata");
           break;
         }
@@ -76,11 +96,18 @@ serve(async (req) => {
         const planId = session.metadata.plan_id;
         
         // Retrieve the subscription details
+        logWebhookEvent("Retrieving subscription details", { subscriptionId: session.subscription });
         const subscription = await stripe.subscriptions.retrieve(
           session.subscription as string
         );
         
         // Update user subscription in Supabase
+        logWebhookEvent("Updating subscription record", { 
+          userId,
+          planId,
+          status: subscription.status
+        });
+        
         const { error } = await supabaseClient
           .from("user_subscriptions")
           .upsert({
@@ -96,13 +123,20 @@ serve(async (req) => {
           });
         
         if (error) {
+          logWebhookEvent("Error updating subscription record", { error });
           console.error("Error updating subscription record:", error);
+        } else {
+          logWebhookEvent("Subscription record updated successfully");
         }
         break;
       }
       
       case "customer.subscription.updated": {
         const subscription = event.data.object;
+        logWebhookEvent("Customer subscription updated", { 
+          subscriptionId: subscription.id, 
+          status: subscription.status 
+        });
         
         // Update subscription status in Supabase
         const { error } = await supabaseClient
@@ -115,7 +149,10 @@ serve(async (req) => {
           .eq("stripe_subscription_id", subscription.id);
           
         if (error) {
+          logWebhookEvent("Error updating subscription", { error });
           console.error("Error updating subscription:", error);
+        } else {
+          logWebhookEvent("Subscription updated successfully");
         }
         break;
       }
@@ -123,6 +160,7 @@ serve(async (req) => {
       case "customer.subscription.deleted": {
         // Mark subscription as inactive
         const subscription = event.data.object;
+        logWebhookEvent("Customer subscription deleted", { subscriptionId: subscription.id });
         
         const { error } = await supabaseClient
           .from("user_subscriptions")
@@ -130,20 +168,26 @@ serve(async (req) => {
           .eq("stripe_subscription_id", subscription.id);
           
         if (error) {
+          logWebhookEvent("Error deactivating subscription", { error });
           console.error("Error deactivating subscription:", error);
+        } else {
+          logWebhookEvent("Subscription deactivated successfully");
         }
         break;
       }
     }
 
+    logWebhookEvent("Webhook processing completed successfully");
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logWebhookEvent("Error processing webhook", { message: errorMessage });
     console.error("Error processing webhook:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Unknown error" }),
+      JSON.stringify({ error: errorMessage || "Unknown error" }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
