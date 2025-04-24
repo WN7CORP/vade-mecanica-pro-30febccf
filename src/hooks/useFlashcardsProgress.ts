@@ -44,21 +44,24 @@ export function useFlashcardsProgress(theme?: string) {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Transform the data using type assertion instead of direct mapping
+      // Create a new array and explicitly construct each FlashcardProgress object
       const transformedData: FlashcardProgress[] = [];
       
-      (data || []).forEach((item: any) => {
-        transformedData.push({
-          id: item.id,
-          flashcard_id: item.flashcard_id,
-          viewed_count: item.viewed_count || 0,
-          correct_count: item.correct_count || 0,
-          last_viewed: item.last_viewed || new Date().toISOString(),
-          proficiency_level: item.proficiency_level || 0,
-          streak: item.streak || 0,
-          theme: item.theme || ''
-        });
-      });
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          transformedData.push({
+            id: item.id,
+            flashcard_id: item.flashcard_id,
+            viewed_count: item.viewed_count || 0,
+            correct_count: item.correct_count || 0,
+            last_viewed: item.last_viewed || new Date().toISOString(),
+            proficiency_level: item.proficiency_level || 0,
+            streak: item.streak || 0,
+            theme: item.theme || ''
+          });
+        }
+      }
       
       return transformedData;
     }
@@ -81,8 +84,14 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existing) {
-        // Cast the existing data to our interface to handle potentially missing properties
-        const existingProgress = existing as any;
+        // Use type assertions more carefully to avoid deep nesting
+        const existingProgress = existing as unknown as {
+          id: string;
+          viewed_count?: number;
+          correct_count?: number;
+          streak?: number;
+          proficiency_level?: number;
+        };
         
         const { error } = await supabase
           .from('user_flashcard_progress')
