@@ -46,9 +46,9 @@ serve(async (req) => {
           webhookSecret
         );
       } else {
-        // For testing without webhook signature verification
+        // Fallback for environments without signature verification
+        console.warn("Processing webhook without signature verification");
         event = JSON.parse(body);
-        console.log("Warning: Processing webhook without signature verification");
       }
     } catch (err) {
       console.error(`Webhook signature verification failed: ${err.message}`);
@@ -58,65 +58,45 @@ serve(async (req) => {
       });
     }
 
-    // Log the event type
+    // Log the event type for debugging
     console.log(`Processing webhook event: ${event.type}`);
 
-    // Record the event in our database
-    const { data: eventRecord, error: recordError } = await supabaseClient
-      .from("subscription_events")
-      .insert({
-        stripe_event_id: event.id,
-        type: event.type,
-        data: event
-      })
-      .select()
-      .single();
-
-    if (recordError) {
-      console.error("Error recording webhook event:", recordError);
-    }
-
-    // Process different event types
+    // Process subscription-related events
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
         
-        // Get the subscription details
-        const subscription = await stripe.subscriptions.retrieve(
-          session.subscription
-        );
-        
-        // Get the customer
-        const customer = await stripe.customers.retrieve(
-          session.customer
-        );
-        
-        // Update or create user subscription in our database
-        if (session.metadata && session.metadata.user_id) {
-          const userId = session.metadata.user_id;
-          const planId = session.metadata.plan_id;
-          
-          const { error } = await supabaseClient
-            .from("user_subscriptions")
-            .upsert({
-              user_id: userId,
-              plan_id: planId,
-              status: "active",
-              stripe_customer_id: session.customer,
-              stripe_subscription_id: subscription.id,
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-              cancel_at_period_end: subscription.cancel_at_period_end
-            }, {
-              onConflict: "user_id"
-            });
-            
-          if (error) {
-            console.error("Error updating subscription record:", error);
-          } else {
-            console.log("Successfully updated subscription for user", userId);
-          }
-        } else {
+        // Ensure we have user and plan metadata
+        if (!session.metadata || !session.metadata.user_id || !session.metadata.plan_id) {
           console.error("Missing user_id or plan_id in session metadata");
+          break;
+        }
+
+        const userId = session.metadata.user_id;
+        const planId = session.metadata.plan_id;
+        
+        // Retrieve the subscription details
+        const subscription = await stripe.subscriptions.retrieve(
+          session.subscription as string
+        );
+        
+        // Update user subscription in Supabase
+        const { error } = await supabaseClient
+          .from("user_subscriptions")
+          .upsert({
+            user_id: userId,
+            plan_id: planId,
+            status: "active",
+            stripe_customer_id: session.customer,
+            stripe_subscription_id: subscription.id,
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            cancel_at_period_end: subscription.cancel_at_period_end
+          }, {
+            onConflict: "user_id"
+          });
+        
+        if (error) {
+          console.error("Error updating subscription record:", error);
         }
         break;
       }
@@ -124,20 +104,8 @@ serve(async (req) => {
       case "customer.subscription.updated": {
         const subscription = event.data.object;
         
-        // Find the user associated with this subscription
-        const { data: userSubscription, error } = await supabaseClient
-          .from("user_subscriptions")
-          .select("user_id")
-          .eq("stripe_subscription_id", subscription.id)
-          .maybeSingle();
-          
-        if (error || !userSubscription) {
-          console.error("Error finding subscription or subscription not found:", error);
-          break;
-        }
-        
-        // Update subscription status
-        const { error: updateError } = await supabaseClient
+        // Update subscription status in Supabase
+        const { error } = await supabaseClient
           .from("user_subscriptions")
           .update({
             status: subscription.status,
@@ -146,40 +114,26 @@ serve(async (req) => {
           })
           .eq("stripe_subscription_id", subscription.id);
           
-        if (updateError) {
-          console.error("Error updating subscription:", updateError);
-        } else {
-          console.log("Subscription updated for", userSubscription.user_id);
+        if (error) {
+          console.error("Error updating subscription:", error);
         }
         break;
       }
       
       case "customer.subscription.deleted": {
+        // Mark subscription as inactive
         const subscription = event.data.object;
         
-        // Update subscription status to inactive
         const { error } = await supabaseClient
           .from("user_subscriptions")
-          .update({
-            status: "inactive"
-          })
+          .update({ status: "inactive" })
           .eq("stripe_subscription_id", subscription.id);
           
         if (error) {
           console.error("Error deactivating subscription:", error);
-        } else {
-          console.log("Subscription deactivated");
         }
         break;
       }
-    }
-
-    // Update event as processed
-    if (eventRecord) {
-      await supabaseClient
-        .from("subscription_events")
-        .update({ status: "processed" })
-        .eq("id", eventRecord.id);
     }
 
     return new Response(JSON.stringify({ received: true }), {
