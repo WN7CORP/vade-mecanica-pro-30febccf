@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -25,8 +24,7 @@ const LawView = () => {
     searchTerm,
     handleSearch,
     hasMore,
-    loadingRef,
-    totalCount
+    loadingRef
   } = useLawArticles(lawName);
 
   const {
@@ -42,7 +40,6 @@ const LawView = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   
-  // Ensure all audio is stopped when navigating
   useEffect(() => {
     return () => {
       if (window.currentAudio) {

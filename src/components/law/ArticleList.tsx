@@ -7,6 +7,7 @@ import AIChat from "@/components/ui/AIChat";
 import VoiceNarration from "@/components/ui/VoiceNarration";
 import { AIExplanation as AIExplanationType } from "@/services/aiService";
 import { Article } from "@/services/lawService";
+import { ScrollArea } from "../ui/scroll-area";
 
 interface ArticleListProps {
   isLoading: boolean;
@@ -18,7 +19,7 @@ interface ArticleListProps {
   loadingExplanation: boolean;
   selectedArticle: Article | null;
   showChat: boolean;
-  loadingRef?: React.MutableRefObject<HTMLDivElement | null>;
+  loadingRef?: React.RefObject<HTMLDivElement>;
   hasMore?: boolean;
   onExplainArticle: (article: Article, type: 'technical' | 'formal') => void;
   onAskQuestion: (article: Article) => void;
@@ -73,57 +74,59 @@ const ArticleList = ({
   }
 
   return (
-    <div>
-      {filteredArticles.map((article, index) => (
-        <ArticleCard
-          key={`${article.id}-${index}`}
-          articleNumber={article.numero}
-          content={article.conteudo}
-          example={article.exemplo1}
-          lawName={lawName ? decodeURIComponent(lawName) : ""}
-          onExplainRequest={(type) => onExplainArticle(article, type)}
-          onAskQuestion={() => onAskQuestion(article)}
+    <ScrollArea className="h-[calc(100vh-200px)]">
+      <div>
+        {filteredArticles.map((article, index) => (
+          <ArticleCard
+            key={`${article.id}-${index}`}
+            articleNumber={article.numero}
+            content={article.conteudo}
+            example={article.exemplo1}
+            lawName={lawName ? decodeURIComponent(lawName) : ""}
+            onExplainRequest={(type) => onExplainArticle(article, type)}
+            onAskQuestion={() => onAskQuestion(article)}
+          />
+        ))}
+        
+        {/* Loading indicator for infinite scroll */}
+        {(hasMore || isLoading) && (
+          <div
+            ref={loadingRef}
+            className="flex justify-center items-center py-6"
+          >
+            <Loader2 className="h-8 w-8 text-primary-300 animate-spin" />
+          </div>
+        )}
+        
+        {showExplanation && selectedArticle && (
+          <AIExplanation
+            explanation={explanation}
+            isLoading={loadingExplanation}
+            articleNumber={selectedArticle.numero}
+            lawName={lawName ? decodeURIComponent(lawName) : ""}
+            onClose={onCloseExplanation}
+            onNarrateExplanation={handleNarrateExplanation}
+          />
+        )}
+        
+        {showChat && selectedArticle && lawName && (
+          <AIChat
+            articleNumber={selectedArticle.numero}
+            articleContent={selectedArticle.conteudo}
+            lawName={decodeURIComponent(lawName)}
+            onClose={onCloseChat}
+          />
+        )}
+        
+        <VoiceNarration
+          text={narratingContent.text}
+          title={narratingContent.title}
+          isActive={isNarratingExplanation}
+          onComplete={() => setIsNarratingExplanation(false)}
+          onStop={() => setIsNarratingExplanation(false)}
         />
-      ))}
-      
-      {/* Loading indicator for infinite scroll */}
-      {(hasMore || isLoading) && (
-        <div
-          ref={loadingRef}
-          className="flex justify-center items-center py-6"
-        >
-          <Loader2 className="h-8 w-8 text-primary-300 animate-spin" />
-        </div>
-      )}
-      
-      {showExplanation && selectedArticle && (
-        <AIExplanation
-          explanation={explanation}
-          isLoading={loadingExplanation}
-          articleNumber={selectedArticle.numero}
-          lawName={lawName ? decodeURIComponent(lawName) : ""}
-          onClose={onCloseExplanation}
-          onNarrateExplanation={handleNarrateExplanation}
-        />
-      )}
-      
-      {showChat && selectedArticle && lawName && (
-        <AIChat
-          articleNumber={selectedArticle.numero}
-          articleContent={selectedArticle.conteudo}
-          lawName={decodeURIComponent(lawName)}
-          onClose={onCloseChat}
-        />
-      )}
-      
-      <VoiceNarration
-        text={narratingContent.text}
-        title={narratingContent.title}
-        isActive={isNarratingExplanation}
-        onComplete={() => setIsNarratingExplanation(false)}
-        onStop={() => setIsNarratingExplanation(false)}
-      />
-    </div>
+      </div>
+    </ScrollArea>
   );
 };
 
