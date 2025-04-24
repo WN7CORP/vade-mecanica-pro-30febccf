@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,25 +7,27 @@ import { Loader2, Bookmark, PieChart } from "lucide-react";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { toast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
-
 const Favorites = () => {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | undefined>();
-  const { logUserActivity } = useUserActivity(userId);
-  
+  const {
+    logUserActivity
+  } = useUserActivity(userId);
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (session) {
         setUserId(session.user.id);
       }
     };
-    
     checkAuth();
   }, []);
-  
   useEffect(() => {
     const loadFavorites = () => {
       try {
@@ -36,7 +37,7 @@ const Favorites = () => {
           const favoritesList = Object.entries(parsed).map(([key, value]) => {
             const [lawName, articleNumber] = key.split('-');
             return {
-              ...value as any,
+              ...(value as any),
               lawName,
               articleNumber
             };
@@ -53,12 +54,9 @@ const Favorites = () => {
         setIsLoading(false);
       }
     };
-    
     loadFavorites();
   }, []);
-
-  return (
-    <div className="flex flex-col min-h-screen pb-16 pt-20 px-4">
+  return <div className="flex flex-col min-h-screen pb-16 pt-20 px-4">
       <Header />
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
@@ -70,29 +68,19 @@ const Favorites = () => {
             </h1>
           </div>
           
-          <div className="neomorph p-3 text-primary-300">
-            <PieChart size={20} />
-          </div>
+          
         </div>
         
-        {isLoading ? (
-          <div className="text-center py-8">
+        {isLoading ? <div className="text-center py-8">
             <Loader2 className="animate-spin h-8 w-8 text-primary-300 mx-auto mb-4" />
             <p className="text-gray-400">Carregando seus favoritos...</p>
-          </div>
-        ) : favorites.length > 0 ? (
-          <div className="space-y-4 animate-fade-in">
-            {favorites.map((fav, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  navigate(`/lei/${encodeURIComponent(fav.lawName)}`);
-                  if (userId) {
-                    logUserActivity('favorite_view', fav.lawName, fav.articleNumber);
-                  }
-                }}
-                className="w-full p-4 neomorph flex items-center justify-between hover:scale-[1.02] transition-all duration-300"
-              >
+          </div> : favorites.length > 0 ? <div className="space-y-4 animate-fade-in">
+            {favorites.map((fav, index) => <button key={index} onClick={() => {
+          navigate(`/lei/${encodeURIComponent(fav.lawName)}`);
+          if (userId) {
+            logUserActivity('favorite_view', fav.lawName, fav.articleNumber);
+          }
+        }} className="w-full p-4 neomorph flex items-center justify-between hover:scale-[1.02] transition-all duration-300">
                 <div className="flex items-center gap-3">
                   <Bookmark size={18} className="text-primary-300 fill-current" />
                   <div className="text-left">
@@ -100,11 +88,8 @@ const Favorites = () => {
                     <p className="text-sm text-gray-400">Art. {fav.articleNumber}</p>
                   </div>
                 </div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 neomorph">
+              </button>)}
+          </div> : <div className="text-center py-8 neomorph">
             <Bookmark className="h-12 w-12 text-gray-500 mx-auto mb-4" />
             <h3 className="text-xl font-heading font-semibold text-primary-100 mb-2">
               Nenhum favorito ainda
@@ -112,13 +97,10 @@ const Favorites = () => {
             <p className="text-gray-400">
               Favorite artigos para encontrá-los facilmente aqui.
             </p>
-          </div>
-        )}
+          </div>}
       </main>
       
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Favorites;
