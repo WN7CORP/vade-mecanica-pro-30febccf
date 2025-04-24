@@ -1,4 +1,6 @@
 
+import { formatTextWithMarkdown } from '@/utils/textExpansion';
+
 interface ArticleContentProps {
   content: string;
   fontSize: number;
@@ -20,6 +22,12 @@ const ArticleContent = ({
     return content.split('\n').map((line, i) => {
       const isHeader = !articleNumber && (i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.'));
       
+      // Format the text with markdown for bold sections
+      const formattedLine = formatTextWithMarkdown(line);
+      
+      // Convert markdown to HTML
+      const htmlContent = formattedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
       if (centerContent) {
         return (
           <p 
@@ -32,9 +40,8 @@ const ArticleContent = ({
               transform: 'translateY(0)',
               transition: 'opacity 0.3s ease, transform 0.3s ease'
             }}
-          >
-            {line}
-          </p>
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
         );
       }
       
@@ -49,9 +56,8 @@ const ArticleContent = ({
             transform: 'translateY(0)',
             transition: 'opacity 0.3s ease, transform 0.3s ease'
           }}
-        >
-          {line}
-        </p>
+          dangerouslySetInnerHTML={{ __html: htmlContent }}
+        />
       );
     });
   };
@@ -64,3 +70,4 @@ const ArticleContent = ({
 };
 
 export default ArticleContent;
+

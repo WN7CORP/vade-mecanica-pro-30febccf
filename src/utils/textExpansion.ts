@@ -1,4 +1,3 @@
-
 // Dictionary types
 type ExpansionDictionary = {
   [key: string]: string;
@@ -86,16 +85,16 @@ export const lawCodes: ExpansionDictionary = {
 
 export const expandText = (text: string): string => {
   let expandedText = text;
-
+  
   // Helper function to escape special characters in regex
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
+  
   // Function to create a regex that matches whole words
   const createWordBoundaryRegex = (term: string) => {
     const escaped = escapeRegExp(term);
     return new RegExp(`\\b${escaped}\\b`, 'g');
   };
-
+  
   // Helper function to capitalize first letter if needed
   const matchCase = (original: string, replacement: string) => {
     if (original[0] === original[0].toUpperCase()) {
@@ -103,24 +102,42 @@ export const expandText = (text: string): string => {
     }
     return replacement;
   };
-
+  
   // Expand legal abbreviations
   Object.entries(legalAbbreviations).forEach(([abbr, full]) => {
     const regex = createWordBoundaryRegex(abbr);
     expandedText = expandedText.replace(regex, (match) => matchCase(match, full));
   });
-
+  
   // Expand roman numerals (only when they appear as references)
   Object.entries(romanNumerals).forEach(([roman, full]) => {
     const regex = new RegExp(`\\b${roman}\\b(?!\\w)`, 'g');
     expandedText = expandedText.replace(regex, full);
   });
-
+  
   // Expand law codes
   Object.entries(lawCodes).forEach(([code, full]) => {
     const regex = createWordBoundaryRegex(code);
     expandedText = expandedText.replace(regex, (match) => matchCase(match, full));
   });
-
+  
   return expandedText;
+};
+
+export const formatTextWithMarkdown = (text: string): string => {
+  let formattedText = text;
+  
+  // Format "Art. X" or "Art. X-Y." patterns with bold
+  formattedText = formattedText.replace(
+    /(Art\. \d+(?:-[A-Z])?\.)/g,
+    '**$1**'
+  );
+  
+  // Format "Parágrafo único" with bold
+  formattedText = formattedText.replace(
+    /(Parágrafo único)/g,
+    '**$1**'
+  );
+  
+  return formattedText;
 };
