@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight, BookOpen, HelpCircle, Info } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight, BookOpen, Info } from "lucide-react";
+import { motion } from "framer-motion";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { toast } from "@/hooks/use-toast";
 
@@ -10,6 +11,7 @@ interface FlashCardProps {
   answer: string;
   explanation?: string;
   relatedArticles?: string;
+  theme?: string;
   onNext: () => void;
   onPrevious: () => void;
   onRate: (correct: boolean) => void;
@@ -28,7 +30,7 @@ const FlashCard = ({
   hasNext,
   hasPrevious,
   theme
-}: FlashCardProps & { theme?: string }) => {
+}: FlashCardProps) => {
   const [showExplanation, setShowExplanation] = useState(false);
   const [hasRated, setHasRated] = useState(false);
   const [fontSize, setFontSize] = useState(16);

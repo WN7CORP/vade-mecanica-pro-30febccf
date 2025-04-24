@@ -53,9 +53,9 @@ export function useFlashcardsProgress(theme?: string) {
         viewed_count: row.viewed_count,
         correct_count: row.correct_count,
         last_viewed: row.last_viewed,
-        proficiency_level: row.proficiency_level,
-        streak: row.streak,
-        theme: row.theme,
+        proficiency_level: row.proficiency_level || 0,
+        streak: row.streak || 0,
+        theme: row.theme || '',
         user_id: row.user_id,
         created_at: row.created_at
       }));
@@ -72,6 +72,10 @@ export function useFlashcardsProgress(theme?: string) {
       correct: boolean;
       theme?: string;
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error('User not authenticated');
+
       const { data: existingData } = await supabase
         .from('user_flashcard_progress')
         .select('*')
@@ -100,7 +104,7 @@ export function useFlashcardsProgress(theme?: string) {
           .from('user_flashcard_progress')
           .insert({
             flashcard_id: flashcardId,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_id: user.id,
             viewed_count: 1,
             correct_count: correct ? 1 : 0,
             streak: correct ? 1 : 0,
