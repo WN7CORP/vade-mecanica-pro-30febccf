@@ -10,7 +10,7 @@ const LawHeader = ({ lawName }: LawHeaderProps) => {
   const navigate = useNavigate();
   
   return (
-    <div className="flex items-center gap-4 mb-6 p-4 neomorph">
+    <div className="flex items-center gap-4 p-4 neomorph">
       <button
         onClick={() => navigate(-1)}
         className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200"
@@ -27,3 +27,4 @@ const LawHeader = ({ lawName }: LawHeaderProps) => {
 };
 
 export default LawHeader;
+
