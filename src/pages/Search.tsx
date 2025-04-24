@@ -61,7 +61,7 @@ const Search = () => {
   useEffect(() => {
     const loadLaws = async () => {
       try {
-        const laws = fetchAvailableLaws();
+        const laws = await fetchAvailableLaws();
         setAvailableLaws(laws);
         
         // Se não houver lei selecionada, usar a primeira

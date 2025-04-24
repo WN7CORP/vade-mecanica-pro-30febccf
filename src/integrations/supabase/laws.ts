@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -58,8 +57,9 @@ async function logUserAction(
     // Only proceed if we have a user ID
     if (userId) {
       // Run in background - don't block the main flow
-      if (typeof EdgeRuntime !== 'undefined') {
-        EdgeRuntime.waitUntil((async () => {
+      // Using Promise-based approach instead of EdgeRuntime
+      setTimeout(async () => {
+        try {
           const { error } = await supabase.from('user_statistics').insert({
             user_id: userId,
             action_type: actionType,
@@ -70,20 +70,10 @@ async function logUserAction(
           if (error) {
             console.error('Error logging user action:', error);
           }
-        })());
-      } else {
-        // Regular execution for environments without EdgeRuntime
-        const { error } = await supabase.from('user_statistics').insert({
-          user_id: userId,
-          action_type: actionType,
-          law_name: lawName,
-          article_number: articleNumber
-        });
-
-        if (error) {
-          console.error('Error logging user action:', error);
+        } catch (err) {
+          console.error('Background task error:', err);
         }
-      }
+      }, 0);
     } else {
       console.log('User not authenticated, skipping action logging');
     }
