@@ -7,16 +7,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
-const geminiApiKey = "AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0";
-const supabaseUrl = "https://phzcazcyjhlmdchcjagy.supabase.co";
-const supabaseServiceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    const supabaseUrl = "https://phzcazcyjhlmdchcjagy.supabase.co";
+    const supabaseServiceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const geminiApiKey = "AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0";
+
     const supabase = createClient(supabaseUrl, supabaseServiceRole);
     
     // Fetch articles that don't have flashcards yet
@@ -54,6 +54,7 @@ serve(async (req) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-goog-api-key": geminiApiKey,
           },
           body: JSON.stringify({
             contents: [{
