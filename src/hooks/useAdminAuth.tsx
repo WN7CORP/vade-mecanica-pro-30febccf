@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export function useAdminAuth() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -19,6 +19,7 @@ export function useAdminAuth() {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
+          console.log("[AdminAuth] No active session");
           setIsAdmin(false);
           setAdminEmail(null);
           setIsLoading(false);
@@ -27,6 +28,7 @@ export function useAdminAuth() {
 
         // Hardcoded admin check as first fallback
         if (session.user.email === "wesleyhard@hotmail.com") {
+          console.log("[AdminAuth] Hardcoded admin found:", session.user.email);
           setIsAdmin(true);
           setAdminEmail(session.user.email);
           setIsLoading(false);
@@ -42,13 +44,14 @@ export function useAdminAuth() {
             .single();
 
           if (!directError && directAdminCheck) {
+            console.log("[AdminAuth] Admin user found in table:", directAdminCheck.email);
             setIsAdmin(true);
             setAdminEmail(directAdminCheck.email);
             setIsLoading(false);
             return;
           }
         } catch (directCheckError) {
-          console.log("Direct admin check failed, trying RPC function");
+          console.log("[AdminAuth] Direct admin check failed:", directCheckError);
         }
 
         // Use the is_admin RPC function as final approach
@@ -57,11 +60,12 @@ export function useAdminAuth() {
         });
         
         if (error) {
-          console.error("Error checking admin status:", error);
+          console.error("[AdminAuth] Error checking admin status:", error);
           setError(error.message);
           setIsAdmin(false);
           setAdminEmail(null);
         } else {
+          console.log("[AdminAuth] RPC admin check result:", data);
           setIsAdmin(!!data);
           if (data) {
             setAdminEmail(session.user.email);
@@ -70,7 +74,7 @@ export function useAdminAuth() {
           }
         }
       } catch (error: any) {
-        console.error("Error in admin status check:", error);
+        console.error("[AdminAuth] Error in admin status check:", error);
         setError(error?.message || "Erro ao verificar status de administrador");
         setIsAdmin(false);
         setAdminEmail(null);
@@ -84,6 +88,7 @@ export function useAdminAuth() {
     // Set up listener for authentication state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("[AdminAuth] Auth state changed:", event);
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           await checkAdminStatus();
         } else if (event === 'SIGNED_OUT') {
