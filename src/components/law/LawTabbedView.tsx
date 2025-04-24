@@ -1,8 +1,8 @@
 
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, GraduationCap, Timeline } from "lucide-react";
+import { BookOpen, GraduationCap, BookClock } from "lucide-react";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
@@ -10,12 +10,11 @@ import SearchBar from "@/components/ui/SearchBar";
 import { FloatingSearchButton } from "@/components/ui/FloatingSearchButton";
 import ComparisonTool from "@/components/law/ComparisonTool";
 import { Article } from "@/services/lawService";
-import FlashCard from "@/components/study/FlashCard";
-import { useStudyTimer } from "@/contexts/StudyTimerContext";
+import { StudyMode } from "@/pages/StudyMode";
+import { LegalTimeline } from "@/pages/LegalTimeline";
 
 const LawTabbedView = () => {
   const { lawName } = useParams<{ lawName: string }>();
-  const navigate = useNavigate();
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [articlesToCompare, setArticlesToCompare] = useState<Article[]>([]);
@@ -74,7 +73,7 @@ const LawTabbedView = () => {
             <span>Estudar</span>
           </TabsTrigger>
           <TabsTrigger value="timeline" className="w-full">
-            <Timeline className="mr-2 h-4 w-4" />
+            <BookClock className="mr-2 h-4 w-4" />
             <span>Linha do Tempo</span>
           </TabsTrigger>
         </TabsList>

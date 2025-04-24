@@ -1,13 +1,11 @@
 
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
-interface LawHeaderProps {
-  lawName: string | undefined;
-}
-
-const LawHeader = ({ lawName }: LawHeaderProps) => {
+const LawHeader = () => {
   const navigate = useNavigate();
+  const { lawName } = useParams<{ lawName: string }>();
   
   return (
     <div className="flex items-center gap-4 p-4 neomorph">
@@ -27,4 +25,3 @@ const LawHeader = ({ lawName }: LawHeaderProps) => {
 };
 
 export default LawHeader;
-
