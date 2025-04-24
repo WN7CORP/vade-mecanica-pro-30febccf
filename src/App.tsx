@@ -18,6 +18,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Community from "./pages/Community";
 import Admin from "./pages/Admin";
+import Subscription from "./pages/Subscription";
 import { useSessionTracking } from "./hooks/useSessionTracking";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ function AppWithProviders() {
         <Route path="/perfil" element={<Profile />} />
         <Route path="/comunidade" element={<Community />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/subscription" element={<Subscription />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <FloatingTimer
