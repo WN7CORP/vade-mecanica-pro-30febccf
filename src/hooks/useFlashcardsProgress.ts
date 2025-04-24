@@ -9,9 +9,9 @@ interface FlashcardProgressRaw {
   viewed_count: number | null;
   correct_count: number | null;
   last_viewed: string | null;
-  proficiency_level?: number | null;
-  streak?: number | null;
-  theme?: string | null;
+  proficiency_level: number | null;
+  streak: number | null;
+  theme: string | null;
   user_id: string | null;
   created_at: string | null;
 }
