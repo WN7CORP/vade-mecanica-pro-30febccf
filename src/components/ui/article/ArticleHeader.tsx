@@ -1,5 +1,6 @@
 
 import { Copy, PenLine, Bookmark } from "lucide-react";
+import { getLawAbbreviation } from "@/utils/lawAbbreviations";
 
 interface ArticleHeaderProps {
   articleNumber: string;
@@ -20,13 +21,18 @@ const ArticleHeader = ({
   isFavorite = false,
   onToggleFavorite
 }: ArticleHeaderProps) => {
+  const abbreviation = getLawAbbreviation(lawName);
+  
   return (
     <div className="flex justify-between items-center mb-4">
       <div>
-        <h3 className="text-primary-300 text-lg font-heading font-semibold">
-          {articleNumber ? `Art. ${articleNumber}` : lawName}
-        </h3>
-        <p className="text-xs text-muted-foreground">{lawName}</p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-primary-300/70">{abbreviation}</span>
+          <h3 className="text-primary-300 text-lg font-heading font-semibold">
+            {articleNumber ? `Art. ${articleNumber}` : lawName}
+          </h3>
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5">{lawName}</p>
       </div>
       <div className="flex space-x-2">
         <button 

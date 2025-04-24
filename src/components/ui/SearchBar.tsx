@@ -1,5 +1,6 @@
 import { Search, X } from "lucide-react";
 import { useState, useEffect, forwardRef } from "react";
+import { getLawAbbreviation } from "@/utils/lawAbbreviations";
 
 interface SearchBarProps {
   onSearch: (term: string) => void;
@@ -23,6 +24,10 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   const [searchPreviews, setSearchPreviews] = useState<Array<{
     title: string;
     preview: string;
+    lawName: string;
+    previewType: string;
+    article?: string;
+    content: string;
   }>>([]);
 
   useEffect(() => {
@@ -54,8 +59,8 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     // Simulate search previews - replace with actual API call
     if (value.length >= 2) {
       setSearchPreviews([
-        { title: "Art. 5º CF", preview: "Direitos e garantias fundamentais..." },
-        { title: "Art. 37 CF", preview: "Administração pública direta e indireta..." },
+        { title: "Art. 5º CF", preview: "Direitos e garantias fundamentais...", lawName: "CF", previewType: 'article', article: "5º", content: "Direitos e garantias fundamentais..." },
+        { title: "Art. 37 CF", preview: "Administração pública direta e indireta...", lawName: "CF", previewType: 'article', article: "37", content: "Administração pública direta e indireta..." },
       ]);
     } else {
       setSearchPreviews([]);
@@ -121,22 +126,32 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
       {/* Search previews */}
       {isFocused && searchPreviews.length > 0 && (
         <div className="search-preview animate-fade-in">
-          {searchPreviews.map((preview, index) => (
-            <div 
-              key={index}
-              className="search-preview-item"
-              onClick={() => {
-                setSearchTerm(preview.title);
-                onSearch(preview.title);
-              }}
-            >
-              <Search size={16} className="text-primary-300" />
-              <div>
-                <div className="text-sm font-medium">{preview.title}</div>
-                <div className="text-xs text-gray-400">{preview.preview}</div>
+          {searchPreviews.map((preview, index) => {
+            const abbreviation = getLawAbbreviation(preview.lawName);
+            return (
+              <div 
+                key={index}
+                className="search-preview-item"
+                onClick={() => {
+                  setSearchTerm(preview.title);
+                  onSearch(preview.title);
+                }}
+              >
+                <Search size={16} className="text-primary-300" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-primary-300/70">{abbreviation}</span>
+                    <div className="text-sm font-medium">
+                      {preview.previewType === 'article' ? 'Artigo' : 'Contém'} {preview.article && `${preview.article}`}
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">
+                    {preview.content}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
