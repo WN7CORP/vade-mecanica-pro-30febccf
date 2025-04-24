@@ -2,22 +2,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define the interface for raw database response
-interface FlashcardProgressRaw {
-  id: string;
-  flashcard_id: string;
-  viewed_count: number | null;
-  correct_count: number | null;
-  last_viewed: string | null;
-  proficiency_level: number | null;
-  streak: number | null;
-  theme: string | null;
-  user_id: string | null;
-  created_at: string | null;
-}
-
-// Define the interface for normalized progress data
-interface FlashcardProgress {
+// Define the interface for flashcard progress
+export interface FlashcardProgress {
   id: string;
   flashcard_id: string;
   viewed_count: number;
@@ -47,8 +33,8 @@ export function useFlashcardsProgress(theme?: string) {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Transform the raw data without complex type casting
-      return (data || []).map((row: any) => ({
+      // Transform the data with explicit typing to avoid deep instantiation
+      return (data || []).map((row): FlashcardProgress => ({
         id: row.id || '',
         flashcard_id: row.flashcard_id || '',
         viewed_count: row.viewed_count || 0,
@@ -73,28 +59,26 @@ export function useFlashcardsProgress(theme?: string) {
       correct: boolean;
       theme?: string;
     }) => {
-      const { data: existing } = await supabase
+      const { data: existingData } = await supabase
         .from('user_flashcard_progress')
         .select('*')
         .eq('flashcard_id', flashcardId)
         .single();
 
-      if (existing) {
-        // Use type assertion without complex typing
-        const existingProgress = existing as any;
-        
+      if (existingData) {
+        // Use well-defined types with null checking
         const { error } = await supabase
           .from('user_flashcard_progress')
           .update({
-            viewed_count: (existingProgress.viewed_count || 0) + 1,
-            correct_count: (existingProgress.correct_count || 0) + (correct ? 1 : 0),
-            streak: (existingProgress.streak || 0) + (correct ? 1 : 0),
+            viewed_count: (existingData.viewed_count || 0) + 1,
+            correct_count: (existingData.correct_count || 0) + (correct ? 1 : 0),
+            streak: (existingData.streak || 0) + (correct ? 1 : 0),
             proficiency_level: correct 
-              ? Math.min((existingProgress.proficiency_level || 0) + 1, 5)
-              : Math.max((existingProgress.proficiency_level || 0) - 1, 0),
+              ? Math.min((existingData.proficiency_level || 0) + 1, 5)
+              : Math.max((existingData.proficiency_level || 0) - 1, 0),
             last_viewed: new Date().toISOString()
           })
-          .eq('id', existingProgress.id);
+          .eq('id', existingData.id);
 
         if (error) throw error;
       } else {
