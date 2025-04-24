@@ -19,7 +19,7 @@ export function useThemePreferences() {
         const { data, error } = await supabase
           .from('user_theme_preferences')
           .select('*')
-          .single();
+          .maybeSingle();  // Changed from .single() to .maybeSingle()
 
         if (error && error.code !== 'PGRST116') {
           throw error;
@@ -27,7 +27,7 @@ export function useThemePreferences() {
         
         // Return data with defaults if missing
         return {
-          selected_themes: data?.selected_themes || [],
+          selected_themes: Array.isArray(data?.selected_themes) ? data.selected_themes : [],
           order_mode: data?.order_mode || 'sequential',
           font_size: data?.font_size || 16,
           ...data
