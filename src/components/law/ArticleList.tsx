@@ -26,7 +26,7 @@ interface ArticleListProps {
   onCloseExplanation: () => void;
   onAddToComparison?: (article: Article) => void;
   onStudyMode?: () => void;
-  globalFontSize?: number; // Adicionado para resolver o erro
+  globalFontSize?: number; // Added to resolve the type error
 }
 
 const ArticleList = ({

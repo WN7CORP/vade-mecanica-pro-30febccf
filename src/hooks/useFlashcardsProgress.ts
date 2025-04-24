@@ -2,7 +2,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define a interface com todos os campos usados
+// Define the interface for raw database response
+interface FlashcardProgressRaw {
+  id: string;
+  flashcard_id: string;
+  viewed_count: number | null;
+  correct_count: number | null;
+  last_viewed: string | null;
+  proficiency_level?: number | null;
+  streak?: number | null;
+  theme?: string | null;
+  user_id: string | null;
+  created_at: string | null;
+}
+
+// Define the interface for normalized progress data
 interface FlashcardProgress {
   id: string;
   flashcard_id: string;
@@ -37,7 +51,7 @@ export function useFlashcardsProgress(theme?: string) {
       const transformedData: FlashcardProgress[] = [];
       
       if (data) {
-        for (const row of data) {
+        for (const row of data as FlashcardProgressRaw[]) {
           transformedData.push({
             id: row.id || '',
             flashcard_id: row.flashcard_id || '',
@@ -74,18 +88,21 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existing) {
+        // Cast to FlashcardProgressRaw to handle potentially undefined fields
+        const existingProgress = existing as FlashcardProgressRaw;
+        
         const { error } = await supabase
           .from('user_flashcard_progress')
           .update({
-            viewed_count: (existing.viewed_count || 0) + 1,
-            correct_count: (existing.correct_count || 0) + (correct ? 1 : 0),
-            streak: (existing.streak || 0) + (correct ? 1 : 0),
+            viewed_count: (existingProgress.viewed_count || 0) + 1,
+            correct_count: (existingProgress.correct_count || 0) + (correct ? 1 : 0),
+            streak: (existingProgress.streak || 0) + (correct ? 1 : 0),
             proficiency_level: correct 
-              ? Math.min((existing.proficiency_level || 0) + 1, 5)
-              : Math.max((existing.proficiency_level || 0) - 1, 0),
+              ? Math.min((existingProgress.proficiency_level || 0) + 1, 5)
+              : Math.max((existingProgress.proficiency_level || 0) - 1, 0),
             last_viewed: new Date().toISOString()
           })
-          .eq('id', existing.id);
+          .eq('id', existingProgress.id);
 
         if (error) throw error;
       } else {
