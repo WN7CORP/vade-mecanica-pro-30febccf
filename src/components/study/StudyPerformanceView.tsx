@@ -1,4 +1,6 @@
 
+import { PerformanceChart } from "./PerformanceChart";
+
 export interface PerformanceData {
   theme: string;
   correct: number;
