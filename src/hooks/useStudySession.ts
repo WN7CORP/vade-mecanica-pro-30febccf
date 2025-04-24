@@ -17,9 +17,15 @@ export function useStudySession() {
 
   const startSession = useMutation({
     mutationFn: async (theme: string | undefined) => {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('user_study_sessions')
         .insert({
+          user_id: user.id, // Add the required user_id field
           theme,
           flashcards_viewed: 0,
           flashcards_correct: 0
