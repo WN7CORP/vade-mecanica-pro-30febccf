@@ -48,18 +48,21 @@ export function useFlashcardsProgress(theme?: string) {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Map the raw data to our interface with default values for missing fields
-      return (data || []).map((row): FlashcardProgress => ({
-        id: row.id || '',
-        flashcard_id: row.flashcard_id || '',
+      // Explicitly cast data to the database type
+      const dbData = (data || []) as DbFlashcardProgress[];
+      
+      // Map the db data to our interface with default values for missing fields
+      return dbData.map((row): FlashcardProgress => ({
+        id: row.id,
+        flashcard_id: row.flashcard_id,
         viewed_count: row.viewed_count || 0,
         correct_count: row.correct_count || 0,
         last_viewed: row.last_viewed || new Date().toISOString(),
         proficiency_level: row.proficiency_level || 0,
         streak: row.streak || 0,
         theme: row.theme || '',
-        user_id: row.user_id || '',
-        created_at: row.created_at || new Date().toISOString()
+        user_id: row.user_id,
+        created_at: row.created_at
       }));
     }
   });
@@ -81,22 +84,23 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existingData) {
-        // Handle case where fields might be missing in the database
-        const existingStreak = (existingData as any).streak || 0;
-        const existingProficiency = (existingData as any).proficiency_level || 0;
+        // Cast to DbFlashcardProgress to handle optional fields
+        const existingRecord = existingData as DbFlashcardProgress;
+        const existingStreak = existingRecord.streak || 0;
+        const existingProficiency = existingRecord.proficiency_level || 0;
 
         const { error } = await supabase
           .from('user_flashcard_progress')
           .update({
-            viewed_count: (existingData.viewed_count || 0) + 1,
-            correct_count: (existingData.correct_count || 0) + (correct ? 1 : 0),
+            viewed_count: (existingRecord.viewed_count || 0) + 1,
+            correct_count: (existingRecord.correct_count || 0) + (correct ? 1 : 0),
             streak: existingStreak + (correct ? 1 : 0),
             proficiency_level: correct 
               ? Math.min(existingProficiency + 1, 5)
               : Math.max(existingProficiency - 1, 0),
             last_viewed: new Date().toISOString()
           })
-          .eq('id', existingData.id);
+          .eq('id', existingRecord.id);
 
         if (error) throw error;
       } else {
