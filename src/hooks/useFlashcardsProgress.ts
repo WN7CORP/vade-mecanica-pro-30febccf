@@ -53,7 +53,7 @@ export function useFlashcardsProgress(theme?: string) {
         
         for (const row of rows) {
           // Cast to access properties with a simpler type
-          const item = row as Record<string, unknown>;
+          const item = row as Record<string, any>;
           
           transformedData.push({
             id: item.id as string,
@@ -90,20 +90,20 @@ export function useFlashcardsProgress(theme?: string) {
 
       if (existing) {
         // Simplify type handling with a direct assertion
-        const dbProgress = existing as Record<string, unknown>;
+        const dbProgress = existing as Record<string, any>;
         
         const { error } = await supabase
           .from('user_flashcard_progress')
           .update({
-            viewed_count: (dbProgress.viewed_count as number ?? 0) + 1,
-            correct_count: (dbProgress.correct_count as number ?? 0) + (correct ? 1 : 0),
-            streak: (dbProgress.streak as number ?? 0) + (correct ? 1 : 0),
+            viewed_count: (dbProgress.viewed_count ?? 0) + 1,
+            correct_count: (dbProgress.correct_count ?? 0) + (correct ? 1 : 0),
+            streak: (dbProgress.streak ?? 0) + (correct ? 1 : 0),
             proficiency_level: correct 
-              ? Math.min((dbProgress.proficiency_level as number ?? 0) + 1, 5)
-              : Math.max((dbProgress.proficiency_level as number ?? 0) - 1, 0),
+              ? Math.min((dbProgress.proficiency_level ?? 0) + 1, 5)
+              : Math.max((dbProgress.proficiency_level ?? 0) - 1, 0),
             last_viewed: new Date().toISOString()
           })
-          .eq('id', dbProgress.id);
+          .eq('id', dbProgress.id as string);
 
         if (error) throw error;
       } else {
