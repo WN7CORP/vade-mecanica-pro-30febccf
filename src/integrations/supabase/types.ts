@@ -1735,29 +1735,32 @@ export type Database = {
       subscription_events: {
         Row: {
           created_at: string
+          data: Json
           error: string | null
-          event_type: string
           id: string
-          payload: Json
-          processed: boolean | null
+          status: string
+          stripe_event_id: string
+          type: string
           user_subscription_id: string | null
         }
         Insert: {
           created_at?: string
+          data: Json
           error?: string | null
-          event_type: string
           id?: string
-          payload: Json
-          processed?: boolean | null
+          status?: string
+          stripe_event_id: string
+          type: string
           user_subscription_id?: string | null
         }
         Update: {
           created_at?: string
+          data?: Json
           error?: string | null
-          event_type?: string
           id?: string
-          payload?: Json
-          processed?: boolean | null
+          status?: string
+          stripe_event_id?: string
+          type?: string
           user_subscription_id?: string | null
         }
         Relationships: [
@@ -1772,33 +1775,36 @@ export type Database = {
       }
       subscription_plans: {
         Row: {
-          cakto_plan_id: string
           created_at: string
           description: string | null
+          features: Json | null
           id: string
           interval: string
           name: string
           price: number
+          stripe_price_id: string
           updated_at: string
         }
         Insert: {
-          cakto_plan_id: string
           created_at?: string
           description?: string | null
+          features?: Json | null
           id?: string
           interval: string
           name: string
           price: number
+          stripe_price_id: string
           updated_at?: string
         }
         Update: {
-          cakto_plan_id?: string
           created_at?: string
           description?: string | null
+          features?: Json | null
           id?: string
           interval?: string
           name?: string
           price?: number
+          stripe_price_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -2202,35 +2208,38 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
-          cakto_subscription_id: string | null
+          cancel_at_period_end: boolean
           created_at: string
-          end_date: string | null
+          current_period_end: string | null
           id: string
           plan_id: string
-          start_date: string | null
           status: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
-          cakto_subscription_id?: string | null
+          cancel_at_period_end?: boolean
           created_at?: string
-          end_date?: string | null
+          current_period_end?: string | null
           id?: string
           plan_id: string
-          start_date?: string | null
           status?: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
           updated_at?: string
           user_id: string
         }
         Update: {
-          cakto_subscription_id?: string | null
+          cancel_at_period_end?: boolean
           created_at?: string
-          end_date?: string | null
+          current_period_end?: string | null
           id?: string
           plan_id?: string
-          start_date?: string | null
           status?: string
+          stripe_customer_id?: string
+          stripe_subscription_id?: string
           updated_at?: string
           user_id?: string
         }
@@ -2328,6 +2337,10 @@ export type Database = {
       }
       check_if_user_is_admin: {
         Args: { user_id: string }
+        Returns: boolean
+      }
+      check_user_subscription: {
+        Args: { user_uuid: string }
         Returns: boolean
       }
       fetch_all_legal_documents: {

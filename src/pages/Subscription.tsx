@@ -1,34 +1,72 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PricingCard } from "@/components/subscription/PricingCard";
 import { toast } from "sonner";
 
+interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  interval: string;
+  features: string[];
+}
+
+interface SubscriptionStatus {
+  active: boolean;
+  plan?: Plan;
+}
+
 export default function Subscription() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const navigate = useNavigate();
 
-  const handleSubscribe = async () => {
-    try {
-      setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("Você precisa estar logado para assinar");
-        navigate("/auth");
-        return;
-      }
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const { data: plans, error } = await supabase
+          .from("subscription_plans")
+          .select("*");
 
-      // Redirect to Cakto checkout
-      window.location.href = `https://app.cakto.com.br/checkout/YOUR_MERCHANT_ID?plan=YOUR_PLAN_ID&external_id=${user.id}&redirect_url=${window.location.origin}/subscription/success`;
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Erro ao processar assinatura");
-    } finally {
+        if (error) throw error;
+        setPlans(plans || []);
+      } catch (error) {
+        console.error("Error fetching plans:", error);
+        toast.error("Erro ao carregar planos");
+      }
+    };
+
+    const checkSubscription = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('check-subscription');
+        if (error) throw error;
+        setSubscriptionStatus(data);
+      } catch (error) {
+        console.error("Error checking subscription:", error);
+        toast.error("Erro ao verificar assinatura");
+      }
+    };
+
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchPlans(), checkSubscription()]);
       setIsLoading(false);
-    }
-  };
+    };
+
+    loadData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
@@ -39,8 +77,19 @@ export default function Subscription() {
         </p>
       </div>
       
-      <div className="flex justify-center">
-        <PricingCard onSubscribe={handleSubscribe} isLoading={isLoading} />
+      <div className="flex flex-wrap justify-center gap-6">
+        {plans.map((plan) => (
+          <PricingCard
+            key={plan.id}
+            planId={plan.id}
+            name={plan.name}
+            description={plan.description || ""}
+            price={Number(plan.price)}
+            interval={plan.interval}
+            features={plan.features || []}
+            isCurrentPlan={subscriptionStatus?.plan?.id === plan.id}
+          />
+        ))}
       </div>
     </div>
   );

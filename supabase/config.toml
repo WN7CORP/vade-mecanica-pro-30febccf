@@ -21,5 +21,14 @@ port = 54323
 [db.extensions]
 pg_cron = true
 
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.check-subscription]
+verify_jwt = true
+
+[functions.customer-portal]
+verify_jwt = true
+
 [functions.generate-flashcards]
 verify_jwt = true
