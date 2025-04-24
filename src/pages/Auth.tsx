@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { isAdmin, isLoading } = useAdminAuth();
   const [checkingSession, setCheckingSession] = useState(true);
+  const queryClient = useQueryClient(); // Ensure QueryClient is available in this component
 
   useEffect(() => {
     // Check for authenticated session and admin status

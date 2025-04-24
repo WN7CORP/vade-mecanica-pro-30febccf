@@ -53,6 +53,7 @@ export function useNotifications() {
       if (error) throw error;
     },
     onSuccess: () => {
+      // This is where the queryClient is used
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
   });
