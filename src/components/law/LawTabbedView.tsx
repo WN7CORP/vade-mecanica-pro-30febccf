@@ -115,7 +115,7 @@ const LawTabbedView = () => {
             isLoading={isLoading} 
             searchTerm={searchTerm} 
             filteredArticles={filteredArticles} 
-            lawName={lawName} 
+            lawName={lawName || ''} 
             showExplanation={showExplanation} 
             explanation={explanation} 
             loadingExplanation={loadingExplanation} 
@@ -136,7 +136,11 @@ const LawTabbedView = () => {
         </TabsContent>
 
         <TabsContent value="study" className="mt-0">
-          {lawName && <StudyContent lawName={lawName} />}
+          {lawName && (
+            <div className="study-content-container">
+              <StudyContent lawName={lawName} />
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="timeline" className="mt-0">

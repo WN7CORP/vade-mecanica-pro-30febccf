@@ -4,7 +4,7 @@ import FlashCard from "@/components/study/FlashCard";
 import { PerformanceChart } from "@/components/study/PerformanceChart";
 import { useFlashcardsProgress } from "@/hooks/useFlashcardsProgress";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { Book } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -64,7 +64,8 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
   // Initialize session when starting study
   useEffect(() => {
     const initSession = async () => {
-      if (!currentSessionId && flashcards.length > 0 && preferences?.selected_themes?.length > 0) {
+      if (!currentSessionId && flashcards.length > 0 && 
+          preferences?.selected_themes && preferences.selected_themes.length > 0) {
         try {
           const session = await startSession.mutateAsync(preferences.selected_themes[0]);
           if (session?.id) {
@@ -182,7 +183,7 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
           <div className="flex justify-between text-xs">
             <span className="text-gray-400">Progresso</span>
             <span className="text-primary-100">
-              {currentIndex + 1}/{orderedFlashcards.length} cartões
+              {currentIndex + 1}/{orderedFlashcards.length || 1} cartões
             </span>
           </div>
           <Progress value={(currentIndex + 1) / Math.max(orderedFlashcards.length, 1) * 100} className="h-1.5" />
