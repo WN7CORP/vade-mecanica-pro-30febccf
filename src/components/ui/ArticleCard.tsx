@@ -21,6 +21,7 @@ interface ArticleCardProps {
   onAskQuestion?: () => void;
   onAddToComparison?: () => void;
   onStudyMode?: () => void;
+  globalFontSize?: number;
 }
 
 const ArticleCard = ({
@@ -31,7 +32,8 @@ const ArticleCard = ({
   onExplainRequest,
   onAskQuestion,
   onAddToComparison,
-  onStudyMode
+  onStudyMode,
+  globalFontSize
 }: ArticleCardProps) => {
   const [fontSize, setFontSize] = useState(16);
   const [isReading, setIsReading] = useState(false);
@@ -48,6 +50,12 @@ const ArticleCard = ({
   
   const safeContent = typeof content === 'string' ? content : (content ? JSON.stringify(content) : '');
   const safeExample = typeof example === 'string' ? example : (example ? JSON.stringify(example) : '');
+
+  useEffect(() => {
+    if (globalFontSize) {
+      setFontSize(globalFontSize);
+    }
+  }, [globalFontSize]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -206,7 +214,7 @@ const ArticleCard = ({
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
   return (
-    <div className="card-article mb-6 hover:shadow-lg transition-all duration-300 animate-fade-in">
+    <div className="card-article mb-4 hover:shadow-lg transition-all duration-300 animate-fade-in">
       <CopyToast show={showCopyToast} />
       
       <ArticleHeader
@@ -232,7 +240,7 @@ const ArticleCard = ({
         <div className="flex justify-center">
           <Button
             variant="outline"
-            className="w-full max-w-xs mx-auto mt-4 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95 animate-fade-in"
+            className="max-w-xs mx-auto mt-3 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95 animate-fade-in"
             onClick={() => setShowExample(true)}
           >
             Ver Exemplo
@@ -289,7 +297,7 @@ const ArticleCard = ({
       />
 
       {shouldLeftAlign && (
-        <div className="mt-8 mb-12 animate-fade-in">
+        <div className="mt-6 mb-8 animate-fade-in">
           <p
             className="mb-4 whitespace-pre-wrap transition-all duration-200 text-left text-white"
             style={{ fontSize: `${fontSize + 2}px` }}

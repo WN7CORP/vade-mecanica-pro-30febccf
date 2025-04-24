@@ -1,8 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, GraduationCap, Clock } from "lucide-react";
+import { BookOpen, GraduationCap, Clock, ArrowUp } from "lucide-react";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
@@ -12,6 +12,7 @@ import ComparisonTool from "@/components/law/ComparisonTool";
 import { Article } from "@/services/lawService";
 import StudyMode from "@/pages/StudyMode";
 import LegalTimeline from "@/pages/LegalTimeline";
+import { Button } from "@/components/ui/button";
 
 const LawTabbedView = () => {
   const { lawName } = useParams<{ lawName: string }>();
@@ -20,6 +21,8 @@ const LawTabbedView = () => {
   const [articlesToCompare, setArticlesToCompare] = useState<Article[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [showChat, setShowChat] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [globalFontSize, setGlobalFontSize] = useState(16);
   
   const {
     filteredArticles,
@@ -37,6 +40,22 @@ const LawTabbedView = () => {
     loadingExplanation,
     handleExplainArticle
   } = useAIExplanation(lawName);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
 
   const handleOpenSearch = () => {
     setShowSearchBar(true);
@@ -57,13 +76,35 @@ const LawTabbedView = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className={`transition-all duration-300 ${showSearchBar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
         <SearchBar onSearch={handleSearch} initialValue={searchTerm} placeholder="Buscar artigo específico..." />
       </div>
 
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => setGlobalFontSize(prev => Math.max(prev - 1, 12))}
+          >
+            A-
+          </Button>
+          <span className="text-xs text-gray-400">Fonte: {globalFontSize}px</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1"
+            onClick={() => setGlobalFontSize(prev => Math.min(prev + 1, 24))}
+          >
+            A+
+          </Button>
+        </div>
+      </div>
+
       <Tabs defaultValue="articles" className="w-full">
-        <TabsList className="w-full mb-6">
+        <TabsList className="w-full mb-4">
           <TabsTrigger value="articles" className="w-full">
             <BookOpen className="mr-2 h-4 w-4" />
             <span>Artigos</span>
@@ -110,6 +151,7 @@ const LawTabbedView = () => {
             onCloseChat={() => setShowChat(false)}
             onCloseExplanation={() => setShowExplanation(false)}
             onAddToComparison={handleAddToComparison}
+            globalFontSize={globalFontSize}
           />
         </TabsContent>
 
@@ -123,6 +165,17 @@ const LawTabbedView = () => {
       </Tabs>
 
       <FloatingSearchButton onOpenSearch={handleOpenSearch} />
+      
+      {showScrollTop && (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={scrollToTop}
+          className="fixed bottom-20 right-4 z-50 bg-primary/20 text-primary hover:bg-primary/30 rounded-full shadow-lg"
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 };

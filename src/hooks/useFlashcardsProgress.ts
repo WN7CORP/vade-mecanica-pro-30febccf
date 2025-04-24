@@ -13,20 +13,6 @@ interface FlashcardProgress {
   theme: string;
 }
 
-// Define a simpler interface without deep nesting
-interface RawDatabaseRow {
-  id: string;
-  flashcard_id: string;
-  viewed_count: number | null;
-  correct_count: number | null;
-  last_viewed: string | null;
-  proficiency_level: number | null;
-  streak: number | null;
-  theme: string | null;
-  user_id: string;
-  created_at: string;
-}
-
 export function useFlashcardsProgress(theme?: string) {
   const queryClient = useQueryClient();
 
@@ -48,22 +34,16 @@ export function useFlashcardsProgress(theme?: string) {
       const transformedData: FlashcardProgress[] = [];
       
       if (data) {
-        // Use a simple assertion without complex type reasoning
-        const rows = data as unknown[];
-        
-        for (const row of rows) {
-          // Cast to access properties with a simpler type
-          const item = row as Record<string, any>;
-          
+        for (const row of data) {
           transformedData.push({
-            id: item.id as string,
-            flashcard_id: item.flashcard_id as string,
-            viewed_count: (item.viewed_count as number) ?? 0,
-            correct_count: (item.correct_count as number) ?? 0,
-            last_viewed: (item.last_viewed as string) ?? new Date().toISOString(),
-            proficiency_level: (item.proficiency_level as number) ?? 0,
-            streak: (item.streak as number) ?? 0,
-            theme: (item.theme as string) ?? ''
+            id: row.id || '',
+            flashcard_id: row.flashcard_id || '',
+            viewed_count: row.viewed_count || 0,
+            correct_count: row.correct_count || 0,
+            last_viewed: row.last_viewed || new Date().toISOString(),
+            proficiency_level: row.proficiency_level || 0,
+            streak: row.streak || 0,
+            theme: row.theme || ''
           });
         }
       }
@@ -89,21 +69,18 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existing) {
-        // Simplify type handling with a direct assertion
-        const dbProgress = existing as Record<string, any>;
-        
         const { error } = await supabase
           .from('user_flashcard_progress')
           .update({
-            viewed_count: (dbProgress.viewed_count ?? 0) + 1,
-            correct_count: (dbProgress.correct_count ?? 0) + (correct ? 1 : 0),
-            streak: (dbProgress.streak ?? 0) + (correct ? 1 : 0),
+            viewed_count: (existing.viewed_count || 0) + 1,
+            correct_count: (existing.correct_count || 0) + (correct ? 1 : 0),
+            streak: (existing.streak || 0) + (correct ? 1 : 0),
             proficiency_level: correct 
-              ? Math.min((dbProgress.proficiency_level ?? 0) + 1, 5)
-              : Math.max((dbProgress.proficiency_level ?? 0) - 1, 0),
+              ? Math.min((existing.proficiency_level || 0) + 1, 5)
+              : Math.max((existing.proficiency_level || 0) - 1, 0),
             last_viewed: new Date().toISOString()
           })
-          .eq('id', dbProgress.id as string);
+          .eq('id', existing.id);
 
         if (error) throw error;
       } else {

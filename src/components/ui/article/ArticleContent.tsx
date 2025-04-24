@@ -1,6 +1,4 @@
 
-import { ZoomIn, ZoomOut } from "lucide-react";
-
 interface ArticleContentProps {
   content: string;
   fontSize: number;
@@ -26,7 +24,7 @@ const ArticleContent = ({
         return (
           <p 
             key={i} 
-            className="mb-4 whitespace-pre-wrap transition-all duration-300 text-center text-white animate-fade-in" 
+            className="mb-3 whitespace-pre-wrap transition-all duration-300 text-center text-white animate-fade-in" 
             style={{
               fontSize: `${fontSize}px`,
               fontWeight: 'normal',
@@ -43,7 +41,7 @@ const ArticleContent = ({
       return (
         <p 
           key={i} 
-          className={`mb-4 whitespace-pre-wrap transition-all duration-300 text-left ${isHeader ? "text-sm text-gray-400" : "text-white"} animate-fade-in`} 
+          className={`mb-3 whitespace-pre-wrap transition-all duration-300 text-left ${isHeader ? "text-sm text-gray-400" : "text-white"} animate-fade-in`} 
           style={{
             fontSize: `${fontSize}px`,
             fontWeight: 'normal',
@@ -59,25 +57,8 @@ const ArticleContent = ({
   };
 
   return (
-    <div className="relative mt-8 mb-12 animate-fade-in">
+    <div className="relative mt-6 mb-6 animate-fade-in">
       {renderContent()}
-      
-      <div className="fixed right-4 bottom-24 flex flex-col space-y-2 z-50">
-        <button
-          onClick={onIncreaseFontSize}
-          className="neomorph p-3 rounded-full bg-primary/20 hover:bg-primary/30 text-primary shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
-          aria-label="Aumentar fonte"
-        >
-          <ZoomIn size={24} />
-        </button>
-        <button
-          onClick={onDecreaseFontSize}
-          className="neomorph p-3 rounded-full bg-primary/20 hover:bg-primary/30 text-primary shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
-          aria-label="Diminuir fonte"
-        >
-          <ZoomOut size={24} />
-        </button>
-      </div>
     </div>
   );
 };

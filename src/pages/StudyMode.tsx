@@ -9,10 +9,11 @@ import { useFlashcardsProgress } from "@/hooks/useFlashcardsProgress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useStudyTimer } from "@/contexts/StudyTimerContext";
-import { Book, Timer } from "lucide-react";
+import { Book, Timer, ArrowUp } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 interface FlashCardData {
   id: string;
@@ -31,6 +32,23 @@ const StudyMode = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { studyTimeMinutes } = useStudyTimer();
   const { progress, updateProgress } = useFlashcardsProgress();
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
 
   useEffect(() => {
     const fetchFlashcards = async () => {
@@ -98,48 +116,47 @@ const StudyMode = () => {
   }, [] as { theme: string; correct: number; total: number }[]);
 
   return (
-    <div style={{ background: '#131620' }} className="flex flex-col min-h-screen px-[9px]">
+    <div style={{ background: '#131620' }} className="flex flex-col min-h-screen px-2 md:px-4">
       <Header />
       
-      <main className="flex-1 max-w-screen-md mx-auto w-full pt-20 pb-10">
-        <div className="neomorph p-4 mb-6">
-          <div className="flex justify-between items-center mb-4">
+      <main className="flex-1 max-w-screen-md mx-auto w-full pt-16 pb-6">
+        <div className="neomorph p-3 mb-4">
+          <div className="flex justify-between items-center">
             <div className="flex items-center text-primary-200">
-              <Book className="mr-2" size={18} />
-              <span>{lawName ? decodeURIComponent(lawName) : "Estudo Geral"}</span>
+              <Book className="mr-2" size={16} />
+              <span className="text-sm">{lawName ? decodeURIComponent(lawName) : "Estudo Geral"}</span>
             </div>
             
             <div className="flex items-center text-gray-400">
-              <Timer className="mr-2" size={18} />
-              <span>{studyTimeMinutes} {studyTimeMinutes === 1 ? "minuto" : "minutos"}</span>
+              <Timer className="mr-2" size={16} />
+              <span className="text-sm">{studyTimeMinutes} {studyTimeMinutes === 1 ? "minuto" : "minutos"}</span>
             </div>
           </div>
           
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+          <div className="space-y-1 mt-2">
+            <div className="flex justify-between text-xs">
               <span className="text-gray-400">Progresso</span>
               <span className="text-primary-100">
                 {currentIndex + 1}/{flashcards.length} cartões
               </span>
             </div>
-            <Progress value={(currentIndex + 1) / flashcards.length * 100} className="h-2" />
+            <Progress value={(currentIndex + 1) / flashcards.length * 100} className="h-1.5" />
           </div>
         </div>
         
         <Tabs defaultValue="flashcards" className="w-full">
-          <TabsList className="w-full mb-6">
+          <TabsList className="w-full mb-4">
             <TabsTrigger value="flashcards" className="w-full">Flashcards</TabsTrigger>
             <TabsTrigger value="statistics" className="w-full">Estatísticas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="flashcards">
             {isLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-[300px] w-full" />
+              <div className="space-y-3">
+                <Skeleton className="h-[250px] w-full" />
                 <div className="flex justify-between">
-                  <Skeleton className="h-10 w-24" />
-                  <Skeleton className="h-10 w-32" />
-                  <Skeleton className="h-10 w-24" />
+                  <Skeleton className="h-9 w-24" />
+                  <Skeleton className="h-9 w-24" />
                 </div>
               </div>
             ) : flashcards.length > 0 ? (
@@ -155,15 +172,15 @@ const StudyMode = () => {
                 hasPrevious={currentIndex > 0}
               />
             ) : (
-              <div className="text-center py-8">
+              <div className="text-center py-6">
                 <p className="text-gray-400">Nenhum flashcard disponível.</p>
               </div>
             )}
           </TabsContent>
           
           <TabsContent value="statistics">
-            <div className="neomorph p-6">
-              <h3 className="text-lg font-semibold text-primary-100 mb-4">
+            <div className="neomorph p-4">
+              <h3 className="text-lg font-semibold text-primary-100 mb-3">
                 Desempenho por Tema
               </h3>
               <PerformanceChart data={performanceData} />
@@ -171,6 +188,17 @@ const StudyMode = () => {
           </TabsContent>
         </Tabs>
       </main>
+      
+      {showScrollTop && (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={scrollToTop}
+          className="fixed bottom-20 right-4 z-50 bg-primary/20 text-primary hover:bg-primary/30 rounded-full shadow-lg"
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+      )}
       
       <Footer />
     </div>
