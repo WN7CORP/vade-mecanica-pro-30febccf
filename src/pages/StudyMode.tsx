@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -14,7 +13,6 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-
 interface FlashCardData {
   id: string;
   pergunta: string;
@@ -24,40 +22,44 @@ interface FlashCardData {
   artigos: string;
   area: string;
 }
-
 const StudyMode = () => {
-  const { lawName } = useParams<{ lawName: string }>();
+  const {
+    lawName
+  } = useParams<{
+    lawName: string;
+  }>();
   const [flashcards, setFlashcards] = useState<FlashCardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const { studyTimeMinutes } = useStudyTimer();
-  const { progress, updateProgress } = useFlashcardsProgress();
+  const {
+    studyTimeMinutes
+  } = useStudyTimer();
+  const {
+    progress,
+    updateProgress
+  } = useFlashcardsProgress();
   const [showScrollTop, setShowScrollTop] = useState(false);
-
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
     };
-    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
       behavior: "smooth"
     });
   };
-
   useEffect(() => {
     const fetchFlashcards = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('flashcards_pro')
-          .select('*');
-
+        const {
+          data,
+          error
+        } = await supabase.from('flashcards_pro').select('*');
         if (error) throw error;
         setFlashcards(data);
       } catch (error) {
@@ -71,22 +73,18 @@ const StudyMode = () => {
         setIsLoading(false);
       }
     };
-
     fetchFlashcards();
   }, []);
-
   const handleNext = () => {
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
-
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
   };
-
   const handleRate = async (correct: boolean) => {
     if (flashcards[currentIndex]) {
       await updateProgress.mutateAsync({
@@ -113,10 +111,14 @@ const StudyMode = () => {
       }
     }
     return acc;
-  }, [] as { theme: string; correct: number; total: number }[]);
-
-  return (
-    <div style={{ background: '#131620' }} className="flex flex-col min-h-screen px-2 md:px-4">
+  }, [] as {
+    theme: string;
+    correct: number;
+    total: number;
+  }[]);
+  return <div style={{
+    background: '#131620'
+  }} className="flex flex-col min-h-screen md:px-4 px-0">
       <Header />
       
       <main className="flex-1 max-w-screen-md mx-auto w-full pt-16 pb-6">
@@ -151,31 +153,15 @@ const StudyMode = () => {
           </TabsList>
           
           <TabsContent value="flashcards">
-            {isLoading ? (
-              <div className="space-y-3">
+            {isLoading ? <div className="space-y-3">
                 <Skeleton className="h-[250px] w-full" />
                 <div className="flex justify-between">
                   <Skeleton className="h-9 w-24" />
                   <Skeleton className="h-9 w-24" />
                 </div>
-              </div>
-            ) : flashcards.length > 0 ? (
-              <FlashCard
-                question={flashcards[currentIndex].pergunta}
-                answer={flashcards[currentIndex].resposta}
-                explanation={flashcards[currentIndex].explicacao}
-                relatedArticles={flashcards[currentIndex].artigos}
-                onNext={handleNext}
-                onPrevious={handlePrevious}
-                onRate={handleRate}
-                hasNext={currentIndex < flashcards.length - 1}
-                hasPrevious={currentIndex > 0}
-              />
-            ) : (
-              <div className="text-center py-6">
+              </div> : flashcards.length > 0 ? <FlashCard question={flashcards[currentIndex].pergunta} answer={flashcards[currentIndex].resposta} explanation={flashcards[currentIndex].explicacao} relatedArticles={flashcards[currentIndex].artigos} onNext={handleNext} onPrevious={handlePrevious} onRate={handleRate} hasNext={currentIndex < flashcards.length - 1} hasPrevious={currentIndex > 0} /> : <div className="text-center py-6">
                 <p className="text-gray-400">Nenhum flashcard disponível.</p>
-              </div>
-            )}
+              </div>}
           </TabsContent>
           
           <TabsContent value="statistics">
@@ -189,20 +175,11 @@ const StudyMode = () => {
         </Tabs>
       </main>
       
-      {showScrollTop && (
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={scrollToTop}
-          className="fixed bottom-20 right-4 z-50 bg-primary/20 text-primary hover:bg-primary/30 rounded-full shadow-lg"
-        >
+      {showScrollTop && <Button variant="outline" size="icon" onClick={scrollToTop} className="fixed bottom-20 right-4 z-50 bg-primary/20 text-primary hover:bg-primary/30 rounded-full shadow-lg">
           <ArrowUp className="h-4 w-4" />
-        </Button>
-      )}
+        </Button>}
       
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default StudyMode;
