@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// Simplified interface for flashcard progress with all possible fields
 export interface FlashcardProgress {
   id: string;
   flashcard_id: string;
@@ -15,17 +16,19 @@ export interface FlashcardProgress {
   created_at: string;
 }
 
+// Define what the database actually returns
 interface DbFlashcardProgress {
   id: string;
   flashcard_id: string;
-  viewed_count: number;
-  correct_count: number;
-  last_viewed: string;
+  viewed_count?: number;
+  correct_count?: number;
+  last_viewed?: string;
   user_id: string;
   created_at: string;
-  proficiency_level: number;
-  streak: number;
-  theme: string;
+  // These fields might not exist in the current database schema
+  proficiency_level?: number;
+  streak?: number;
+  theme?: string;
 }
 
 export function useFlashcardsProgress(theme?: string) {
@@ -34,25 +37,27 @@ export function useFlashcardsProgress(theme?: string) {
   const { data: progress, isLoading } = useQuery({
     queryKey: ['flashcard-progress', theme],
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from('user_flashcard_progress')
         .select('*');
 
       if (theme) {
-        query = query.eq('theme', theme);
+        query.eq('theme', theme);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-
-      const dbData = data as DbFlashcardProgress[];
       
+      // Explicitly cast data to the database type
+      const dbData = (data || []) as DbFlashcardProgress[];
+      
+      // Map the db data to our interface with default values for missing fields
       return dbData.map((row): FlashcardProgress => ({
         id: row.id,
         flashcard_id: row.flashcard_id,
-        viewed_count: row.viewed_count,
-        correct_count: row.correct_count,
-        last_viewed: row.last_viewed,
+        viewed_count: row.viewed_count || 0,
+        correct_count: row.correct_count || 0,
+        last_viewed: row.last_viewed || new Date().toISOString(),
         proficiency_level: row.proficiency_level || 0,
         streak: row.streak || 0,
         theme: row.theme || '',
@@ -72,10 +77,6 @@ export function useFlashcardsProgress(theme?: string) {
       correct: boolean;
       theme?: string;
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('User not authenticated');
-
       const { data: existingData } = await supabase
         .from('user_flashcard_progress')
         .select('*')
@@ -83,28 +84,32 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existingData) {
+        // Cast to DbFlashcardProgress to handle optional fields
         const existingRecord = existingData as DbFlashcardProgress;
+        const existingStreak = existingRecord.streak || 0;
+        const existingProficiency = existingRecord.proficiency_level || 0;
 
         const { error } = await supabase
           .from('user_flashcard_progress')
           .update({
-            viewed_count: existingRecord.viewed_count + 1,
-            correct_count: existingRecord.correct_count + (correct ? 1 : 0),
-            streak: (existingRecord.streak || 0) + (correct ? 1 : 0),
+            viewed_count: (existingRecord.viewed_count || 0) + 1,
+            correct_count: (existingRecord.correct_count || 0) + (correct ? 1 : 0),
+            streak: existingStreak + (correct ? 1 : 0),
             proficiency_level: correct 
-              ? Math.min((existingRecord.proficiency_level || 0) + 1, 5)
-              : Math.max((existingRecord.proficiency_level || 0) - 1, 0),
+              ? Math.min(existingProficiency + 1, 5)
+              : Math.max(existingProficiency - 1, 0),
             last_viewed: new Date().toISOString()
           })
           .eq('id', existingRecord.id);
 
         if (error) throw error;
       } else {
+        // Create a new progress entry if none exists
         const { error } = await supabase
           .from('user_flashcard_progress')
           .insert({
             flashcard_id: flashcardId,
-            user_id: user.id,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
             viewed_count: 1,
             correct_count: correct ? 1 : 0,
             streak: correct ? 1 : 0,

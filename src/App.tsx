@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,7 +10,6 @@ import Index from "./pages/Index";
 import Search from "./pages/Search";
 import AllLaws from "./pages/AllLaws";
 import LawView from "./pages/LawView";
-import StudyMode from "./pages/StudyMode";
 import AIChat from "./pages/AIChat";
 import NotFound from "./pages/NotFound";
 import Favorites from "./pages/Favorites";
@@ -35,7 +33,6 @@ function AppWithProviders() {
         <Route path="/pesquisa" element={<Search />} />
         <Route path="/leis" element={<AllLaws />} />
         <Route path="/lei/:lawName" element={<LawView />} />
-        <Route path="/estudar/:lawName?" element={<StudyMode />} />
         <Route path="/duvidas" element={<AIChat />} />
         <Route path="/favoritos" element={<Favorites />} />
         <Route path="/anotacoes" element={<Notes />} />

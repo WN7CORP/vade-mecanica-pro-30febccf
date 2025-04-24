@@ -1218,39 +1218,6 @@ export type Database = {
         }
         Relationships: []
       }
-      legal_library: {
-        Row: {
-          author: string | null
-          category: string
-          created_at: string
-          description: string | null
-          id: string
-          pdf_url: string
-          publication_date: string | null
-          title: string
-        }
-        Insert: {
-          author?: string | null
-          category: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          pdf_url: string
-          publication_date?: string | null
-          title: string
-        }
-        Update: {
-          author?: string | null
-          category?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          pdf_url?: string
-          publication_date?: string | null
-          title?: string
-        }
-        Relationships: []
-      }
       legal_movies: {
         Row: {
           average_rating: number | null
@@ -1909,9 +1876,6 @@ export type Database = {
           flashcard_id: string
           id: string
           last_viewed: string | null
-          proficiency_level: number | null
-          streak: number | null
-          theme: string | null
           user_id: string
           viewed_count: number | null
         }
@@ -1921,9 +1885,6 @@ export type Database = {
           flashcard_id: string
           id?: string
           last_viewed?: string | null
-          proficiency_level?: number | null
-          streak?: number | null
-          theme?: string | null
           user_id: string
           viewed_count?: number | null
         }
@@ -1933,9 +1894,6 @@ export type Database = {
           flashcard_id?: string
           id?: string
           last_viewed?: string | null
-          proficiency_level?: number | null
-          streak?: number | null
-          theme?: string | null
           user_id?: string
           viewed_count?: number | null
         }
@@ -2093,72 +2051,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_study_sessions: {
-        Row: {
-          created_at: string
-          duration_seconds: number | null
-          ended_at: string | null
-          flashcards_correct: number | null
-          flashcards_viewed: number | null
-          id: string
-          started_at: string
-          theme: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          duration_seconds?: number | null
-          ended_at?: string | null
-          flashcards_correct?: number | null
-          flashcards_viewed?: number | null
-          id?: string
-          started_at?: string
-          theme?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          duration_seconds?: number | null
-          ended_at?: string | null
-          flashcards_correct?: number | null
-          flashcards_viewed?: number | null
-          id?: string
-          started_at?: string
-          theme?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_theme_preferences: {
-        Row: {
-          created_at: string
-          font_size: number | null
-          id: string
-          order_mode: string | null
-          selected_themes: string[] | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          font_size?: number | null
-          id?: string
-          order_mode?: string | null
-          selected_themes?: string[] | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          font_size?: number | null
-          id?: string
-          order_mode?: string | null
-          selected_themes?: string[] | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_weekly_rankings: {
         Row: {
           id: string
@@ -2214,32 +2106,6 @@ export type Database = {
       check_if_user_is_admin: {
         Args: { user_id: string }
         Returns: boolean
-      }
-      fetch_all_legal_documents: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          author: string | null
-          category: string
-          created_at: string
-          description: string | null
-          id: string
-          pdf_url: string
-          publication_date: string | null
-          title: string
-        }[]
-      }
-      fetch_legal_document_by_id: {
-        Args: { document_id: string }
-        Returns: {
-          author: string | null
-          category: string
-          created_at: string
-          description: string | null
-          id: string
-          pdf_url: string
-          publication_date: string | null
-          title: string
-        }[]
       }
       get_unique_themes: {
         Args: { table_name: string }
