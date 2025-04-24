@@ -13,6 +13,7 @@ import { Article } from "@/services/lawService";
 import StudyContent from "@/components/study/StudyContent";
 import LegalTimeline from "@/pages/LegalTimeline";
 import { Button } from "@/components/ui/button";
+import { useThemePreferences } from "@/hooks/useThemePreferences";
 
 const LawTabbedView = () => {
   const { lawName } = useParams<{ lawName: string }>();
@@ -22,7 +23,9 @@ const LawTabbedView = () => {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [globalFontSize, setGlobalFontSize] = useState(16);
+  
+  const { preferences } = useThemePreferences();
+  const globalFontSize = preferences?.font_size || 16;
   
   const {
     filteredArticles,

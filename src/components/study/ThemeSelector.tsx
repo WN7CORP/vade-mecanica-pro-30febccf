@@ -34,6 +34,17 @@ export function ThemeSelector({ themes = [], onThemeSelect }: ThemeSelectorProps
     ? preferences.selected_themes 
     : [];
 
+  // Create a safe version of the onThemeSelect handler
+  const handleThemeSelect = (theme: string) => {
+    if (!onThemeSelect) return;
+    
+    const newSelection = selectedThemes.includes(theme)
+      ? selectedThemes.filter((t) => t !== theme)
+      : [...selectedThemes, theme];
+    
+    onThemeSelect(newSelection);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -54,16 +65,11 @@ export function ThemeSelector({ themes = [], onThemeSelect }: ThemeSelectorProps
           <CommandInput placeholder="Buscar tema..." />
           <CommandEmpty>Nenhum tema encontrado.</CommandEmpty>
           <CommandGroup className="max-h-[200px] overflow-auto">
-            {safeThemes.map((theme) => (
+            {safeThemes.length > 0 ? safeThemes.map((theme) => (
               <CommandItem
                 key={theme}
                 value={theme}
-                onSelect={() => {
-                  const newSelection = selectedThemes.includes(theme)
-                    ? selectedThemes.filter((t) => t !== theme)
-                    : [...selectedThemes, theme];
-                  onThemeSelect(newSelection);
-                }}
+                onSelect={() => handleThemeSelect(theme)}
               >
                 <Check
                   className={cn(
@@ -73,7 +79,11 @@ export function ThemeSelector({ themes = [], onThemeSelect }: ThemeSelectorProps
                 />
                 {theme}
               </CommandItem>
-            ))}
+            )) : (
+              <div className="px-2 py-1 text-sm text-muted-foreground">
+                Nenhum tema disponível
+              </div>
+            )}
           </CommandGroup>
         </Command>
       </PopoverContent>
