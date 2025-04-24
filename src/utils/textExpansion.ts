@@ -138,7 +138,7 @@ export const formatTextWithMarkdown = (text: string): string => {
   
   // Format "Parágrafo único" with bold
   formattedText = formattedText.replace(
-    /(Parágrafo único)/g,
+    /(Parágrafo único.)/g,
     '**$1**'
   );
   
