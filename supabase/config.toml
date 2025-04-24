@@ -1,1 +1,25 @@
+
+# Project ID - Keep this the first line!
 project_id = "phzcazcyjhlmdchcjagy"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+# Enable pg_cron extension
+[db.extensions]
+pg_cron = true
+
+[functions.generate-flashcards]
+verify_jwt = true

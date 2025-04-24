@@ -1161,6 +1161,39 @@ export type Database = {
         }
         Relationships: []
       }
+      law_flashcards: {
+        Row: {
+          answer: string
+          article_content: string
+          article_number: string
+          created_at: string
+          difficulty: string
+          id: string
+          law_name: string
+          question: string
+        }
+        Insert: {
+          answer: string
+          article_content: string
+          article_number: string
+          created_at?: string
+          difficulty?: string
+          id?: string
+          law_name: string
+          question: string
+        }
+        Update: {
+          answer?: string
+          article_content?: string
+          article_number?: string
+          created_at?: string
+          difficulty?: string
+          id?: string
+          law_name?: string
+          question?: string
+        }
+        Relationships: []
+      }
       law_subject_areas: {
         Row: {
           display_name: string

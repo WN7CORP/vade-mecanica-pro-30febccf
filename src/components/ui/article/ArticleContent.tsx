@@ -7,7 +7,6 @@ interface ArticleContentProps {
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
   articleNumber?: string;
-  example?: string;
   centerContent?: boolean;
 }
 
@@ -21,9 +20,6 @@ const ArticleContent = ({
 }: ArticleContentProps) => {
   const renderContent = () => {
     return content.split('\n').map((line, i) => {
-      // A line should be treated as a header if:
-      // 1. It's the first line and there's no article number (title)
-      // 2. It starts with § or Art.
       const isHeader = !articleNumber && (i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.'));
       
       if (centerContent) {
@@ -66,20 +62,20 @@ const ArticleContent = ({
     <div className="relative mt-8 mb-12 animate-fade-in">
       {renderContent()}
       
-      <div className="fixed left-4 bottom-24 flex flex-col space-y-2 z-10">
+      <div className="fixed right-4 bottom-24 flex flex-col space-y-2 z-50">
         <button
           onClick={onIncreaseFontSize}
-          className="p-2 rounded-full bg-primary/20 hover:bg-primary/30 text-primary shadow-md transition-all duration-200 hover:scale-105 active:scale-95"
+          className="neomorph p-3 rounded-full bg-primary/20 hover:bg-primary/30 text-primary shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
           aria-label="Aumentar fonte"
         >
-          <ZoomIn size={20} />
+          <ZoomIn size={24} />
         </button>
         <button
           onClick={onDecreaseFontSize}
-          className="p-2 rounded-full bg-primary/20 hover:bg-primary/30 text-primary shadow-md transition-all duration-200 hover:scale-105 active:scale-95"
+          className="neomorph p-3 rounded-full bg-primary/20 hover:bg-primary/30 text-primary shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
           aria-label="Diminuir fonte"
         >
-          <ZoomOut size={20} />
+          <ZoomOut size={24} />
         </button>
       </div>
     </div>
