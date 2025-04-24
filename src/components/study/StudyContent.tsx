@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import FlashCard from "@/components/study/FlashCard";
 import { PerformanceChart } from "@/components/study/PerformanceChart";
@@ -33,8 +32,10 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
   const [flashcards, setFlashcards] = useState<FlashCardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingThemes, setLoadingThemes] = useState(true);
+  const [availableThemes, setAvailableThemes] = useState<string[]>([]);
   const { progress, updateProgress } = useFlashcardsProgress();
-  const { preferences, updatePreferences } = useThemePreferences();
+  const { preferences, updatePreferences, isLoading: preferencesLoading } = useThemePreferences();
   const { startSession, endSession } = useStudySession();
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>();
   const [viewedCards, setViewedCards] = useState(0);
@@ -47,6 +48,11 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
         const { data, error } = await supabase.from('flashcards_pro').select('*');
         if (error) throw error;
         setFlashcards(data || []);
+        
+        if (data && data.length > 0) {
+          const themes = Array.from(new Set(data.map(card => card.tema || '').filter(Boolean)));
+          setAvailableThemes(themes);
+        }
       } catch (error) {
         console.error("Erro ao buscar flashcards:", error);
         toast({
@@ -56,16 +62,21 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
         });
       } finally {
         setIsLoading(false);
+        setLoadingThemes(false);
       }
     };
+    
     fetchFlashcards();
   }, []);
 
-  // Initialize session when starting study
   useEffect(() => {
     const initSession = async () => {
-      if (!currentSessionId && flashcards.length > 0 && 
-          preferences?.selected_themes && preferences.selected_themes.length > 0) {
+      if (
+        !currentSessionId && 
+        flashcards.length > 0 && 
+        preferences?.selected_themes && 
+        preferences.selected_themes.length > 0
+      ) {
         try {
           const session = await startSession.mutateAsync(preferences.selected_themes[0]);
           if (session?.id) {
@@ -73,19 +84,23 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
           }
         } catch (error) {
           console.error("Failed to start study session:", error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível iniciar a sessão de estudo.",
+            variant: "destructive"
+          });
         }
       }
     };
     
-    if (preferences) {
+    if (preferences && !preferencesLoading) {
       initSession();
     }
-  }, [currentSessionId, flashcards.length, startSession, preferences]);
+  }, [currentSessionId, flashcards.length, startSession, preferences, preferencesLoading]);
 
-  // End session when component unmounts or all cards are done
   useEffect(() => {
     return () => {
-      if (currentSessionId) {
+      if (currentSessionId && (viewedCards > 0 || correctCards > 0)) {
         endSession.mutate({
           sessionId: currentSessionId,
           flashcardsViewed: viewedCards,
@@ -108,27 +123,35 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
   };
 
   const handleRate = async (correct: boolean) => {
+    if (!filteredFlashcards[currentIndex]) return;
+    
     setViewedCards(prev => prev + 1);
     if (correct) setCorrectCards(prev => prev + 1);
     
-    if (filteredFlashcards[currentIndex]) {
+    try {
       await updateProgress.mutateAsync({
         flashcardId: filteredFlashcards[currentIndex].id,
         correct,
         theme: filteredFlashcards[currentIndex].tema
       });
+    } catch (error) {
+      console.error("Error updating flashcard progress:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar seu progresso.",
+        variant: "destructive"
+      });
     }
   };
 
-  // Filter flashcards by selected themes
   const filteredFlashcards = useMemo(() => {
-    if (!preferences?.selected_themes?.length) return flashcards;
+    if (!preferences?.selected_themes?.length) return [];
+    
     return flashcards.filter(card => 
       preferences.selected_themes.includes(card.tema)
     );
   }, [flashcards, preferences?.selected_themes]);
 
-  // Order flashcards based on preference
   const orderedFlashcards = useMemo(() => {
     if (preferences?.order_mode === 'random') {
       return [...filteredFlashcards].sort(() => Math.random() - 0.5);
@@ -136,34 +159,60 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
     return filteredFlashcards;
   }, [filteredFlashcards, preferences?.order_mode]);
 
-  // Get unique themes from flashcards, safely handling arrays
-  const uniqueThemes = useMemo(() => {
-    if (!flashcards || flashcards.length === 0) return [];
-    return Array.from(new Set(flashcards.map(card => card.tema || '').filter(Boolean)));
-  }, [flashcards]);
+  const handleThemeSelect = async (themes: string[]) => {
+    try {
+      await updatePreferences.mutateAsync({ selected_themes: themes });
+      setCurrentIndex(0);
+      
+      if (themes.length > 0 && !currentSessionId) {
+        const session = await startSession.mutateAsync(themes[0]);
+        if (session?.id) {
+          setCurrentSessionId(session.id);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating theme preferences:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar suas preferências de tema.",
+        variant: "destructive"
+      });
+    }
+  };
 
-  // Calculate performance data for the chart
   const performanceData = useMemo(() => {
     if (!progress) return [];
     
-    return flashcards.reduce((acc, card) => {
-      const cardProgress = progress?.find(p => p.flashcard_id === card.id);
-      if (cardProgress) {
-        const themeData = acc.find(d => d.theme === card.tema);
-        if (themeData) {
-          themeData.correct += cardProgress.correct_count;
-          themeData.total += cardProgress.viewed_count;
-        } else {
-          acc.push({
-            theme: card.tema,
-            correct: cardProgress.correct_count,
-            total: cardProgress.viewed_count
-          });
-        }
-      }
-      return acc;
-    }, [] as { theme: string; correct: number; total: number; }[]);
-  }, [flashcards, progress]);
+    return availableThemes.map(theme => {
+      const themeCards = flashcards.filter(card => card.tema === theme);
+      const themeProgress = themeCards
+        .map(card => progress.find(p => p.flashcard_id === card.id))
+        .filter(Boolean);
+      
+      const correct = themeProgress.reduce((sum, p) => sum + (p?.correct_count || 0), 0);
+      const total = themeProgress.reduce((sum, p) => sum + (p?.viewed_count || 0), 0);
+      
+      return { theme, correct, total: total || 0 };
+    }).filter(item => item.total > 0);
+  }, [flashcards, progress, availableThemes]);
+
+  if (isLoading || preferencesLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+        <Skeleton className="h-[250px] w-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -185,20 +234,30 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
           <div className="flex justify-between text-xs">
             <span className="text-gray-400">Progresso</span>
             <span className="text-primary-100">
-              {currentIndex + 1}/{orderedFlashcards.length || 1} cartões
+              {orderedFlashcards.length > 0 
+                ? `${currentIndex + 1}/${orderedFlashcards.length} cartões`
+                : "0/0 cartões"}
             </span>
           </div>
-          <Progress value={(currentIndex + 1) / Math.max(orderedFlashcards.length, 1) * 100} className="h-1.5" />
+          <Progress value={orderedFlashcards.length > 0 
+            ? (currentIndex + 1) / orderedFlashcards.length * 100 
+            : 0} 
+            className="h-1.5" 
+          />
         </div>
       </div>
       
       <div className="mb-6 space-y-4">
-        <ThemeSelector 
-          themes={uniqueThemes}
-          onThemeSelect={(themes) => 
-            updatePreferences.mutate({ selected_themes: themes })
-          }
-        />
+        <div className="space-y-1">
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-medium">Temas de estudo</label>
+            {loadingThemes && <Skeleton className="h-4 w-4 rounded-full" />}
+          </div>
+          <ThemeSelector 
+            themes={availableThemes}
+            onThemeSelect={handleThemeSelect}
+          />
+        </div>
         
         <div className="flex items-center space-x-2">
           <Switch
@@ -238,12 +297,26 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
           />
         </div>
       ) : (
-        <div className="text-center py-6">
+        <div className="text-center py-6 neomorph">
           <p className="text-gray-400">
             {preferences?.selected_themes?.length 
               ? "Nenhum flashcard disponível para os temas selecionados."
               : "Nenhum flashcard disponível. Selecione pelo menos um tema."}
           </p>
+          {!preferences?.selected_themes?.length && (
+            <Button
+              variant="outline"
+              className="mt-4 bg-primary/10 hover:bg-primary/20"
+              onClick={() => {
+                const scrollElement = document.querySelector('.space-y-1');
+                if (scrollElement) {
+                  scrollElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }}
+            >
+              Selecionar temas
+            </Button>
+          )}
         </div>
       )}
       
@@ -252,7 +325,15 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
           Desempenho por Tema
         </h3>
         <div className="neomorph p-4">
-          <PerformanceChart data={performanceData} />
+          {performanceData.length > 0 ? (
+            <PerformanceChart data={performanceData} />
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-gray-400">
+                Estude alguns flashcards para ver seu desempenho aqui.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

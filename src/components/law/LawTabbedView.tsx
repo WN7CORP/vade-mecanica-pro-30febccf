@@ -8,12 +8,14 @@ import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
 import SearchBar from "@/components/ui/SearchBar";
 import { FloatingSearchButton } from "@/components/ui/FloatingSearchButton";
+import { FloatingFontSizeControls } from "@/components/ui/FloatingFontSizeControls";
 import ComparisonTool from "@/components/law/ComparisonTool";
 import { Article } from "@/services/lawService";
 import StudyContent from "@/components/study/StudyContent";
 import LegalTimeline from "@/pages/LegalTimeline";
 import { Button } from "@/components/ui/button";
 import { useThemePreferences } from "@/hooks/useThemePreferences";
+import { toast } from "@/components/ui/use-toast";
 
 const LawTabbedView = () => {
   const { lawName } = useParams<{ lawName: string }>();
@@ -23,9 +25,18 @@ const LawTabbedView = () => {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [activeTab, setActiveTab] = useState("articles");
+  const [fontSize, setFontSize] = useState(16);
+  const [isUpdatingPreferences, setIsUpdatingPreferences] = useState(false);
   
-  const { preferences } = useThemePreferences();
-  const globalFontSize = preferences?.font_size || 16;
+  const { preferences, updatePreferences } = useThemePreferences();
+  
+  // Initialize font size from preferences
+  useEffect(() => {
+    if (preferences?.font_size) {
+      setFontSize(preferences.font_size);
+    }
+  }, [preferences]);
   
   const {
     filteredArticles,
@@ -80,13 +91,60 @@ const LawTabbedView = () => {
     }
   };
   
+  const handleIncreaseFontSize = async () => {
+    if (fontSize >= 24) return;
+    
+    const newSize = fontSize + 1;
+    setFontSize(newSize);
+    
+    try {
+      setIsUpdatingPreferences(true);
+      await updatePreferences.mutateAsync({ font_size: newSize });
+    } catch (error) {
+      console.error("Error updating font size preference:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar o tamanho da fonte.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingPreferences(false);
+    }
+  };
+  
+  const handleDecreaseFontSize = async () => {
+    if (fontSize <= 12) return;
+    
+    const newSize = fontSize - 1;
+    setFontSize(newSize);
+    
+    try {
+      setIsUpdatingPreferences(true);
+      await updatePreferences.mutateAsync({ font_size: newSize });
+    } catch (error) {
+      console.error("Error updating font size preference:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar o tamanho da fonte.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingPreferences(false);
+    }
+  };
+  
   return (
     <div className="space-y-4">
       <div className={`transition-all duration-300 ${showSearchBar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
         <SearchBar onSearch={handleSearch} initialValue={searchTerm} placeholder="Buscar artigo específico..." />
       </div>
 
-      <Tabs defaultValue="articles" className="w-full">
+      <Tabs 
+        defaultValue="articles" 
+        className="w-full"
+        value={activeTab}
+        onValueChange={setActiveTab}
+      >
         <TabsList className="w-full mb-4">
           <TabsTrigger value="articles" className="w-full">
             <BookOpen className="mr-2 h-4 w-4" />
@@ -134,7 +192,7 @@ const LawTabbedView = () => {
             onCloseChat={() => setShowChat(false)} 
             onCloseExplanation={() => setShowExplanation(false)} 
             onAddToComparison={handleAddToComparison} 
-            globalFontSize={globalFontSize} 
+            globalFontSize={fontSize} 
           />
         </TabsContent>
 
@@ -152,6 +210,16 @@ const LawTabbedView = () => {
       </Tabs>
 
       <FloatingSearchButton onOpenSearch={handleOpenSearch} />
+      
+      {activeTab === "articles" && (
+        <FloatingFontSizeControls
+          onIncrease={handleIncreaseFontSize}
+          onDecrease={handleDecreaseFontSize}
+          currentSize={fontSize}
+          minSize={12}
+          maxSize={24}
+        />
+      )}
       
       {showScrollTop && (
         <Button 
