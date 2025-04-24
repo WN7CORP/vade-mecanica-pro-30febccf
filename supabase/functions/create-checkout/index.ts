@@ -8,6 +8,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const logStep = (step: string, details?: any) => {
+  console.log(`[CREATE-CHECKOUT] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,23 +23,22 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Verify authentication
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user } } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
-    if (!user) {
-      throw new Error("Usuário não autenticado");
+    if (userError || !user) {
+      throw new Error("User not authenticated");
     }
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2023-10-16",
-    });
+    logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Get selected plan from request
+    // Get request body
     const { planId } = await req.json();
-    if (!planId) throw new Error("ID do plano não fornecido");
+    if (!planId) throw new Error("Plan ID not provided");
 
-    // Fetch plan details from database
+    // Fetch plan details
     const { data: plan, error: planError } = await supabaseClient
       .from("subscription_plans")
       .select("*")
@@ -43,30 +46,37 @@ serve(async (req) => {
       .single();
 
     if (planError || !plan) {
-      throw new Error("Plano não encontrado");
+      throw new Error("Plan not found");
     }
 
-    console.log("Creating checkout for plan:", plan);
+    logStep("Plan fetched", { planId, stripePriceId: plan.stripe_price_id });
 
-    // Create or retrieve Stripe customer
-    const { data: existingCustomers } = await stripe.customers.list({
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+      apiVersion: "2023-10-16",
+    });
+
+    // Find or create customer
+    let customerId: string;
+    const { data: customers } = await stripe.customers.list({
       email: user.email,
       limit: 1,
     });
 
-    let customerId = existingCustomers.data[0]?.id;
-
-    if (!customerId) {
+    if (customers && customers.length > 0) {
+      customerId = customers[0].id;
+      logStep("Found existing customer", { customerId });
+    } else {
       const customer = await stripe.customers.create({
         email: user.email,
         metadata: {
-          supabase_user_id: user.id,
+          user_id: user.id,
         },
       });
       customerId = customer.id;
+      logStep("Created new customer", { customerId });
     }
 
-    // Create Stripe Checkout session
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [{
@@ -82,6 +92,8 @@ serve(async (req) => {
       },
     });
 
+    logStep("Created checkout session", { sessionId: session.id });
+
     return new Response(
       JSON.stringify({ url: session.url }),
       {
@@ -90,7 +102,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Checkout error:", error);
+    logStep("ERROR", { message: error.message });
     return new Response(
       JSON.stringify({ error: error.message }),
       {
