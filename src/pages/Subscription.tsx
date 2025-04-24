@@ -41,20 +41,24 @@ export default function Subscription() {
           
           if (plan.features) {
             if (Array.isArray(plan.features)) {
-              // If features is already an array, use it directly
-              parsedFeatures = plan.features;
+              // If features is already an array, convert each item to string
+              parsedFeatures = plan.features.map(item => String(item));
             } else if (typeof plan.features === 'string') {
               // If features is a JSON string, parse it
               try {
                 const parsed = JSON.parse(plan.features);
-                parsedFeatures = Array.isArray(parsed) ? parsed : [String(parsed)];
+                parsedFeatures = Array.isArray(parsed) 
+                  ? parsed.map(item => String(item))
+                  : [String(parsed)];
               } catch (e) {
                 parsedFeatures = [String(plan.features)];
               }
             } else if (typeof plan.features === 'object') {
               // If features is a JSON object from Supabase
               try {
-                parsedFeatures = Array.isArray(plan.features) ? plan.features : [String(plan.features)];
+                parsedFeatures = Array.isArray(plan.features) 
+                  ? plan.features.map(item => String(item)) 
+                  : [String(plan.features)];
               } catch (e) {
                 parsedFeatures = [];
               }
