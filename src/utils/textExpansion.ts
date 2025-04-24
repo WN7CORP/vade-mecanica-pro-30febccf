@@ -6,7 +6,7 @@ type ExpansionDictionary = {
 
 // Legal abbreviations dictionary
 export const legalAbbreviations: ExpansionDictionary = {
-  "Art.": "Artigo"
+  "Art.": "Artigo",
   "art.": "artigo",
   "§": "parágrafo",
   "§§": "parágrafos",
