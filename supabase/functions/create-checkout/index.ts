@@ -46,13 +46,15 @@ serve(async (req) => {
       throw new Error("Plano não encontrado");
     }
 
+    console.log("Creating checkout for plan:", plan);
+
     // Create or retrieve Stripe customer
     const { data: existingCustomers } = await stripe.customers.list({
       email: user.email,
       limit: 1,
     });
 
-    let customerId = existingCustomers[0]?.id;
+    let customerId = existingCustomers.data[0]?.id;
 
     if (!customerId) {
       const customer = await stripe.customers.create({
@@ -72,8 +74,8 @@ serve(async (req) => {
         quantity: 1,
       }],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/subscription/success`,
-      cancel_url: `${req.headers.get("origin")}/subscription`,
+      success_url: `${req.headers.get("origin")}/subscription?success=true`,
+      cancel_url: `${req.headers.get("origin")}/subscription?canceled=true`,
       metadata: {
         user_id: user.id,
         plan_id: planId,
@@ -88,6 +90,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error("Checkout error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

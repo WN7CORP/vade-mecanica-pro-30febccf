@@ -1,8 +1,11 @@
+
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PricingCard } from "@/components/subscription/PricingCard";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, AlertCircle } from "lucide-react";
 
 interface Plan {
   id: string;
@@ -16,13 +19,29 @@ interface Plan {
 interface SubscriptionStatus {
   active: boolean;
   plan?: Plan;
+  current_period_end?: number;
 }
 
 export default function Subscription() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  
+  const success = searchParams.get("success");
+  const canceled = searchParams.get("canceled");
+
+  useEffect(() => {
+    if (success === "true") {
+      toast.success("Assinatura realizada com sucesso!");
+      // Remove query params
+      navigate("/subscription", { replace: true });
+    } else if (canceled === "true") {
+      toast.error("Processo de assinatura cancelado");
+      navigate("/subscription", { replace: true });
+    }
+  }, [success, canceled, navigate]);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -79,7 +98,11 @@ export default function Subscription() {
     const checkSubscription = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('check-subscription');
-        if (error) throw error;
+        if (error) {
+          console.error("Error from check-subscription:", error);
+          throw error;
+        }
+        console.log("Subscription status:", data);
         setSubscriptionStatus(data);
       } catch (error) {
         console.error("Error checking subscription:", error);
@@ -112,6 +135,17 @@ export default function Subscription() {
           Escolha o plano ideal para suas necessidades
         </p>
       </div>
+      
+      {subscriptionStatus?.active && (
+        <Alert variant="default" className="mb-6 bg-green-50 border-green-200">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <AlertDescription className="text-green-800">
+            Você tem uma assinatura ativa até {subscriptionStatus.current_period_end
+              ? new Date(subscriptionStatus.current_period_end * 1000).toLocaleDateString()
+              : 'data não disponível'}
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="flex flex-wrap justify-center gap-6">
         {plans.map((plan) => (
