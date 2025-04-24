@@ -44,17 +44,23 @@ export function useFlashcardsProgress(theme?: string) {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Transform the data to ensure it matches the FlashcardProgress interface
-      return (data || []).map((item: ProgressDBResponse) => ({
-        id: item.id,
-        flashcard_id: item.flashcard_id,
-        viewed_count: item.viewed_count || 0,
-        correct_count: item.correct_count || 0,
-        last_viewed: item.last_viewed || new Date().toISOString(),
-        proficiency_level: item.proficiency_level || 0,
-        streak: item.streak || 0,
-        theme: item.theme || ''
-      })) as FlashcardProgress[];
+      // Transform the data using type assertion instead of direct mapping
+      const transformedData: FlashcardProgress[] = [];
+      
+      (data || []).forEach((item: any) => {
+        transformedData.push({
+          id: item.id,
+          flashcard_id: item.flashcard_id,
+          viewed_count: item.viewed_count || 0,
+          correct_count: item.correct_count || 0,
+          last_viewed: item.last_viewed || new Date().toISOString(),
+          proficiency_level: item.proficiency_level || 0,
+          streak: item.streak || 0,
+          theme: item.theme || ''
+        });
+      });
+      
+      return transformedData;
     }
   });
 
@@ -76,7 +82,7 @@ export function useFlashcardsProgress(theme?: string) {
 
       if (existing) {
         // Cast the existing data to our interface to handle potentially missing properties
-        const existingProgress = existing as ProgressDBResponse;
+        const existingProgress = existing as any;
         
         const { error } = await supabase
           .from('user_flashcard_progress')
