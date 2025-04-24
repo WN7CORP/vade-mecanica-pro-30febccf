@@ -86,16 +86,14 @@ export const lawCodes: ExpansionDictionary = {
 export const expandText = (text: string): string => {
   let expandedText = text;
   
-  // Helper function to escape special characters in regex
+  // Helper functions
   const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   
-  // Function to create a regex that matches whole words
   const createWordBoundaryRegex = (term: string) => {
     const escaped = escapeRegExp(term);
     return new RegExp(`\\b${escaped}\\b`, 'g');
   };
   
-  // Helper function to capitalize first letter if needed
   const matchCase = (original: string, replacement: string) => {
     if (original[0] === original[0].toUpperCase()) {
       return replacement.charAt(0).toUpperCase() + replacement.slice(1);
@@ -103,10 +101,15 @@ export const expandText = (text: string): string => {
     return replacement;
   };
   
-  // Expand legal abbreviations
+  // Special case for "Art." -> "Artigo" before other replacements
+  expandedText = expandedText.replace(/\bArt\./g, 'Artigo');
+  
+  // Expand other legal abbreviations
   Object.entries(legalAbbreviations).forEach(([abbr, full]) => {
-    const regex = createWordBoundaryRegex(abbr);
-    expandedText = expandedText.replace(regex, (match) => matchCase(match, full));
+    if (abbr !== 'Art.') { // Skip Art. as it's handled above
+      const regex = createWordBoundaryRegex(abbr);
+      expandedText = expandedText.replace(regex, (match) => matchCase(match, full));
+    }
   });
   
   // Expand roman numerals (only when they appear as references)
@@ -127,9 +130,9 @@ export const expandText = (text: string): string => {
 export const formatTextWithMarkdown = (text: string): string => {
   let formattedText = text;
   
-  // Format "Art. X" or "Art. X-Y." patterns with bold
+  // Format "Art. X" or "Art. X-Y." or "Art. X°" patterns with bold
   formattedText = formattedText.replace(
-    /(Art\. \d+(?:-[A-Z])?\.)/g,
+    /(Art\. \d+(?:-[A-Z])?(?:°)?\.)/g,
     '**$1**'
   );
   

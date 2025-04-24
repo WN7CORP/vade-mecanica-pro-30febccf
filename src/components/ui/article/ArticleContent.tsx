@@ -25,8 +25,8 @@ const ArticleContent = ({
       // Format the text with markdown for bold sections
       const formattedLine = formatTextWithMarkdown(line);
       
-      // Convert markdown to HTML
-      const htmlContent = formattedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // Convert markdown to HTML with color style
+      const htmlContent = formattedLine.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #C7A6FF">$1</strong>');
       
       if (centerContent) {
         return (
@@ -70,4 +70,3 @@ const ArticleContent = ({
 };
 
 export default ArticleContent;
-
