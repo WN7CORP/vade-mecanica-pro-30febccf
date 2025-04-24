@@ -10,26 +10,26 @@ import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Minus } from "lucide-react";
 import { Button } from "./button";
+
 interface ArticleCardProps {
   articleNumber: string;
-  content?: string | {
-    [key: string]: any;
-  };
-  example?: string | {
-    [key: string]: any;
-  };
+  content?: string | { [key: string]: any };
+  example?: string | { [key: string]: any };
   lawName: string;
   onExplainRequest?: (type: 'technical' | 'formal') => void;
   onAskQuestion?: () => void;
 }
+
 declare global {
   interface Window {
     currentAudio: HTMLAudioElement | null;
   }
 }
+
 if (typeof window !== 'undefined' && !window.currentAudio) {
   window.currentAudio = null;
 }
+
 const ArticleCard = ({
   articleNumber,
   content = "",
@@ -40,13 +40,7 @@ const ArticleCard = ({
 }: ArticleCardProps) => {
   const [fontSize, setFontSize] = useState(16);
   const [isReading, setIsReading] = useState(false);
-  const [readingContent, setReadingContent] = useState<{
-    text: string;
-    title: string;
-  }>({
-    text: '',
-    title: ''
-  });
+  const [readingContent, setReadingContent] = useState<{text: string, title: string}>({text: '', title: ''});
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -55,25 +49,22 @@ const ArticleCard = ({
   const [customExplanation, setCustomExplanation] = useState<string | null>(null);
   const [showCustomExplanation, setShowCustomExplanation] = useState(false);
   const [explanationTitle, setExplanationTitle] = useState("");
-  const {
-    logUserActivity
-  } = useUserActivity(userId);
+  const { logUserActivity } = useUserActivity(userId);
   const [showHighlightTools, setShowHighlightTools] = useState(false);
-  const safeContent = typeof content === 'string' ? content : content ? JSON.stringify(content) : '';
-  const safeExample = typeof example === 'string' ? example : example ? JSON.stringify(example) : '';
+  
+  const safeContent = typeof content === 'string' ? content : (content ? JSON.stringify(content) : '');
+  const safeExample = typeof example === 'string' ? example : (example ? JSON.stringify(example) : '');
+
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: {
-          session
-        }
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setUserId(session.user.id);
       }
     };
     checkAuth();
   }, []);
+  
   useEffect(() => {
     try {
       const favoritedArticles = localStorage.getItem('favoritedArticles');
@@ -85,14 +76,20 @@ const ArticleCard = ({
       console.error("Erro ao carregar status de favorito:", error);
     }
   }, [lawName, articleNumber]);
+  
   const copyArticle = () => {
-    const textToCopy = articleNumber && articleNumber !== "0" ? `Art. ${articleNumber}. ${safeContent}` : safeContent;
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      setShowCopyToast(true);
-      setTimeout(() => setShowCopyToast(false), 2000);
-      if (userId) logUserActivity('copy', lawName, articleNumber);
-    }).catch(err => console.error("Erro ao copiar: ", err));
+    const textToCopy = (articleNumber && articleNumber !== "0")
+      ? `Art. ${articleNumber}. ${safeContent}`
+      : safeContent;
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        setShowCopyToast(true);
+        setTimeout(() => setShowCopyToast(false), 2000);
+        if (userId) logUserActivity('copy', lawName, articleNumber);
+      })
+      .catch(err => console.error("Erro ao copiar: ", err));
   };
+  
   const toggleFavorite = () => {
     try {
       const newStatus = !isFavorite;
@@ -101,10 +98,10 @@ const ArticleCard = ({
       const favorites = favoritedArticles ? JSON.parse(favoritedArticles) : {};
       const key = `${lawName}-${articleNumber}`;
       if (newStatus) {
-        favorites[key] = {
-          articleNumber,
-          content: safeContent,
-          example: safeExample,
+        favorites[key] = { 
+          articleNumber, 
+          content: safeContent, 
+          example: safeExample, 
           lawName,
           timestamp: new Date().toISOString()
         };
@@ -117,22 +114,29 @@ const ArticleCard = ({
       console.error("Erro ao gerenciar favoritos:", error);
     }
   };
+
   const handleExplain = (type: 'technical' | 'formal') => {
     setShowCustomExplanation(false);
     setCustomExplanation(null);
     setExplanationTitle("");
     let title = "";
+    
     if (type === "technical") {
       title = "Explicação Técnica";
+      
       if (typeof content === 'object' && content !== null && 'explicacao_tecnica' in content) {
         setCustomExplanation((content as any).explicacao_tecnica);
-      } else if (typeof content === 'object' && content !== null && 'explicacao tecnica' in content) {
+      } 
+      else if (typeof content === 'object' && content !== null && 'explicacao tecnica' in content) {
         setCustomExplanation((content as any)["explicacao tecnica"]);
-      } else if (example && typeof example === 'object' && 'explicacao_tecnica' in example) {
+      }
+      else if (example && typeof example === 'object' && 'explicacao_tecnica' in example) {
         setCustomExplanation((example as any).explicacao_tecnica);
-      } else if (example && typeof example === 'object' && 'explicacao tecnica' in example) {
+      }
+      else if (example && typeof example === 'object' && 'explicacao tecnica' in example) {
         setCustomExplanation((example as any)["explicacao tecnica"]);
-      } else {
+      }
+      else {
         if (onExplainRequest) {
           onExplainRequest(type);
           return;
@@ -141,15 +145,20 @@ const ArticleCard = ({
       }
     } else {
       title = "Explicação Formal";
+      
       if (typeof content === 'object' && content !== null && 'explicacao_formal' in content) {
         setCustomExplanation((content as any).explicacao_formal);
-      } else if (typeof content === 'object' && content !== null && 'explicacao formal' in content) {
+      }
+      else if (typeof content === 'object' && content !== null && 'explicacao formal' in content) {
         setCustomExplanation((content as any)["explicacao formal"]);
-      } else if (example && typeof example === 'object' && 'explicacao_formal' in example) {
+      }
+      else if (example && typeof example === 'object' && 'explicacao_formal' in example) {
         setCustomExplanation((example as any).explicacao_formal);
-      } else if (example && typeof example === 'object' && 'explicacao formal' in example) {
+      }
+      else if (example && typeof example === 'object' && 'explicacao formal' in example) {
         setCustomExplanation((example as any)["explicacao formal"]);
-      } else {
+      }
+      else {
         if (onExplainRequest) {
           onExplainRequest(type);
           return;
@@ -157,19 +166,25 @@ const ArticleCard = ({
         setCustomExplanation("Não há explicação formal disponível para este artigo.");
       }
     }
+    
     setExplanationTitle(title);
     setShowCustomExplanation(true);
+    
     if (userId) {
       logUserActivity('explain', lawName, articleNumber);
     }
   };
+
   const handleComment = () => {
     setShowNotes(true);
     if (userId) logUserActivity('note_view', lawName, articleNumber);
   };
+  
   const handleNarration = (contentType: 'article' | 'example' | 'explanation') => {
     if (isReading) {
-      if (contentType === 'article' && readingContent.title === 'Artigo' || contentType === 'example' && readingContent.title === 'Exemplo' || contentType === 'explanation' && readingContent.title.includes('Explicação')) {
+      if ((contentType === 'article' && readingContent.title === 'Artigo') ||
+          (contentType === 'example' && readingContent.title === 'Exemplo') ||
+          (contentType === 'explanation' && readingContent.title.includes('Explicação'))) {
         setIsReading(false);
         if (window.currentAudio) {
           window.currentAudio.pause();
@@ -178,77 +193,129 @@ const ArticleCard = ({
         return;
       }
     }
+    
     if (contentType === 'article') {
-      setReadingContent({
-        text: safeContent,
-        title: 'Artigo'
+      setReadingContent({ 
+        text: safeContent, 
+        title: 'Artigo' 
       });
       if (userId) logUserActivity('narrate', lawName, articleNumber);
     } else if (contentType === 'example') {
-      setReadingContent({
-        text: safeExample,
-        title: 'Exemplo'
+      setReadingContent({ 
+        text: safeExample, 
+        title: 'Exemplo' 
       });
     } else if (contentType === 'explanation' && customExplanation) {
-      setReadingContent({
-        text: customExplanation,
-        title: `Narração: ${explanationTitle}`
+      setReadingContent({ 
+        text: customExplanation, 
+        title: `Narração: ${explanationTitle}` 
       });
     }
     setIsReading(true);
   };
+
   const handleIncreaseFontSize = () => {
     setFontSize(prev => Math.min(prev + 1, 24));
   };
+
   const handleDecreaseFontSize = () => {
     setFontSize(prev => Math.max(prev - 1, 12));
   };
+
   useEffect(() => {
     if (userId) {
       logUserActivity('read', lawName, articleNumber);
     }
   }, [userId, lawName, articleNumber, logUserActivity]);
+
   const shouldLeftAlign = articleNumber === "esquerda nas linhas";
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
-  return <div className="card-article mb-6 hover:shadow-lg transition-all duration-300 animate-fade-in px-[12px]">
+
+  return (
+    <div className="card-article mb-6 hover:shadow-lg transition-all duration-300 animate-fade-in">
       <CopyToast show={showCopyToast} />
       
       <div className="flex justify-end gap-2 mb-2">
-        <button onClick={handleDecreaseFontSize} className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200 hover:scale-105 active:scale-95 animate-fade-in" aria-label="Diminuir fonte">
+        <button 
+          onClick={handleDecreaseFontSize}
+          className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200 hover:scale-105 active:scale-95 animate-fade-in"
+          aria-label="Diminuir fonte"
+        >
           <Minus size={16} />
         </button>
-        <button onClick={handleIncreaseFontSize} className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200 hover:scale-105 active:scale-95 animate-fade-in" aria-label="Aumentar fonte">
+        <button 
+          onClick={handleIncreaseFontSize}
+          className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200 hover:scale-105 active:scale-95 animate-fade-in"
+          aria-label="Aumentar fonte"
+        >
           <Plus size={16} />
         </button>
       </div>
       
-      <ArticleHeader articleNumber={shouldCenterContent ? "" : articleNumber} lawName={lawName} onCopy={copyArticle} onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)} showHighlightTools={showHighlightTools} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} />
+      <ArticleHeader
+        articleNumber={shouldCenterContent ? "" : articleNumber}
+        lawName={lawName}
+        onCopy={copyArticle}
+        onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
+        showHighlightTools={showHighlightTools}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
+      />
       
-      <ArticleContent content={safeContent} fontSize={fontSize} onIncreaseFontSize={handleIncreaseFontSize} onDecreaseFontSize={handleDecreaseFontSize} articleNumber={shouldCenterContent ? "" : articleNumber} centerContent={shouldCenterContent} />
+      <ArticleContent
+        content={safeContent}
+        fontSize={fontSize}
+        onIncreaseFontSize={handleIncreaseFontSize}
+        onDecreaseFontSize={handleDecreaseFontSize}
+        articleNumber={shouldCenterContent ? "" : articleNumber}
+        centerContent={shouldCenterContent}
+      />
 
-      {!showExample && safeExample && <Button variant="outline" className="w-full max-w-xs mx-auto mt-4 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95 animate-fade-in" onClick={() => setShowExample(true)}>
+      {!showExample && safeExample && (
+        <Button
+          variant="outline"
+          className="w-full max-w-xs mx-auto mt-4 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95 animate-fade-in"
+          onClick={() => setShowExample(true)}
+        >
           Ver Exemplo
-        </Button>}
+        </Button>
+      )}
 
-      {showExample && safeExample && <div className="flex flex-col items-center mt-4 animate-fade-in">
+      {showExample && safeExample && (
+        <div className="flex flex-col items-center mt-4 animate-fade-in">
           <div className="px-4 py-2 bg-primary-50/10 border-l-4 border-primary-200 rounded text-gray-400 text-left whitespace-pre-wrap w-full max-w-xl">
             {safeExample}
           </div>
           <div className="flex gap-2 mt-2">
-            <Button variant="outline" size="sm" onClick={() => handleNarration('example')} className="bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleNarration('example')}
+              className="bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
+            >
               Narrar Exemplo
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowExample(false)} className="bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowExample(false)}
+              className="bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
+            >
               Fechar
             </Button>
           </div>
-        </div>}
+        </div>
+      )}
 
-      {showCustomExplanation && <div className="mt-5 p-4 bg-primary-900/20 border-l-4 border-primary-300 rounded animate-fade-in">
+      {showCustomExplanation && (
+        <div className="mt-5 p-4 bg-primary-900/20 border-l-4 border-primary-300 rounded animate-fade-in">
           <div className="flex justify-between items-center mb-2">
             <h4 className="text-primary-300 font-medium">{explanationTitle}</h4>
-            <button onClick={() => handleNarration('explanation')} className="shadow-button px-3 py-1 text-primary-300 bg-primary/10 text-xs font-medium rounded transition-all 
-                hover:bg-primary/30 active:scale-95 flex items-center gap-1">
+            <button
+              onClick={() => handleNarration('explanation')}
+              className="shadow-button px-3 py-1 text-primary-300 bg-primary/10 text-xs font-medium rounded transition-all 
+                hover:bg-primary/30 active:scale-95 flex items-center gap-1"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-volume-2">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
                 <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
@@ -260,21 +327,50 @@ const ArticleCard = ({
           <p className="text-gray-300 whitespace-pre-wrap text-left">
             {customExplanation}
           </p>
-        </div>}
+        </div>
+      )}
 
-      {!shouldLeftAlign && <ArticleInteractions articleNumber={articleNumber} content={safeContent} example={safeExample} onExplain={handleExplain} onAddComment={handleComment} onStartNarration={handleNarration} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} />}
+      {!shouldLeftAlign && (
+        <ArticleInteractions 
+          articleNumber={articleNumber}
+          content={safeContent}
+          example={safeExample}
+          onExplain={handleExplain}
+          onAddComment={handleComment}
+          onStartNarration={handleNarration}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
+        />
+      )}
 
-      <VoiceNarration text={readingContent.text} title={readingContent.title} isActive={isReading} onComplete={() => setIsReading(false)} onStop={() => setIsReading(false)} />
+      <VoiceNarration
+        text={readingContent.text}
+        title={readingContent.title}
+        isActive={isReading}
+        onComplete={() => setIsReading(false)}
+        onStop={() => setIsReading(false)}
+      />
 
-      <ArticleNotes isOpen={showNotes} onClose={() => setShowNotes(false)} articleNumber={articleNumber} articleContent={safeContent} lawName={lawName} />
+      <ArticleNotes
+        isOpen={showNotes}
+        onClose={() => setShowNotes(false)}
+        articleNumber={articleNumber}
+        articleContent={safeContent}
+        lawName={lawName}
+      />
 
-      {shouldLeftAlign && <div className="mt-8 mb-12 animate-fade-in">
-          <p className="mb-4 whitespace-pre-wrap transition-all duration-200 text-left text-white" style={{
-        fontSize: `${fontSize + 2}px`
-      }}>
+      {shouldLeftAlign && (
+        <div className="mt-8 mb-12 animate-fade-in">
+          <p
+            className="mb-4 whitespace-pre-wrap transition-all duration-200 text-left text-white"
+            style={{ fontSize: `${fontSize + 2}px` }}
+          >
             {safeContent}
           </p>
-        </div>}
-    </div>;
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default ArticleCard;
