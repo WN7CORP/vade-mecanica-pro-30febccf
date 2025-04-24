@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
@@ -30,17 +29,28 @@ export function PricingCard({
   const handleSubscribe = async () => {
     try {
       setIsLoading(true);
+      console.log('Starting checkout process for plan:', planId);
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { planId }
       });
 
-      if (error) throw error;
-      if (!data.url) throw new Error('URL de checkout não encontrada');
+      if (error) {
+        console.error('Checkout error:', error);
+        throw error;
+      }
 
+      if (!data?.url) {
+        console.error('No checkout URL returned:', data);
+        throw new Error('URL de checkout não encontrada');
+      }
+
+      console.log('Redirecting to checkout URL:', data.url);
       window.location.href = data.url;
+      
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Erro ao processar assinatura');
+      console.error('Error details:', error);
+      toast.error('Erro ao processar assinatura. Por favor tente novamente.');
     } finally {
       setIsLoading(false);
     }

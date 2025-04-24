@@ -13,7 +13,6 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -31,6 +30,7 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError || !user) {
+      logStep("Authentication failed", { error: userError });
       throw new Error("User not authenticated");
     }
 
@@ -38,7 +38,10 @@ serve(async (req) => {
 
     // Get request body
     const { planId } = await req.json();
-    if (!planId) throw new Error("Plan ID not provided");
+    if (!planId) {
+      logStep("Missing planId in request");
+      throw new Error("Plan ID not provided");
+    }
 
     // Fetch plan details
     const { data: plan, error: planError } = await supabaseClient
@@ -48,10 +51,21 @@ serve(async (req) => {
       .single();
 
     if (planError || !plan) {
+      logStep("Plan fetch failed", { error: planError });
       throw new Error("Plan not found");
     }
 
-    logStep("Plan fetched", { planId, stripePriceId: plan.stripe_price_id });
+    logStep("Plan fetched", { 
+      planId, 
+      stripePriceId: plan.stripe_price_id,
+      planName: plan.name,
+      price: plan.price 
+    });
+
+    if (!plan.stripe_price_id) {
+      logStep("Missing stripe_price_id");
+      throw new Error("Invalid plan configuration - missing Stripe price ID");
+    }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
@@ -94,7 +108,10 @@ serve(async (req) => {
       },
     });
 
-    logStep("Created checkout session", { sessionId: session.id });
+    logStep("Created checkout session", { 
+      sessionId: session.id,
+      url: session.url 
+    });
 
     return new Response(
       JSON.stringify({ url: session.url }),
@@ -104,7 +121,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    logStep("ERROR", { message: error.message });
+    logStep("ERROR", { message: error.message, stack: error.stack });
     return new Response(
       JSON.stringify({ error: error.message }),
       {
@@ -116,4 +133,3 @@ serve(async (req) => {
 });
 
 export {};
-
