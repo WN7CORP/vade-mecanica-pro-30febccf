@@ -45,6 +45,15 @@ export function ThemeSelector({ themes = [], onThemeSelect }: ThemeSelectorProps
     onThemeSelect(newSelection);
   };
 
+  // Render fallback if CMDK would receive invalid data
+  if (!Array.isArray(safeThemes)) {
+    return (
+      <Button variant="outline" disabled className="w-full">
+        Nenhum tema disponível
+      </Button>
+    );
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

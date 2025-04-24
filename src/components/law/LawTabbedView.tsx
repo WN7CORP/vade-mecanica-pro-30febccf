@@ -117,7 +117,7 @@ const LawTabbedView = () => {
           <ArticleList 
             isLoading={isLoading} 
             searchTerm={searchTerm} 
-            filteredArticles={filteredArticles} 
+            filteredArticles={filteredArticles || []} 
             lawName={lawName || ''} 
             showExplanation={showExplanation} 
             explanation={explanation} 
