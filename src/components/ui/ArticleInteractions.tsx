@@ -1,128 +1,137 @@
 
-import { Button } from "./button";
-import { BookOpen, Bookmark, Copy, Volume2, ScrollText } from "lucide-react";
 import { useState } from "react";
-import { toast } from "@/hooks/use-toast";
+import { MessageCircle, BookOpen, Bookmark, Volume2, MessageSquareMore, PenLine, BarChart2, Scale, GraduationCap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
 
 interface ArticleInteractionsProps {
   articleNumber: string;
-  content: string;
-  example?: string;
+  content: string | { [key: string]: any };
+  example?: string | { [key: string]: any };
   onExplain: (type: 'technical' | 'formal') => void;
   onAddComment: () => void;
-  onStartNarration: (content: 'article' | 'example' | 'explanation') => void;
-  isFavorite?: boolean;
-  onToggleFavorite?: () => void;
+  onStartNarration: (contentType: 'article') => void;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+  onCompare?: () => void;
+  onStudyMode?: () => void;
 }
 
 const ArticleInteractions = ({
   articleNumber,
   content,
-  example,
   onExplain,
   onAddComment,
   onStartNarration,
-  isFavorite = false,
-  onToggleFavorite
+  isFavorite,
+  onToggleFavorite,
+  onCompare,
+  onStudyMode
 }: ArticleInteractionsProps) => {
-  const [showExplainOptions, setShowExplainOptions] = useState(false);
-
-  const copyArticle = () => {
-    const textToCopy = `Art. ${articleNumber}. ${content}`;
-    navigator.clipboard.writeText(textToCopy);
-    toast({
-      description: "Artigo copiado com sucesso!",
-    });
-  };
-
+  const [showExplanationOptions, setShowExplanationOptions] = useState(false);
+  const navigate = useNavigate();
+  
   return (
-    <div className="flex flex-wrap gap-2 mt-6 animate-fade-in">
-      <div className="relative">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowExplainOptions(!showExplainOptions)}
-          className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
-        >
-          <BookOpen size={16} />
-          Explicar
-        </Button>
+    <div className="mt-6 flex justify-center pt-3 animate-fade-in">
+      <div className="flex items-center flex-wrap justify-center space-x-2 space-y-2">
         
-        {showExplainOptions && (
-          <div className="absolute bottom-full mb-2 left-0 z-10 w-48 neomorph p-2 rounded-md bg-background/95 backdrop-blur animate-fade-in">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full mb-1 justify-start text-primary hover:text-primary-foreground hover:bg-primary/30"
-              onClick={() => {
-                onExplain('technical');
-                setShowExplainOptions(false);
-              }}
-            >
-              <BookOpen size={16} className="mr-2" />
-              Explicação Técnica
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start text-primary hover:text-primary-foreground hover:bg-primary/30"
-              onClick={() => {
-                onExplain('formal');
-                setShowExplainOptions(false);
-              }}
-            >
-              <BookOpen size={16} className="mr-2" />
-              Explicação Formal
-            </Button>
-          </div>
+        {/* Narração */}
+        <button 
+          className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+          onClick={() => onStartNarration('article')}
+        >
+          <Volume2 size={16} />
+          <span className="text-xs">Narrar</span>
+        </button>
+          
+        {/* Explicação */}
+        <div className="relative">
+          <button 
+            className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+            onClick={() => setShowExplanationOptions(!showExplanationOptions)}
+          >
+            <MessageCircle size={16} />
+            <span className="text-xs">Explicar</span>
+          </button>
+          
+          {showExplanationOptions && (
+            <div className="absolute top-full left-0 mt-2 bg-background/95 backdrop-blur border border-border rounded-lg shadow-lg p-2 z-20 animate-fade-in-fast min-w-[150px]">
+              <button 
+                className="w-full text-left px-3 py-2 rounded hover:bg-primary/10 text-gray-300 text-sm flex items-center gap-2 transition-colors"
+                onClick={() => {
+                  onExplain('technical');
+                  setShowExplanationOptions(false);
+                }}
+              >
+                <BookOpen size={14} />
+                <span>Técnica</span>
+              </button>
+              
+              <button 
+                className="w-full text-left px-3 py-2 rounded hover:bg-primary/10 text-gray-300 text-sm flex items-center gap-2 transition-colors"
+                onClick={() => {
+                  onExplain('formal');
+                  setShowExplanationOptions(false);
+                }}
+              >
+                <BarChart2 size={14} />
+                <span>Formal</span>
+              </button>
+              
+              <button 
+                className="w-full text-left px-3 py-2 rounded hover:bg-primary/10 text-gray-300 text-sm flex items-center gap-2 transition-colors"
+                onClick={() => {
+                  navigate(`/duvidas?article=${articleNumber}&content=${encodeURIComponent(typeof content === 'string' ? content : JSON.stringify(content))}`);
+                  setShowExplanationOptions(false);
+                }}
+              >
+                <MessageSquareMore size={14} />
+                <span>Personalizada</span>
+              </button>
+            </div>
+          )}
+        </div>
+          
+        {/* Adicionar anotação */}
+        <button 
+          className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+          onClick={onAddComment}
+        >
+          <PenLine size={16} />
+          <span className="text-xs">Anotar</span>
+        </button>
+        
+        {/* Favorito */}
+        <button 
+          className={`shadow-button px-3 py-2 ${isFavorite ? 'bg-primary/30 text-primary-foreground' : 'bg-primary/10 text-primary'} text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95`}
+          onClick={onToggleFavorite}
+        >
+          <Bookmark size={16} fill={isFavorite ? "currentColor" : "none"} />
+          <span className="text-xs">{isFavorite ? "Favoritado" : "Favoritar"}</span>
+        </button>
+
+        {/* Comparar (novo) */}
+        {onCompare && (
+          <button 
+            className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+            onClick={onCompare}
+          >
+            <Scale size={16} />
+            <span className="text-xs">Comparar</span>
+          </button>
+        )}
+
+        {/* Modo de estudo (novo) */}
+        {onStudyMode && (
+          <button 
+            className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+            onClick={onStudyMode}
+          >
+            <GraduationCap size={16} />
+            <span className="text-xs">Estudar</span>
+          </button>
         )}
       </div>
-
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onAddComment}
-        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
-      >
-        <ScrollText size={16} />
-        Anotações
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={copyArticle}
-        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
-      >
-        <Copy size={16} />
-        Copiar
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onStartNarration('article')}
-        className="flex items-center gap-2 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
-      >
-        <Volume2 size={16} />
-        Narrar Artigo
-      </Button>
-
-      {onToggleFavorite && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onToggleFavorite}
-          className={`flex items-center gap-2 ${
-            isFavorite 
-              ? "bg-primary text-primary-foreground" 
-              : "bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary"
-          } font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95`}
-        >
-          <Bookmark size={16} className={isFavorite ? "fill-current" : ""} />
-          {isFavorite ? "Favoritado" : "Favoritar"}
-        </Button>
-      )}
     </div>
   );
 };

@@ -25,6 +25,8 @@ interface ArticleListProps {
   onAskQuestion: (article: Article) => void;
   onCloseChat: () => void;
   onCloseExplanation: () => void;
+  onAddToComparison?: (article: Article) => void;
+  onStudyMode?: () => void;
 }
 
 const ArticleList = ({
@@ -42,7 +44,9 @@ const ArticleList = ({
   onExplainArticle,
   onAskQuestion,
   onCloseChat,
-  onCloseExplanation
+  onCloseExplanation,
+  onAddToComparison,
+  onStudyMode
 }: ArticleListProps) => {
   const [isNarratingExplanation, setIsNarratingExplanation] = useState(false);
   const [narratingContent, setNarratingContent] = useState<{text: string, title: string}>({text: '', title: ''});
@@ -85,6 +89,8 @@ const ArticleList = ({
             lawName={lawName ? decodeURIComponent(lawName) : ""}
             onExplainRequest={(type) => onExplainArticle(article, type)}
             onAskQuestion={() => onAskQuestion(article)}
+            onAddToComparison={onAddToComparison ? () => onAddToComparison(article) : undefined}
+            onStudyMode={onStudyMode}
           />
         ))}
         

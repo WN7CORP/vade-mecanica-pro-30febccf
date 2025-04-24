@@ -18,6 +18,8 @@ interface ArticleCardProps {
   lawName: string;
   onExplainRequest?: (type: 'technical' | 'formal') => void;
   onAskQuestion?: () => void;
+  onAddToComparison?: () => void;
+  onStudyMode?: () => void;
 }
 
 declare global {
@@ -36,7 +38,9 @@ const ArticleCard = ({
   example = "",
   lawName,
   onExplainRequest,
-  onAskQuestion
+  onAskQuestion,
+  onAddToComparison,
+  onStudyMode
 }: ArticleCardProps) => {
   const [fontSize, setFontSize] = useState(16);
   const [isReading, setIsReading] = useState(false);
@@ -222,6 +226,20 @@ const ArticleCard = ({
     setFontSize(prev => Math.max(prev - 1, 12));
   };
 
+  const handleCompare = () => {
+    if (onAddToComparison) {
+      onAddToComparison();
+      if (userId) logUserActivity('compare', lawName, articleNumber);
+    }
+  };
+
+  const handleStudyMode = () => {
+    if (onStudyMode) {
+      onStudyMode();
+      if (userId) logUserActivity('study_mode', lawName, articleNumber);
+    }
+  };
+
   useEffect(() => {
     if (userId) {
       logUserActivity('read', lawName, articleNumber);
@@ -340,6 +358,8 @@ const ArticleCard = ({
           onStartNarration={handleNarration}
           isFavorite={isFavorite}
           onToggleFavorite={toggleFavorite}
+          onCompare={onAddToComparison ? handleCompare : undefined}
+          onStudyMode={onStudyMode ? handleStudyMode : undefined}
         />
       )}
 

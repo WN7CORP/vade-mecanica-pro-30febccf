@@ -16,6 +16,8 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Community from "./pages/Community";
 import Admin from "./pages/Admin";
+import StudyMode from "./pages/StudyMode"; // Nova página
+import LegalTimeline from "./pages/LegalTimeline"; // Nova página
 import { useSessionTracking } from "./hooks/useSessionTracking";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,8 @@ function AppContent() {
       <Route path="/perfil" element={<Profile />} />
       <Route path="/comunidade" element={<Community />} />
       <Route path="/admin" element={<Admin />} />
+      <Route path="/estudar/:lawName" element={<StudyMode />} />
+      <Route path="/timeline/:lawName" element={<LegalTimeline />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
