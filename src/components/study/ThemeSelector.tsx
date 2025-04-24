@@ -22,7 +22,7 @@ interface ThemeSelectorProps {
   onThemeSelect: (themes: string[]) => void;
 }
 
-export function ThemeSelector({ themes, onThemeSelect }: ThemeSelectorProps) {
+export function ThemeSelector({ themes = [], onThemeSelect }: ThemeSelectorProps) {
   const [open, setOpen] = useState(false);
   const { preferences } = useThemePreferences();
 

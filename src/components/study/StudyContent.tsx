@@ -136,9 +136,11 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
     return filteredFlashcards;
   }, [filteredFlashcards, preferences?.order_mode]);
 
-  const uniqueThemes = useMemo(() => 
-    Array.from(new Set(flashcards.map(card => card.tema)))
-  , [flashcards]);
+  // Get unique themes from flashcards, safely handling arrays
+  const uniqueThemes = useMemo(() => {
+    if (!flashcards || flashcards.length === 0) return [];
+    return Array.from(new Set(flashcards.map(card => card.tema || '').filter(Boolean)));
+  }, [flashcards]);
 
   // Calculate performance data for the chart
   const performanceData = useMemo(() => {
