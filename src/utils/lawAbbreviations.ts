@@ -7,6 +7,8 @@ export const LAW_ABBREVIATIONS: Record<string, string> = {
   "Código de Defesa do Consumidor": "CDC",
   "Código Tributário Nacional": "CTN",
   "Código de Trânsito Brasileiro": "CTB",
+  "Código Comercial": "CCom",
+  "Código Eleitoral": "CE",
   "Constituição Federal": "CF",
   "Consolidação das Leis do Trabalho": "CLT"
 };

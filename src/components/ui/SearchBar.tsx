@@ -1,6 +1,14 @@
+
 import { Search, X } from "lucide-react";
 import { useState, useEffect, forwardRef } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
+
+interface SearchPreview {
+  article?: string;
+  content: string;
+  lawName: string;
+  previewType: 'article' | 'term';
+}
 
 interface SearchBarProps {
   onSearch: (term: string) => void;
@@ -9,6 +17,9 @@ interface SearchBarProps {
   onInputChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFocus?: () => void;
   onBlur?: () => void;
+  searchPreviews?: SearchPreview[];
+  showPreviews?: boolean;
+  onPreviewClick?: (preview: SearchPreview) => void;
 }
 
 const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({ 
@@ -17,18 +28,13 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   placeholder = "Buscar artigo ou termo...",
   onInputChange,
   onFocus: propOnFocus,
-  onBlur: propOnBlur
+  onBlur: propOnBlur,
+  searchPreviews = [],
+  showPreviews = false,
+  onPreviewClick
 }, ref) => {
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
-  const [searchPreviews, setSearchPreviews] = useState<Array<{
-    title: string;
-    preview: string;
-    lawName: string;
-    previewType: string;
-    article?: string;
-    content: string;
-  }>>([]);
 
   useEffect(() => {
     setSearchTerm(initialValue);
@@ -48,23 +54,11 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
 
   const handleClear = () => {
     setSearchTerm("");
-    // Se quiser limpar os resultados quando o campo for limpo
-    // onSearch("");
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-    
-    // Simulate search previews - replace with actual API call
-    if (value.length >= 2) {
-      setSearchPreviews([
-        { title: "Art. 5º CF", preview: "Direitos e garantias fundamentais...", lawName: "CF", previewType: 'article', article: "5º", content: "Direitos e garantias fundamentais..." },
-        { title: "Art. 37 CF", preview: "Administração pública direta e indireta...", lawName: "CF", previewType: 'article', article: "37", content: "Administração pública direta e indireta..." },
-      ]);
-    } else {
-      setSearchPreviews([]);
-    }
     
     if (onInputChange) {
       onInputChange(e);
@@ -124,30 +118,24 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
       </div>
       
       {/* Search previews */}
-      {isFocused && searchPreviews.length > 0 && (
-        <div className="search-preview animate-fade-in">
+      {isFocused && showPreviews && searchPreviews.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto animate-fade-in">
           {searchPreviews.map((preview, index) => {
             const abbreviation = getLawAbbreviation(preview.lawName);
             return (
               <div 
                 key={index}
-                className="search-preview-item"
-                onClick={() => {
-                  setSearchTerm(preview.title);
-                  onSearch(preview.title);
-                }}
+                className="p-3 border-b border-border hover:bg-accent/20 cursor-pointer transition-colors"
+                onClick={() => onPreviewClick?.(preview)}
               >
-                <Search size={16} className="text-primary-300" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-primary-300/70">{abbreviation}</span>
-                    <div className="text-sm font-medium">
-                      {preview.previewType === 'article' ? 'Artigo' : 'Contém'} {preview.article && `${preview.article}`}
-                    </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-primary-300/70">{abbreviation}</span>
+                  <div className="text-sm text-primary-100">
+                    {preview.previewType === 'article' ? 'Artigo' : 'Contém'} {preview.article && `${preview.article}`}
                   </div>
-                  <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">
-                    {preview.content}
-                  </div>
+                </div>
+                <div className="text-xs text-gray-400 mt-1 line-clamp-1">
+                  {preview.content}
                 </div>
               </div>
             );
