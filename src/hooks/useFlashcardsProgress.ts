@@ -47,27 +47,19 @@ export function useFlashcardsProgress(theme?: string) {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Create a new array and explicitly construct each FlashcardProgress object
-      const transformedData: FlashcardProgress[] = [];
-      
-      if (data) {
-        for (const row of data as FlashcardProgressRaw[]) {
-          transformedData.push({
-            id: row.id || '',
-            flashcard_id: row.flashcard_id || '',
-            viewed_count: row.viewed_count || 0,
-            correct_count: row.correct_count || 0,
-            last_viewed: row.last_viewed || new Date().toISOString(),
-            proficiency_level: row.proficiency_level || 0,
-            streak: row.streak || 0,
-            theme: row.theme || '',
-            user_id: row.user_id || '',
-            created_at: row.created_at || new Date().toISOString()
-          });
-        }
-      }
-      
-      return transformedData;
+      // Transform the raw data into the expected format with default values for null fields
+      return (data as FlashcardProgressRaw[] || []).map(row => ({
+        id: row.id || '',
+        flashcard_id: row.flashcard_id || '',
+        viewed_count: row.viewed_count || 0,
+        correct_count: row.correct_count || 0,
+        last_viewed: row.last_viewed || new Date().toISOString(),
+        proficiency_level: row.proficiency_level || 0,
+        streak: row.streak || 0,
+        theme: row.theme || '',
+        user_id: row.user_id || '',
+        created_at: row.created_at || new Date().toISOString()
+      } as FlashcardProgress));
     }
   });
 
