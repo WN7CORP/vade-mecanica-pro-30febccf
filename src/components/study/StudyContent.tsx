@@ -180,7 +180,9 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
   const performanceData = useMemo(() => {
     if (!progress) return [];
     
-    return availableThemes.map(theme => {
+    const themes = [...new Set(flashcards.map(card => card.tema).filter(Boolean))];
+    
+    return themes.map(theme => {
       const themeCards = flashcards.filter(card => card.tema === theme);
       const themeProgress = themeCards
         .map(card => progress.find(p => p.flashcard_id === card.id))
@@ -191,7 +193,7 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
       
       return { theme, correct, total: total || 0 };
     }).filter(item => item.total > 0);
-  }, [flashcards, progress, availableThemes]);
+  }, [flashcards, progress]);
 
   if (isLoading || preferencesLoading) {
     return (
