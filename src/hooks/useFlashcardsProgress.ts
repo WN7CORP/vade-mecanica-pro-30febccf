@@ -47,8 +47,8 @@ export function useFlashcardsProgress(theme?: string) {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Transform the raw data into the expected format with default values for null fields
-      return (data as FlashcardProgressRaw[] || []).map(row => ({
+      // Transform the raw data without complex type casting
+      return (data || []).map((row: any) => ({
         id: row.id || '',
         flashcard_id: row.flashcard_id || '',
         viewed_count: row.viewed_count || 0,
@@ -59,7 +59,7 @@ export function useFlashcardsProgress(theme?: string) {
         theme: row.theme || '',
         user_id: row.user_id || '',
         created_at: row.created_at || new Date().toISOString()
-      } as FlashcardProgress));
+      }));
     }
   });
 
@@ -80,8 +80,8 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existing) {
-        // Cast to FlashcardProgressRaw to handle potentially undefined fields
-        const existingProgress = existing as FlashcardProgressRaw;
+        // Use type assertion without complex typing
+        const existingProgress = existing as any;
         
         const { error } = await supabase
           .from('user_flashcard_progress')
