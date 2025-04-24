@@ -8,10 +8,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper logging function for enhanced debugging
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
+  console.log(`[CREATE-CHECKOUT] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
 serve(async (req) => {
@@ -20,123 +18,102 @@ serve(async (req) => {
   }
 
   try {
-    logStep("Function started");
-
-    // Parse request body
-    const { planId } = await req.json();
-    if (!planId) {
-      throw new Error("planId is required");
-    }
-    logStep("Request validated", { planId });
-
-    // Authenticate the user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Authorization header is required");
-    }
-
+    // Create Supabase client with service role key
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Verify authentication
+    const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
-    if (userError || !userData.user) {
-      throw new Error(`Auth error: ${userError?.message || "User not found"}`);
+    if (userError || !user) {
+      logStep("Authentication failed", { error: userError });
+      throw new Error("User not authenticated");
     }
-    
-    const user = userData.user;
+
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Get plan details from database
-    const { data: planData, error: planError } = await supabaseClient
+    // Get request body
+    const { planId } = await req.json();
+    if (!planId) {
+      logStep("Missing planId in request");
+      throw new Error("Plan ID not provided");
+    }
+
+    // Fetch plan details
+    const { data: plan, error: planError } = await supabaseClient
       .from("subscription_plans")
       .select("*")
       .eq("id", planId)
       .single();
-    
-    if (planError || !planData) {
-      throw new Error(`Plan not found: ${planError?.message || "Unknown error"}`);
-    }
-    logStep("Plan details retrieved", { planName: planData.name, price: planData.price });
 
-    // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
+    if (planError || !plan) {
+      logStep("Plan fetch failed", { error: planError });
+      throw new Error("Plan not found");
+    }
+
+    logStep("Plan fetched", { 
+      planId, 
+      stripePriceId: plan.stripe_price_id,
+      planName: plan.name,
+      price: plan.price 
+    });
+
+    if (!plan.stripe_price_id) {
+      logStep("Missing stripe_price_id");
+      throw new Error("Invalid plan configuration - missing Stripe price ID");
+    }
+
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
     });
 
-    // Check if user already has a Stripe customer ID
-    const { data: customerData, error: customerError } = await supabaseClient
-      .from("user_subscriptions")
-      .select("stripe_customer_id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    logStep("Checked for existing customer", { 
-      hasCustomer: !!customerData?.stripe_customer_id,
-      customerId: customerData?.stripe_customer_id 
+    // Find or create customer
+    let customerId: string;
+    const { data: customers } = await stripe.customers.list({
+      email: user.email,
+      limit: 1,
     });
 
-    // Create or retrieve customer
-    let customerId = customerData?.stripe_customer_id;
-    if (!customerId) {
-      // Look up customer in Stripe by email
-      const existingCustomers = await stripe.customers.list({
+    if (customers && customers.length > 0) {
+      customerId = customers[0].id;
+      logStep("Found existing customer", { customerId });
+    } else {
+      const customer = await stripe.customers.create({
         email: user.email,
-        limit: 1,
+        metadata: {
+          user_id: user.id,
+        },
       });
-      
-      if (existingCustomers.data.length > 0) {
-        customerId = existingCustomers.data[0].id;
-        logStep("Found customer in Stripe by email", { customerId });
-      } else {
-        // Create new customer
-        const newCustomer = await stripe.customers.create({
-          email: user.email,
-          name: user.user_metadata?.full_name,
-          metadata: {
-            user_id: user.id
-          }
-        });
-        customerId = newCustomer.id;
-        logStep("Created new customer", { customerId });
-      }
+      customerId = customer.id;
+      logStep("Created new customer", { customerId });
     }
 
-    // Set up Stripe Checkout Session
-    const origin = req.headers.get("origin") || "https://juris-flash-flow.lovable.app";
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      mode: "subscription",
-      payment_method_types: ["card"],
       line_items: [{
-        price_data: {
-          currency: "brl",
-          product_data: {
-            name: planData.name,
-            description: planData.description || `Assinatura ${planData.name}`,
-          },
-          unit_amount: Math.round(planData.price * 100), // Price in cents
-          recurring: {
-            interval: planData.interval === "mês" ? "month" : "year"
-          }
-        },
+        price: plan.stripe_price_id,
         quantity: 1,
       }],
+      mode: "subscription",
+      success_url: `${req.headers.get("origin")}/subscription?success=true`,
+      cancel_url: `${req.headers.get("origin")}/subscription?canceled=true`,
       metadata: {
         user_id: user.id,
-        plan_id: planId
+        plan_id: planId,
       },
-      success_url: `${origin}/subscription?success=true`,
-      cancel_url: `${origin}/subscription?canceled=true`,
+      allow_promotion_codes: true,
+      billing_address_collection: 'auto',
+      client_reference_id: user.id,
     });
 
-    logStep("Checkout session created", { 
+    logStep("Created checkout session", { 
       sessionId: session.id,
-      url: session.url,
-      metadata: session.metadata
+      url: session.url 
     });
 
     return new Response(
@@ -147,11 +124,9 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("Error", { message: errorMessage });
-    
+    logStep("ERROR", { message: error.message, stack: error.stack });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -159,3 +134,5 @@ serve(async (req) => {
     );
   }
 });
+
+export {};
