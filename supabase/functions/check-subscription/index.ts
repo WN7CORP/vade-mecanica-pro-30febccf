@@ -8,6 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper logging function for enhanced debugging
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
@@ -18,133 +19,88 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Use the service role key to perform writes (upsert) in Supabase
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
   try {
     logStep("Function started");
-    
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
 
-    // Get user from auth header
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+    
     const token = authHeader.replace("Bearer ", "");
-    logStep("Authenticating user with token");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-    
-    if (userError || !user) {
-      logStep("Authentication failed", { error: userError });
-      throw new Error("Usuário não autenticado");
+    if (userError || !userData.user) {
+      throw new Error(`Authentication error: ${userError?.message || "User not found"}`);
     }
+    
+    const user = userData.user;
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2023-10-16",
-    });
-
-    // Get user's subscription from database
-    const { data: subscription, error: subError } = await supabaseClient
+    // Check if user has an active subscription
+    const { data: subscription, error: subscriptionError } = await supabaseClient
       .from("user_subscriptions")
-      .select("*, subscription_plans(*)")
+      .select(`
+        id,
+        status,
+        current_period_end,
+        cancel_at_period_end,
+        plan_id,
+        subscription_plans(id, name, price, interval)
+      `)
       .eq("user_id", user.id)
       .eq("status", "active")
       .maybeSingle();
-
-    logStep("Fetched subscription from DB", { found: !!subscription, error: subError?.message });
-
-    if (!subscription) {
-      // No subscription found in DB - return inactive status
-      logStep("No active subscription found in database");
-      
-      return new Response(
-        JSON.stringify({ active: false }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
+    
+    if (subscriptionError) {
+      logStep("Error fetching subscription", { error: subscriptionError.message });
+      throw subscriptionError;
     }
 
-    try {
-      // Verify subscription status in Stripe
-      const stripeSubscription = await stripe.subscriptions.retrieve(
-        subscription.stripe_subscription_id
-      );
-      
-      logStep("Retrieved Stripe subscription", { 
-        id: stripeSubscription.id, 
-        status: stripeSubscription.status,
-        cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end
-      });
-
-      const active = stripeSubscription.status === "active";
-      
-      // Update subscription status if needed
-      if (!active && subscription.status === "active") {
-        logStep("Updating subscription status to inactive");
-        
-        await supabaseClient
-          .from("user_subscriptions")
-          .update({ 
-            status: "inactive",
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", subscription.id);
-      } else {
-        // Update other subscription details
-        await supabaseClient
-          .from("user_subscriptions")
-          .update({
-            current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
-            cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", subscription.id);
-      }
-
+    if (!subscription) {
+      logStep("No active subscription found");
       return new Response(
-        JSON.stringify({
-          active,
-          subscription_tier: subscription.subscription_plans.name,
-          plan: {
-            id: subscription.subscription_plans.id,
-            name: subscription.subscription_plans.name,
-            price: subscription.subscription_plans.price,
-            interval: subscription.subscription_plans.interval
-          },
-          current_period_end: stripeSubscription.current_period_end,
-          cancel_at_period_end: stripeSubscription.cancel_at_period_end
+        JSON.stringify({ 
+          active: false 
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
         }
       );
-    } catch (stripeError) {
-      logStep("Stripe error", { error: stripeError.message });
-      
-      // If we can't get the subscription from Stripe but have it in DB,
-      // mark it as inactive in our database
-      await supabaseClient
-        .from("user_subscriptions")
-        .update({ status: "inactive" })
-        .eq("id", subscription.id);
-      
-      return new Response(
-        JSON.stringify({ active: false, error: "Failed to verify subscription" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
     }
+
+    logStep("Active subscription found", { 
+      subscriptionId: subscription.id,
+      plan: subscription.subscription_plans?.name,
+      endDate: subscription.current_period_end
+    });
+
+    return new Response(
+      JSON.stringify({
+        active: true,
+        subscription_tier: subscription.subscription_plans?.name,
+        current_period_end: subscription.current_period_end ? 
+          Math.floor(new Date(subscription.current_period_end).getTime() / 1000) : undefined,
+        cancel_at_period_end: subscription.cancel_at_period_end,
+        plan: subscription.subscription_plans
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
-    logStep("ERROR", { message: error.message });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -152,5 +108,3 @@ serve(async (req) => {
     );
   }
 });
-
-export {};

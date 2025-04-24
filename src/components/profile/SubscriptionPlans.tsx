@@ -63,7 +63,7 @@ export function SubscriptionPlans() {
           interval: plan.interval,
           features: Array.isArray(plan.features) ? plan.features : 
                    typeof plan.features === 'string' ? JSON.parse(plan.features) : [],
-          is_popular: plan.is_popular || false
+          is_popular: Boolean(plan.is_popular) || false
         })) || [];
 
         setPlans(formattedPlans);
@@ -160,3 +160,4 @@ export function SubscriptionPlans() {
     </div>
   );
 }
+

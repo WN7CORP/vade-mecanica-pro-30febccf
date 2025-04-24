@@ -89,7 +89,7 @@ export default function SubscriptionDashboard() {
         
         const { data: monthlyData, error: monthlyError } = await supabase
           .from("user_subscriptions")
-          .select("created_at, end_date")
+          .select("created_at, current_period_end")
           .gte("created_at", sixMonthsAgo.toISOString());
           
         if (monthlyError) throw monthlyError;
@@ -119,8 +119,8 @@ export default function SubscriptionDashboard() {
             monthlyGrowthMap[createdMonth].new_subscribers++;
           }
           
-          if (sub.end_date) {
-            const endMonth = new Date(sub.end_date).toISOString().substring(0, 7);
+          if (sub.current_period_end) {
+            const endMonth = new Date(sub.current_period_end).toISOString().substring(0, 7);
             if (monthlyGrowthMap[endMonth]) {
               monthlyGrowthMap[endMonth].churned_subscribers++;
             }
@@ -146,7 +146,7 @@ export default function SubscriptionDashboard() {
         setMetrics({
           total_subscribers: subscribersData.length,
           monthly_recurring_revenue: mrr,
-          active_plans,
+          active_plans: activePlans,
           monthly_growth: monthlyGrowth,
           revenue_by_month: revenueByMonth
         });
@@ -348,3 +348,4 @@ export default function SubscriptionDashboard() {
     </div>
   );
 }
+
