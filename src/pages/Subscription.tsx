@@ -35,15 +35,41 @@ export default function Subscription() {
         if (error) throw error;
         
         // Convert the features from JSON to string array
-        const formattedPlans = plansData?.map(plan => ({
-          id: plan.id,
-          name: plan.name,
-          description: plan.description || "",
-          price: Number(plan.price),
-          interval: plan.interval,
-          features: Array.isArray(plan.features) ? plan.features : 
-                    (typeof plan.features === 'string' ? JSON.parse(plan.features) : [])
-        })) || [];
+        const formattedPlans = plansData?.map(plan => {
+          // Parse features based on its type
+          let parsedFeatures: string[] = [];
+          
+          if (plan.features) {
+            if (Array.isArray(plan.features)) {
+              // If features is already an array, use it directly
+              parsedFeatures = plan.features;
+            } else if (typeof plan.features === 'string') {
+              // If features is a JSON string, parse it
+              try {
+                const parsed = JSON.parse(plan.features);
+                parsedFeatures = Array.isArray(parsed) ? parsed : [String(parsed)];
+              } catch (e) {
+                parsedFeatures = [String(plan.features)];
+              }
+            } else if (typeof plan.features === 'object') {
+              // If features is a JSON object from Supabase
+              try {
+                parsedFeatures = Array.isArray(plan.features) ? plan.features : [String(plan.features)];
+              } catch (e) {
+                parsedFeatures = [];
+              }
+            }
+          }
+
+          return {
+            id: plan.id,
+            name: plan.name,
+            description: plan.description || "",
+            price: Number(plan.price),
+            interval: plan.interval,
+            features: parsedFeatures
+          };
+        }) || [];
         
         setPlans(formattedPlans);
       } catch (error) {
