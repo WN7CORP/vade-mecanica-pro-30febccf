@@ -48,10 +48,10 @@ export function useFlashcardsProgress(theme?: string) {
       const transformedData: FlashcardProgress[] = [];
       
       if (data) {
-        // Use type assertion just once at the array level to avoid deep nesting issues
-        const typedData = data as DatabaseFlashcardProgress[];
+        // Type assertion just once with a simple type to avoid deep recursion
+        const rawData = data as any[];
         
-        for (const item of typedData) {
+        for (const item of rawData) {
           transformedData.push({
             id: item.id,
             flashcard_id: item.flashcard_id,
@@ -86,8 +86,8 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existing) {
-        // Type cast the database response explicitly to avoid recursive type issues
-        const dbProgress = existing as DatabaseFlashcardProgress;
+        // Use simple type assertion to avoid complexity
+        const dbProgress = existing as any;
         
         const { error } = await supabase
           .from('user_flashcard_progress')
