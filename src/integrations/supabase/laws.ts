@@ -91,7 +91,7 @@ function mapRawArticle(dbRow: any): Article {
     id: dbRow.id,
     numero: dbRow.numero,
     titulo: dbRow.titulo || undefined,
-    conteudo: dbRow.artigo || dbRow.conteudo || "", // usa 'artigo' se existir, senão 'conteudo'
+    conteudo: dbRow.artigo || dbRow.conteudo || "",
     explicacao_tecnica: dbRow["explicacao tecnica"] || undefined,
     explicacao_formal: dbRow["explicacao formal"] || undefined,
     exemplo1: dbRow.exemplo1 || undefined,
@@ -105,9 +105,7 @@ const articlesCache: Record<string, { timestamp: number, data: Article[] }> = {}
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
 
 export const fetchLawArticles = async (
-  lawDisplayName: string,
-  page: number = 0,
-  pageSize: number = 20
+  lawDisplayName: string
 ): Promise<{articles: Article[], totalCount: number}> => {
   const tableName = getTableName(lawDisplayName);
   if (!tableName) {
@@ -115,41 +113,16 @@ export const fetchLawArticles = async (
     throw new Error(`Lei inválida: "${lawDisplayName}"`);
   }
 
-  // Check cache first
-  const cacheKey = `${lawDisplayName}-${page}-${pageSize}`;
-  const cachedData = articlesCache[cacheKey];
-  const now = Date.now();
-  
-  if (cachedData && (now - cachedData.timestamp) < CACHE_TTL) {
-    console.log(`Using cached data for ${cacheKey}`);
-    return { 
-      articles: cachedData.data,
-      totalCount: cachedData.data.length // We'll update this when we implement pagination fully
-    };
-  }
-
-  // Select only essential columns for initial load
-  let selectCols = "*";
-  const offset = page * pageSize;
-  
-  console.log(`Buscando artigos da tabela: ${tableName}, página ${page}, tamanho ${pageSize}`);
+  console.log(`Buscando todos os artigos da tabela: ${tableName}`);
   
   // Log user action in background to not block the main flow
   logUserAction('search', lawDisplayName);
 
   try {
-    // Get total count first
-    const countResult = await supabase
+    // Get all articles at once
+    const { data, error, count } = await supabase
       .from(tableName as any)
-      .select('id', { count: 'exact', head: true });
-
-    const totalCount = countResult.count || 0;
-
-    // Then get the paginated data
-    const { data, error } = await supabase
-      .from(tableName as any)
-      .select(selectCols)
-      .range(offset, offset + pageSize - 1)
+      .select('*', { count: 'exact' })
       .order('id', { ascending: true });
 
     if (error) {
@@ -164,13 +137,10 @@ export const fetchLawArticles = async (
     // Map the raw data to the Article interface
     const articles = (data as any[]).map(mapRawArticle);
     
-    // Save to cache
-    articlesCache[cacheKey] = {
-      timestamp: now,
-      data: articles
+    return { 
+      articles,
+      totalCount: count || articles.length 
     };
-
-    return { articles, totalCount };
   } catch (error) {
     console.error("Erro ao buscar artigos:", error);
     throw new Error("Falha ao carregar artigos");

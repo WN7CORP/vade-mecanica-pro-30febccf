@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { fetchLawArticles, Article } from "@/services/lawService";
 import { useToast } from "@/hooks/use-toast";
 
@@ -8,15 +8,10 @@ export const useLawArticles = (lawName: string | undefined) => {
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
-  const pageSize = 20;
-  const observer = useRef<IntersectionObserver | null>(null);
-  const loadingRef = useRef<HTMLDivElement | null>(null);
 
-  const loadArticles = useCallback(async (pageNum: number, resetExisting: boolean = false) => {
+  const loadArticles = async () => {
     if (!lawName) {
       console.log("Nome da lei não fornecido");
       setIsLoading(false);
@@ -26,22 +21,17 @@ export const useLawArticles = (lawName: string | undefined) => {
     try {
       setIsLoading(true);
       const decodedLawName = decodeURIComponent(lawName);
-      console.log(`Carregando artigos para: ${decodedLawName}, página ${pageNum}`);
+      console.log(`Carregando artigos para: ${decodedLawName}`);
       
-      const { articles: data, totalCount: count } = await fetchLawArticles(decodedLawName, pageNum, pageSize);
+      const { articles: data, totalCount: count } = await fetchLawArticles(decodedLawName);
       console.log(`Artigos carregados: ${data.length}, total: ${count}`);
       
       setTotalCount(count);
-      
-      if (resetExisting) {
-        setArticles(data);
-        setFilteredArticles(data);
-      } else {
-        setArticles(prev => [...prev, ...data]);
-        setFilteredArticles(prev => searchTerm ? prev : [...prev, ...data]);
-      }
-      
-      setHasMore(data.length === pageSize && (pageNum + 1) * pageSize < count);
+      setArticles(data);
+      setFilteredArticles(searchTerm ? data.filter(article => 
+        (article.numero && article.numero.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (article.conteudo && article.conteudo.toLowerCase().includes(searchTerm.toLowerCase()))
+      ) : data);
       
     } catch (error) {
       console.error("Erro ao carregar artigos:", error);
@@ -55,9 +45,9 @@ export const useLawArticles = (lawName: string | undefined) => {
     } finally {
       setIsLoading(false);
     }
-  }, [lawName, searchTerm, toast, pageSize]);
+  };
 
-  const handleSearch = useCallback((term: string) => {
+  const handleSearch = (term: string) => {
     setSearchTerm(term);
     
     if (!term) {
@@ -71,51 +61,12 @@ export const useLawArticles = (lawName: string | undefined) => {
     );
     
     setFilteredArticles(filtered);
-  }, [articles]);
+  };
 
   // Handle initial load and law changes
   useEffect(() => {
-    setPage(0);
-    setArticles([]);
-    setFilteredArticles([]);
-    loadArticles(0, true);
-  }, [lawName, loadArticles]);
-
-  // Set up intersection observer for infinite scrolling
-  useEffect(() => {
-    const currentObserver = observer.current;
-    
-    // Clean up old observer
-    if (currentObserver) {
-      currentObserver.disconnect();
-    }
-    
-    const options = {
-      root: null,
-      rootMargin: '20px',
-      threshold: 0.1
-    };
-    
-    observer.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMore && !isLoading) {
-        setPage(prevPage => {
-          const nextPage = prevPage + 1;
-          loadArticles(nextPage);
-          return nextPage;
-        });
-      }
-    }, options);
-    
-    if (loadingRef.current) {
-      observer.current.observe(loadingRef.current);
-    }
-    
-    return () => {
-      if (currentObserver) {
-        currentObserver.disconnect();
-      }
-    };
-  }, [loadArticles, hasMore, isLoading]);
+    loadArticles();
+  }, [lawName]);
 
   return {
     articles,
@@ -123,8 +74,6 @@ export const useLawArticles = (lawName: string | undefined) => {
     isLoading,
     searchTerm,
     handleSearch,
-    hasMore,
-    loadingRef,
     totalCount
   };
 };
