@@ -1,12 +1,27 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FlipHorizontal, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { 
+  FlipHorizontal, 
+  ThumbsUp, 
+  ThumbsDown, 
+  ChevronLeft, 
+  ChevronRight,
+  BookOpen,
+  HelpCircle 
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface FlashCardProps {
   question: string;
   answer: string;
+  explanation?: string;
+  relatedArticles?: string;
   onNext: () => void;
   onPrevious: () => void;
   onRate: (correct: boolean) => void;
@@ -17,6 +32,8 @@ interface FlashCardProps {
 const FlashCard = ({ 
   question, 
   answer, 
+  explanation,
+  relatedArticles,
   onNext, 
   onPrevious, 
   onRate,
@@ -81,9 +98,25 @@ const FlashCard = ({
                 style={{ backfaceVisibility: 'hidden' }}
               >
                 <div>
-                  <h3 className="text-lg font-semibold text-primary-100 mb-4 animate-pulse-slow">Questão</h3>
+                  <h3 className="text-lg font-semibold text-primary-100 mb-4">Questão</h3>
                   <p className="text-white">{question}</p>
                 </div>
+
+                {relatedArticles && (
+                  <div className="mt-4 text-sm text-gray-400">
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <Button variant="ghost" size="sm" className="gap-2">
+                          <BookOpen className="h-4 w-4" />
+                          Artigos Relacionados
+                        </Button>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        {relatedArticles}
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+                )}
               </motion.div>
             ) : (
               <motion.div 
@@ -99,8 +132,24 @@ const FlashCard = ({
                 }}
               >
                 <div>
-                  <h3 className="text-lg font-semibold text-primary-100 mb-4 animate-pulse-slow">Resposta</h3>
+                  <h3 className="text-lg font-semibold text-primary-100 mb-4">Resposta</h3>
                   <p className="text-white">{answer}</p>
+
+                  {explanation && (
+                    <div className="mt-4">
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <Button variant="ghost" size="sm" className="gap-2">
+                            <HelpCircle className="h-4 w-4" />
+                            Ver Explicação
+                          </Button>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          {explanation}
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                  )}
                 </div>
                 
                 {!hasRated && (

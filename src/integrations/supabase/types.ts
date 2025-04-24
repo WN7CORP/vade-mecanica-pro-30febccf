@@ -1080,7 +1080,8 @@ export type Database = {
       flashcards_pro: {
         Row: {
           area: string
-          created_at: string
+          artigos: string
+          created_at: string | null
           explicacao: string | null
           id: string
           pergunta: string
@@ -1089,7 +1090,8 @@ export type Database = {
         }
         Insert: {
           area: string
-          created_at?: string
+          artigos: string
+          created_at?: string | null
           explicacao?: string | null
           id?: string
           pergunta: string
@@ -1098,7 +1100,8 @@ export type Database = {
         }
         Update: {
           area?: string
-          created_at?: string
+          artigos?: string
+          created_at?: string | null
           explicacao?: string | null
           id?: string
           pergunta?: string
