@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,46 +33,41 @@ export default function Subscription() {
 
         if (error) throw error;
         
-        // Convert the features from JSON to string array
-        const formattedPlans = plansData?.map(plan => {
-          // Parse features based on its type
-          let parsedFeatures: string[] = [];
-          
-          if (plan.features) {
-            if (Array.isArray(plan.features)) {
-              // If features is already an array, convert each item to string
-              parsedFeatures = plan.features.map(item => String(item));
-            } else if (typeof plan.features === 'string') {
-              // If features is a JSON string, parse it
-              try {
-                const parsed = JSON.parse(plan.features);
-                parsedFeatures = Array.isArray(parsed) 
-                  ? parsed.map(item => String(item))
-                  : [String(parsed)];
-              } catch (e) {
-                parsedFeatures = [String(plan.features)];
-              }
-            } else if (typeof plan.features === 'object') {
-              // If features is a JSON object from Supabase
-              try {
-                parsedFeatures = Array.isArray(plan.features) 
-                  ? plan.features.map(item => String(item)) 
-                  : [String(plan.features)];
-              } catch (e) {
-                parsedFeatures = [];
-              }
+        const parseFeatures = (features: any): string[] => {
+          if (!features) return [];
+
+          if (Array.isArray(features)) {
+            return features.map(item => String(item).trim()).filter(item => item);
+          }
+
+          if (typeof features === 'string') {
+            try {
+              const parsed = JSON.parse(features);
+              return Array.isArray(parsed) 
+                ? parsed.map(item => String(item).trim()).filter(item => item)
+                : [String(parsed).trim()];
+            } catch {
+              return [features.trim()];
             }
           }
 
-          return {
-            id: plan.id,
-            name: plan.name,
-            description: plan.description || "",
-            price: Number(plan.price),
-            interval: plan.interval,
-            features: parsedFeatures
-          };
-        }) || [];
+          if (typeof features === 'object') {
+            return Array.isArray(features) 
+              ? features.map(item => String(item).trim()).filter(item => item)
+              : [String(features).trim()];
+          }
+
+          return [];
+        };
+        
+        const formattedPlans = plansData?.map(plan => ({
+          id: plan.id,
+          name: plan.name,
+          description: plan.description || "",
+          price: Number(plan.price),
+          interval: plan.interval,
+          features: parseFeatures(plan.features)
+        })) || [];
         
         setPlans(formattedPlans);
       } catch (error) {
