@@ -49,11 +49,11 @@ export function ThemeSelector({ themes = [], onThemeSelect }: ThemeSelectorProps
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
+      <PopoverContent className="w-full p-0" align="start">
         <Command>
           <CommandInput placeholder="Buscar tema..." />
           <CommandEmpty>Nenhum tema encontrado.</CommandEmpty>
-          <CommandGroup>
+          <CommandGroup className="max-h-[200px] overflow-auto">
             {safeThemes.map((theme) => (
               <CommandItem
                 key={theme}
