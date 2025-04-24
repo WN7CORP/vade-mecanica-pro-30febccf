@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -12,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUserActivity } from "@/hooks/useUserActivity";
+import { useStudyTimer } from "@/contexts/StudyTimerContext";
 
 interface FlashCardData {
   id: number;
@@ -30,18 +30,12 @@ const StudyMode = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [incorrectAnswers, setIncorrectAnswers] = useState(0);
-  const [studyTimeMinutes, setStudyTimeMinutes] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const { studyTimeMinutes } = useStudyTimer();
   const { logUserActivity } = useUserActivity(userId);
   
   // Timer for study session
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStudyTimeMinutes(prev => prev + 1);
-    }, 60000); // Update every minute
-    
-    return () => clearInterval(interval);
-  }, []);
+  
   
   // Check authentication
   useEffect(() => {
