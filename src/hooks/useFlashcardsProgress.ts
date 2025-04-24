@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// Define a interface com todos os campos usados
 interface FlashcardProgress {
   id: string;
   flashcard_id: string;
@@ -11,6 +12,8 @@ interface FlashcardProgress {
   proficiency_level: number;
   streak: number;
   theme: string;
+  user_id: string;
+  created_at: string;
 }
 
 export function useFlashcardsProgress(theme?: string) {
@@ -43,7 +46,9 @@ export function useFlashcardsProgress(theme?: string) {
             last_viewed: row.last_viewed || new Date().toISOString(),
             proficiency_level: row.proficiency_level || 0,
             streak: row.streak || 0,
-            theme: row.theme || ''
+            theme: row.theme || '',
+            user_id: row.user_id || '',
+            created_at: row.created_at || new Date().toISOString()
           });
         }
       }

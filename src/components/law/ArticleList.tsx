@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import ArticleCard from "@/components/ui/ArticleCard";
@@ -25,6 +26,7 @@ interface ArticleListProps {
   onCloseExplanation: () => void;
   onAddToComparison?: (article: Article) => void;
   onStudyMode?: () => void;
+  globalFontSize?: number; // Adicionado para resolver o erro
 }
 
 const ArticleList = ({
