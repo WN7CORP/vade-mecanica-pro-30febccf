@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
+import { Button } from "./button";
+import { Plus } from "lucide-react";
 import ArticleHeader from "./article/ArticleHeader";
-import HighlightTools from "./article/HighlightTools";
 import ArticleContent from "./article/ArticleContent";
+import { ArticleActions } from "./article/ArticleActions";
+import { ArticleExample } from "./article/ArticleExample";
+import { ArticleCustomExplanation } from "./article/ArticleCustomExplanation";
 import CopyToast from "./article/CopyToast";
-import VoiceNarration from "../ui/VoiceNarration";
-import ArticleInteractions from "./ArticleInteractions";
+import VoiceNarration from "./VoiceNarration";
 import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Minus } from "lucide-react";
-import { Button } from "./button";
 
 interface ArticleCardProps {
   articleNumber: string;
@@ -20,16 +21,6 @@ interface ArticleCardProps {
   onAskQuestion?: () => void;
   onAddToComparison?: () => void;
   onStudyMode?: () => void;
-}
-
-declare global {
-  interface Window {
-    currentAudio: HTMLAudioElement | null;
-  }
-}
-
-if (typeof window !== 'undefined' && !window.currentAudio) {
-  window.currentAudio = null;
 }
 
 const ArticleCard = ({
@@ -54,7 +45,6 @@ const ArticleCard = ({
   const [showCustomExplanation, setShowCustomExplanation] = useState(false);
   const [explanationTitle, setExplanationTitle] = useState("");
   const { logUserActivity } = useUserActivity(userId);
-  const [showHighlightTools, setShowHighlightTools] = useState(false);
   
   const safeContent = typeof content === 'string' ? content : (content ? JSON.stringify(content) : '');
   const safeExample = typeof example === 'string' ? example : (example ? JSON.stringify(example) : '');
@@ -199,16 +189,10 @@ const ArticleCard = ({
     }
     
     if (contentType === 'article') {
-      setReadingContent({ 
-        text: safeContent, 
-        title: 'Artigo' 
-      });
+      setReadingContent({ text: safeContent, title: 'Artigo' });
       if (userId) logUserActivity('narrate', lawName, articleNumber);
     } else if (contentType === 'example') {
-      setReadingContent({ 
-        text: safeExample, 
-        title: 'Exemplo' 
-      });
+      setReadingContent({ text: safeExample, title: 'Exemplo' });
     } else if (contentType === 'explanation' && customExplanation) {
       setReadingContent({ 
         text: customExplanation, 
@@ -218,34 +202,6 @@ const ArticleCard = ({
     setIsReading(true);
   };
 
-  const handleIncreaseFontSize = () => {
-    setFontSize(prev => Math.min(prev + 1, 24));
-  };
-
-  const handleDecreaseFontSize = () => {
-    setFontSize(prev => Math.max(prev - 1, 12));
-  };
-
-  const handleCompare = () => {
-    if (onAddToComparison) {
-      onAddToComparison();
-      if (userId) logUserActivity('compare', lawName, articleNumber);
-    }
-  };
-
-  const handleStudyMode = () => {
-    if (onStudyMode) {
-      onStudyMode();
-      if (userId) logUserActivity('study_mode', lawName, articleNumber);
-    }
-  };
-
-  useEffect(() => {
-    if (userId) {
-      logUserActivity('read', lawName, articleNumber);
-    }
-  }, [userId, lawName, articleNumber, logUserActivity]);
-
   const shouldLeftAlign = articleNumber === "esquerda nas linhas";
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
@@ -253,29 +209,12 @@ const ArticleCard = ({
     <div className="card-article mb-6 hover:shadow-lg transition-all duration-300 animate-fade-in">
       <CopyToast show={showCopyToast} />
       
-      <div className="flex justify-end gap-2 mb-2">
-        <button 
-          onClick={handleDecreaseFontSize}
-          className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200 hover:scale-105 active:scale-95 animate-fade-in"
-          aria-label="Diminuir fonte"
-        >
-          <Minus size={16} />
-        </button>
-        <button 
-          onClick={handleIncreaseFontSize}
-          className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-all duration-200 hover:scale-105 active:scale-95 animate-fade-in"
-          aria-label="Aumentar fonte"
-        >
-          <Plus size={16} />
-        </button>
-      </div>
-      
       <ArticleHeader
         articleNumber={shouldCenterContent ? "" : articleNumber}
         lawName={lawName}
         onCopy={copyArticle}
-        onToggleHighlight={() => setShowHighlightTools(!showHighlightTools)}
-        showHighlightTools={showHighlightTools}
+        onToggleHighlight={() => {}}
+        showHighlightTools={false}
         isFavorite={isFavorite}
         onToggleFavorite={toggleFavorite}
       />
@@ -283,83 +222,53 @@ const ArticleCard = ({
       <ArticleContent
         content={safeContent}
         fontSize={fontSize}
-        onIncreaseFontSize={handleIncreaseFontSize}
-        onDecreaseFontSize={handleDecreaseFontSize}
+        onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 1, 24))}
+        onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 1, 12))}
         articleNumber={shouldCenterContent ? "" : articleNumber}
         centerContent={shouldCenterContent}
       />
 
       {!showExample && safeExample && (
-        <Button
-          variant="outline"
-          className="w-full max-w-xs mx-auto mt-4 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95 animate-fade-in"
-          onClick={() => setShowExample(true)}
-        >
-          Ver Exemplo
-        </Button>
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            className="w-full max-w-xs mx-auto mt-4 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95 animate-fade-in"
+            onClick={() => setShowExample(true)}
+          >
+            Ver Exemplo
+          </Button>
+        </div>
       )}
 
       {showExample && safeExample && (
-        <div className="flex flex-col items-center mt-4 animate-fade-in">
-          <div className="px-4 py-2 bg-primary-50/10 border-l-4 border-primary-200 rounded text-gray-400 text-left whitespace-pre-wrap w-full max-w-xl">
-            {safeExample}
-          </div>
-          <div className="flex gap-2 mt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleNarration('example')}
-              className="bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
-            >
-              Narrar Exemplo
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowExample(false)}
-              className="bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95"
-            >
-              Fechar
-            </Button>
-          </div>
-        </div>
+        <ArticleExample
+          example={safeExample}
+          onClose={() => setShowExample(false)}
+          onNarrate={() => handleNarration('example')}
+        />
       )}
 
-      {showCustomExplanation && (
-        <div className="mt-5 p-4 bg-primary-900/20 border-l-4 border-primary-300 rounded animate-fade-in">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="text-primary-300 font-medium">{explanationTitle}</h4>
-            <button
-              onClick={() => handleNarration('explanation')}
-              className="shadow-button px-3 py-1 text-primary-300 bg-primary/10 text-xs font-medium rounded transition-all 
-                hover:bg-primary/30 active:scale-95 flex items-center gap-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-volume-2">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-              </svg>
-              Narrar
-            </button>
-          </div>
-          <p className="text-gray-300 whitespace-pre-wrap text-left">
-            {customExplanation}
-          </p>
-        </div>
+      {showCustomExplanation && customExplanation && (
+        <ArticleCustomExplanation
+          title={explanationTitle}
+          explanation={customExplanation}
+          onNarrate={() => handleNarration('explanation')}
+        />
       )}
 
       {!shouldLeftAlign && (
-        <ArticleInteractions 
+        <ArticleActions
           articleNumber={articleNumber}
           content={safeContent}
-          example={safeExample}
           onExplain={handleExplain}
           onAddComment={handleComment}
           onStartNarration={handleNarration}
           isFavorite={isFavorite}
           onToggleFavorite={toggleFavorite}
-          onCompare={onAddToComparison ? handleCompare : undefined}
-          onStudyMode={onStudyMode ? handleStudyMode : undefined}
+          onCompare={onAddToComparison}
+          onStudyMode={onStudyMode}
+          userId={userId}
+          lawName={lawName}
         />
       )}
 
