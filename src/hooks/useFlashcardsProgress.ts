@@ -13,6 +13,20 @@ interface FlashcardProgress {
   theme: string;
 }
 
+// Define the shape of the database response to handle potential missing fields
+interface ProgressDBResponse {
+  id: string;
+  flashcard_id: string;
+  viewed_count?: number;
+  correct_count?: number;
+  last_viewed?: string;
+  proficiency_level?: number;
+  streak?: number;
+  theme?: string;
+  user_id: string;
+  created_at: string;
+}
+
 export function useFlashcardsProgress(theme?: string) {
   const queryClient = useQueryClient();
 
@@ -31,7 +45,7 @@ export function useFlashcardsProgress(theme?: string) {
       if (error) throw error;
       
       // Transform the data to ensure it matches the FlashcardProgress interface
-      return (data || []).map(item => ({
+      return (data || []).map((item: ProgressDBResponse) => ({
         id: item.id,
         flashcard_id: item.flashcard_id,
         viewed_count: item.viewed_count || 0,
@@ -61,18 +75,21 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existing) {
+        // Cast the existing data to our interface to handle potentially missing properties
+        const existingProgress = existing as ProgressDBResponse;
+        
         const { error } = await supabase
           .from('user_flashcard_progress')
           .update({
-            viewed_count: existing.viewed_count + 1,
-            correct_count: existing.correct_count + (correct ? 1 : 0),
-            streak: (existing.streak || 0) + (correct ? 1 : 0),
+            viewed_count: (existingProgress.viewed_count || 0) + 1,
+            correct_count: (existingProgress.correct_count || 0) + (correct ? 1 : 0),
+            streak: (existingProgress.streak || 0) + (correct ? 1 : 0),
             proficiency_level: correct 
-              ? Math.min((existing.proficiency_level || 0) + 1, 5)
-              : Math.max((existing.proficiency_level || 0) - 1, 0),
+              ? Math.min((existingProgress.proficiency_level || 0) + 1, 5)
+              : Math.max((existingProgress.proficiency_level || 0) - 1, 0),
             last_viewed: new Date().toISOString()
           })
-          .eq('id', existing.id);
+          .eq('id', existingProgress.id);
 
         if (error) throw error;
       } else {
