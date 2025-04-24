@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -65,42 +64,44 @@ const LawView = () => {
   return (
     <div 
       style={{ background: '#131620' }} 
-      className="flex flex-col min-h-screen pb-16 pt-16 px-[9px]" // Changed pt-20 to pt-16
+      className="flex flex-col min-h-screen px-[9px]"
     >
       <Header />
       
-      <main className="flex-1 max-w-screen-md mx-auto w-full">
-        <LawHeader lawName={lawName} />
-        
-        <div className={`mb-4 transition-all duration-300 ${showSearchBar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
-          <SearchBar onSearch={handleSearch} initialValue={searchTerm} placeholder="Buscar artigo específico..." />
-        </div>
-        
-        {!isLoading && filteredArticles.length > 0 && (
-          <div className="mb-4 text-sm text-gray-400">
-            {searchTerm ? `${filteredArticles.length} ${filteredArticles.length === 1 ? 'artigo encontrado' : 'artigos encontrados'}` : ''}
+      <main className="flex-1 max-w-screen-md mx-auto w-full pt-20">
+        <div className="space-y-4">
+          <LawHeader lawName={lawName} />
+          
+          <div className={`transition-all duration-300 ${showSearchBar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+            <SearchBar onSearch={handleSearch} initialValue={searchTerm} placeholder="Buscar artigo específico..." />
           </div>
-        )}
-        
-        <ArticleList 
-          isLoading={isLoading} 
-          searchTerm={searchTerm} 
-          filteredArticles={filteredArticles} 
-          lawName={lawName} 
-          showExplanation={showExplanation} 
-          explanation={explanation} 
-          loadingExplanation={loadingExplanation} 
-          selectedArticle={selectedArticle} 
-          showChat={showChat} 
-          loadingRef={loadingRef} 
-          hasMore={hasMore} 
-          onExplainArticle={handleExplain} 
-          onAskQuestion={handleAskQuestion} 
-          onCloseChat={() => setShowChat(false)} 
-          onCloseExplanation={() => setShowExplanation(false)} 
-        />
+          
+          {!isLoading && filteredArticles.length > 0 && (
+            <div className="text-sm text-gray-400">
+              {searchTerm ? `${filteredArticles.length} ${filteredArticles.length === 1 ? 'artigo encontrado' : 'artigos encontrados'}` : ''}
+            </div>
+          )}
+          
+          <ArticleList 
+            isLoading={isLoading} 
+            searchTerm={searchTerm} 
+            filteredArticles={filteredArticles} 
+            lawName={lawName} 
+            showExplanation={showExplanation} 
+            explanation={explanation} 
+            loadingExplanation={loadingExplanation} 
+            selectedArticle={selectedArticle} 
+            showChat={showChat} 
+            loadingRef={loadingRef} 
+            hasMore={hasMore} 
+            onExplainArticle={handleExplain} 
+            onAskQuestion={handleAskQuestion} 
+            onCloseChat={() => setShowChat(false)} 
+            onCloseExplanation={() => setShowExplanation(false)} 
+          />
 
-        <FloatingSearchButton onOpenSearch={handleOpenSearch} />
+          <FloatingSearchButton onOpenSearch={handleOpenSearch} />
+        </div>
       </main>
       
       <Footer />
@@ -109,4 +110,3 @@ const LawView = () => {
 };
 
 export default LawView;
-
