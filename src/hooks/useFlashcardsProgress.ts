@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define the interface for flashcard progress
+// Simplified interface for flashcard progress with all possible fields
 export interface FlashcardProgress {
   id: string;
   flashcard_id: string;
@@ -33,8 +33,8 @@ export function useFlashcardsProgress(theme?: string) {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Transform the data with explicit typing to avoid deep instantiation
-      return (data || []).map((row): FlashcardProgress => ({
+      // Map the raw data to our interface with default values for missing fields
+      return (data || []).map((row: any): FlashcardProgress => ({
         id: row.id || '',
         flashcard_id: row.flashcard_id || '',
         viewed_count: row.viewed_count || 0,
@@ -66,16 +66,19 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existingData) {
-        // Use well-defined types with null checking
+        // Handle case where fields might be missing in the database
+        const existingStreak = existingData.streak || 0;
+        const existingProficiency = existingData.proficiency_level || 0;
+
         const { error } = await supabase
           .from('user_flashcard_progress')
           .update({
             viewed_count: (existingData.viewed_count || 0) + 1,
             correct_count: (existingData.correct_count || 0) + (correct ? 1 : 0),
-            streak: (existingData.streak || 0) + (correct ? 1 : 0),
+            streak: existingStreak + (correct ? 1 : 0),
             proficiency_level: correct 
-              ? Math.min((existingData.proficiency_level || 0) + 1, 5)
-              : Math.max((existingData.proficiency_level || 0) - 1, 0),
+              ? Math.min(existingProficiency + 1, 5)
+              : Math.max(existingProficiency - 1, 0),
             last_viewed: new Date().toISOString()
           })
           .eq('id', existingData.id);
