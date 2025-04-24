@@ -114,7 +114,7 @@ export default function Subscription() {
           price: Number(plan.price),
           interval: plan.interval,
           features: parseFeatures(plan.features),
-          is_popular: Boolean(plan.is_popular || false)
+          is_popular: plan.is_popular || false
         })) || [];
         
         setPlans(formattedPlans);

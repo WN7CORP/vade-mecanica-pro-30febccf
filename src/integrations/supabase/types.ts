@@ -1780,6 +1780,7 @@ export type Database = {
           features: Json | null
           id: string
           interval: string
+          is_popular: boolean | null
           name: string
           price: number
           stripe_price_id: string
@@ -1791,6 +1792,7 @@ export type Database = {
           features?: Json | null
           id?: string
           interval: string
+          is_popular?: boolean | null
           name: string
           price: number
           stripe_price_id: string
@@ -1802,6 +1804,7 @@ export type Database = {
           features?: Json | null
           id?: string
           interval?: string
+          is_popular?: boolean | null
           name?: string
           price?: number
           stripe_price_id?: string

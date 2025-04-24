@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PricingCard } from "@/components/subscription/PricingCard";
@@ -47,14 +46,12 @@ export function SubscriptionPlans() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch plans
         const { data: plansData, error: plansError } = await supabase
           .from("subscription_plans")
           .select("*");
 
         if (plansError) throw plansError;
 
-        // Parse features for each plan
         const formattedPlans = plansData?.map(plan => ({
           id: plan.id,
           name: plan.name,
@@ -63,13 +60,11 @@ export function SubscriptionPlans() {
           interval: plan.interval,
           features: Array.isArray(plan.features) ? plan.features : 
                    typeof plan.features === 'string' ? JSON.parse(plan.features) : [],
-          // Safely handle is_popular which might not exist in the database schema
-          is_popular: Boolean(plan.is_popular || false)
+          is_popular: plan.is_popular || false
         })) || [];
 
         setPlans(formattedPlans);
 
-        // Check subscription status
         await checkSubscription();
 
       } catch (error) {
@@ -82,10 +77,9 @@ export function SubscriptionPlans() {
 
     loadData();
 
-    // Set up polling to check subscription status periodically
     const intervalId = setInterval(() => {
       checkSubscription();
-    }, 15000); // Check every 15 seconds
+    }, 15000);
 
     return () => {
       clearInterval(intervalId);
@@ -154,7 +148,7 @@ export function SubscriptionPlans() {
             interval={plan.interval}
             features={plan.features || []}
             isCurrentPlan={subscriptionStatus?.subscription_tier === plan.name}
-            isPopular={Boolean(plan.is_popular)}
+            isPopular={plan.is_popular}
           />
         ))}
       </div>
