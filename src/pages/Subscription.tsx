@@ -28,12 +28,24 @@ export default function Subscription() {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const { data: plans, error } = await supabase
+        const { data: plansData, error } = await supabase
           .from("subscription_plans")
           .select("*");
 
         if (error) throw error;
-        setPlans(plans || []);
+        
+        // Convert the features from JSON to string array
+        const formattedPlans = plansData?.map(plan => ({
+          id: plan.id,
+          name: plan.name,
+          description: plan.description || "",
+          price: Number(plan.price),
+          interval: plan.interval,
+          features: Array.isArray(plan.features) ? plan.features : 
+                    (typeof plan.features === 'string' ? JSON.parse(plan.features) : [])
+        })) || [];
+        
+        setPlans(formattedPlans);
       } catch (error) {
         console.error("Error fetching plans:", error);
         toast.error("Erro ao carregar planos");
