@@ -52,7 +52,6 @@ const ArticleCard = ({
   const { logUserActivity } = useUserActivity(userId);
   const [showHighlightTools, setShowHighlightTools] = useState(false);
   
-  // Convert content and example to safe string values
   const safeContent = typeof content === 'string' ? content : (content ? JSON.stringify(content) : '');
   const safeExample = typeof example === 'string' ? example : (example ? JSON.stringify(example) : '');
 
@@ -182,7 +181,6 @@ const ArticleCard = ({
   };
   
   const handleNarration = (contentType: 'article' | 'example' | 'explanation') => {
-    // If already playing this content, stop it
     if (isReading) {
       if ((contentType === 'article' && readingContent.title === 'Artigo') ||
           (contentType === 'example' && readingContent.title === 'Exemplo') ||
@@ -208,7 +206,10 @@ const ArticleCard = ({
         title: 'Exemplo' 
       });
     } else if (contentType === 'explanation' && customExplanation) {
-      setReadingContent({ text: customExplanation, title: `Narração: ${explanationTitle}` });
+      setReadingContent({ 
+        text: customExplanation, 
+        title: `Narração: ${explanationTitle}` 
+      });
     }
     setIsReading(true);
   };
@@ -263,7 +264,6 @@ const ArticleCard = ({
       
       <ArticleContent
         content={safeContent}
-        example={undefined}
         fontSize={fontSize}
         onIncreaseFontSize={handleIncreaseFontSize}
         onDecreaseFontSize={handleDecreaseFontSize}
