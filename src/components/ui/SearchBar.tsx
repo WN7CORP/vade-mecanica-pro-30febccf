@@ -1,4 +1,3 @@
-
 import { Search, X } from "lucide-react";
 import { useState, useEffect, forwardRef } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
@@ -117,24 +116,23 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
         </div>
       </div>
       
-      {/* Search previews */}
-      {isFocused && showPreviews && searchPreviews.length > 0 && (
+      {showPreviews && searchPreviews.length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto animate-fade-in">
           {searchPreviews.map((preview, index) => {
             const abbreviation = getLawAbbreviation(preview.lawName);
             return (
               <div 
                 key={index}
-                className="p-3 border-b border-border hover:bg-accent/20 cursor-pointer transition-colors"
                 onClick={() => onPreviewClick?.(preview)}
+                className="group p-3 border-b border-border hover:bg-accent/20 cursor-pointer transition-all duration-200"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-primary-300/70">{abbreviation}</span>
-                  <div className="text-sm text-primary-100">
-                    {preview.previewType === 'article' ? 'Artigo' : 'Contém'} {preview.article && `${preview.article}`}
+                  <div className="text-sm text-primary-100 group-hover:text-primary-300 transition-colors">
+                    {preview.previewType === 'article' ? 'Art.' : ''} {preview.article}
                   </div>
                 </div>
-                <div className="text-xs text-gray-400 mt-1 line-clamp-1">
+                <div className="text-xs text-gray-400 mt-1 line-clamp-2 group-hover:text-gray-300 transition-colors">
                   {preview.content}
                 </div>
               </div>

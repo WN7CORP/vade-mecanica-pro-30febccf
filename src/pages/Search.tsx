@@ -47,23 +47,19 @@ const Search = () => {
   const [isFocused, setIsFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   
-  // Estados para explicação da IA
   const [showExplanation, setShowExplanation] = useState(false);
   const [explanation, setExplanation] = useState<AIExplanationType | null>(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<SearchResult | null>(null);
   
-  // Estado para o chat de IA
   const [showChat, setShowChat] = useState(false);
 
-  // Carregar leis disponíveis
   useEffect(() => {
     const loadLaws = async () => {
       try {
         const laws = await fetchAvailableLaws();
         setAvailableLaws(laws);
         
-        // Se não houver lei selecionada, usar a primeira
         if (!selectedLaw && laws.length > 0) {
           setSelectedLaw(laws[0]);
         }
@@ -75,7 +71,6 @@ const Search = () => {
     loadLaws();
   }, [selectedLaw]);
 
-  // Realizar pesquisa quando a query ou lei selecionada muda
   useEffect(() => {
     const performSearch = async () => {
       if (!query || !selectedLaw) return;
@@ -84,7 +79,6 @@ const Search = () => {
       setNoResults(false);
       
       try {
-        // Primeira tentativa: buscar artigo exato
         const article = await searchArticle(selectedLaw, query);
         
         if (article && article.numero) {
@@ -94,7 +88,6 @@ const Search = () => {
             lawName: selectedLaw
           }]);
         } else {
-          // Segunda tentativa: buscar por termo
           const results = await searchByTerm(selectedLaw, query);
           
           if (results.length > 0) {
@@ -122,7 +115,6 @@ const Search = () => {
     performSearch();
   }, [query, selectedLaw]);
 
-  // Função debounce para busca em tempo real
   const debouncedSearchPreview = useRef(
     debounce(async (term: string, law: string) => {
       if (term.length < 2 || !law) {
@@ -132,29 +124,25 @@ const Search = () => {
       }
       
       try {
-        // Buscar artigo exato
         const article = await searchArticle(law, term);
-        
         const previews: SearchPreview[] = [];
         
         if (article && article.numero) {
           previews.push({
             article: article.numero,
-            content: article.conteudo,
+            content: article.conteudo.substring(0, 100) + "...",
             lawName: law,
             previewType: 'article'
           });
         }
         
-        // Buscar por termo (limitado a 3 resultados)
         const termResults = await searchByTerm(law, term);
         if (termResults.length > 0) {
-          termResults.slice(0, 3).forEach(result => {
-            // Evitar duplicação se já adicionamos o artigo exato
+          termResults.slice(0, 5).forEach(result => {
             if (!previews.some(p => p.article === result.numero)) {
               previews.push({
                 article: result.numero,
-                content: result.conteudo,
+                content: result.conteudo.substring(0, 100) + "...",
                 lawName: law,
                 previewType: 'term'
               });
@@ -202,7 +190,6 @@ const Search = () => {
   };
   
   const handleSearchBlur = () => {
-    // Delay para permitir cliques nas sugestões
     setTimeout(() => {
       setIsFocused(false);
       setShowPreviews(false);
@@ -268,7 +255,6 @@ const Search = () => {
           />
         </div>
         
-        {/* Seletor de lei */}
         <div className="mb-6 overflow-x-auto scrollbar-thin pb-2">
           <div className="flex space-x-2">
             {LAW_OPTIONS.map((law) => (
@@ -287,7 +273,6 @@ const Search = () => {
           </div>
         </div>
         
-        {/* Resultados da pesquisa */}
         <div>
           {isLoading ? (
             <div className="text-center py-8">
@@ -327,7 +312,6 @@ const Search = () => {
                 />
               )}
               
-              {/* Exibir o chat quando solicitado */}
               {showChat && selectedArticle && (
                 <AIChat
                   articleNumber={selectedArticle.article}
@@ -337,7 +321,6 @@ const Search = () => {
                 />
               )}
               
-              {/* Botão de exportar PDF */}
               {showExplanation && !loadingExplanation && selectedArticle && explanation && (
                 <div className="mt-4 flex justify-end">
                   <PDFExporter
