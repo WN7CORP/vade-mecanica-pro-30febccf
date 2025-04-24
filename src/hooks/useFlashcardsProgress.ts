@@ -13,16 +13,16 @@ interface FlashcardProgress {
   theme: string;
 }
 
-// Define the shape of the database response to handle potential missing fields
-interface ProgressDBResponse {
+// Define a type that exactly matches what the database returns
+type DatabaseFlashcardProgress = {
   id: string;
   flashcard_id: string;
-  viewed_count?: number;
-  correct_count?: number;
-  last_viewed?: string;
-  proficiency_level?: number;
-  streak?: number;
-  theme?: string;
+  viewed_count: number | null;
+  correct_count: number | null;
+  last_viewed: string | null;
+  proficiency_level: number | null;
+  streak: number | null;
+  theme: string | null;
   user_id: string;
   created_at: string;
 }
@@ -48,17 +48,19 @@ export function useFlashcardsProgress(theme?: string) {
       const transformedData: FlashcardProgress[] = [];
       
       if (data) {
-        for (let i = 0; i < data.length; i++) {
-          const item = data[i];
+        // Use type assertion just once at the array level to avoid deep nesting issues
+        const typedData = data as DatabaseFlashcardProgress[];
+        
+        for (const item of typedData) {
           transformedData.push({
             id: item.id,
             flashcard_id: item.flashcard_id,
-            viewed_count: item.viewed_count || 0,
-            correct_count: item.correct_count || 0,
-            last_viewed: item.last_viewed || new Date().toISOString(),
-            proficiency_level: item.proficiency_level || 0,
-            streak: item.streak || 0,
-            theme: item.theme || ''
+            viewed_count: item.viewed_count ?? 0,
+            correct_count: item.correct_count ?? 0,
+            last_viewed: item.last_viewed ?? new Date().toISOString(),
+            proficiency_level: item.proficiency_level ?? 0,
+            streak: item.streak ?? 0,
+            theme: item.theme ?? ''
           });
         }
       }
@@ -84,27 +86,21 @@ export function useFlashcardsProgress(theme?: string) {
         .single();
 
       if (existing) {
-        // Use type assertions more carefully to avoid deep nesting
-        const existingProgress = existing as unknown as {
-          id: string;
-          viewed_count?: number;
-          correct_count?: number;
-          streak?: number;
-          proficiency_level?: number;
-        };
+        // Type cast the database response explicitly to avoid recursive type issues
+        const dbProgress = existing as DatabaseFlashcardProgress;
         
         const { error } = await supabase
           .from('user_flashcard_progress')
           .update({
-            viewed_count: (existingProgress.viewed_count || 0) + 1,
-            correct_count: (existingProgress.correct_count || 0) + (correct ? 1 : 0),
-            streak: (existingProgress.streak || 0) + (correct ? 1 : 0),
+            viewed_count: (dbProgress.viewed_count ?? 0) + 1,
+            correct_count: (dbProgress.correct_count ?? 0) + (correct ? 1 : 0),
+            streak: (dbProgress.streak ?? 0) + (correct ? 1 : 0),
             proficiency_level: correct 
-              ? Math.min((existingProgress.proficiency_level || 0) + 1, 5)
-              : Math.max((existingProgress.proficiency_level || 0) - 1, 0),
+              ? Math.min((dbProgress.proficiency_level ?? 0) + 1, 5)
+              : Math.max((dbProgress.proficiency_level ?? 0) - 1, 0),
             last_viewed: new Date().toISOString()
           })
-          .eq('id', existingProgress.id);
+          .eq('id', dbProgress.id);
 
         if (error) throw error;
       } else {
