@@ -16,6 +16,21 @@ export interface FlashcardProgress {
   created_at: string;
 }
 
+// Define what the database actually returns
+interface DbFlashcardProgress {
+  id: string;
+  flashcard_id: string;
+  viewed_count?: number;
+  correct_count?: number;
+  last_viewed?: string;
+  user_id: string;
+  created_at: string;
+  // These fields might not exist in the current database schema
+  proficiency_level?: number;
+  streak?: number;
+  theme?: string;
+}
+
 export function useFlashcardsProgress(theme?: string) {
   const queryClient = useQueryClient();
 
@@ -34,7 +49,7 @@ export function useFlashcardsProgress(theme?: string) {
       if (error) throw error;
       
       // Map the raw data to our interface with default values for missing fields
-      return (data || []).map((row: any): FlashcardProgress => ({
+      return (data || []).map((row): FlashcardProgress => ({
         id: row.id || '',
         flashcard_id: row.flashcard_id || '',
         viewed_count: row.viewed_count || 0,
@@ -67,8 +82,8 @@ export function useFlashcardsProgress(theme?: string) {
 
       if (existingData) {
         // Handle case where fields might be missing in the database
-        const existingStreak = existingData.streak || 0;
-        const existingProficiency = existingData.proficiency_level || 0;
+        const existingStreak = (existingData as any).streak || 0;
+        const existingProficiency = (existingData as any).proficiency_level || 0;
 
         const { error } = await supabase
           .from('user_flashcard_progress')
