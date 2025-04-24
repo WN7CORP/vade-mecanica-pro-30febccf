@@ -1,18 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import FlashCard from "@/components/study/FlashCard";
-import { PerformanceChart } from "@/components/study/PerformanceChart";
 import { useFlashcardsProgress } from "@/hooks/useFlashcardsProgress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { Book } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useThemePreferences } from "@/hooks/useThemePreferences";
 import { useStudySession } from "@/hooks/useStudySession";
-import { ThemeSelector } from "@/components/study/ThemeSelector";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { StudyProgress } from "./StudyProgress";
+import { StudySettings } from "./StudySettings";
+import { StudyPerformanceView } from "./StudyPerformanceView";
 
 interface FlashCardData {
   id: string;
@@ -217,72 +213,20 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="neomorph p-3 mb-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center text-primary-200">
-            <Book className="mr-2" size={16} />
-            <span className="text-sm">{lawName ? decodeURIComponent(lawName) : "Estudo Geral"}</span>
-          </div>
-          
-          {studyTimeMinutes > 0 && (
-            <div className="flex items-center text-gray-400">
-              <span className="text-sm">{studyTimeMinutes} {studyTimeMinutes === 1 ? "minuto" : "minutos"}</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="space-y-1 mt-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-gray-400">Progresso</span>
-            <span className="text-primary-100">
-              {orderedFlashcards.length > 0 
-                ? `${currentIndex + 1}/${orderedFlashcards.length} cartões`
-                : "0/0 cartões"}
-            </span>
-          </div>
-          <Progress value={orderedFlashcards.length > 0 
-            ? (currentIndex + 1) / orderedFlashcards.length * 100 
-            : 0} 
-            className="h-1.5" 
-          />
-        </div>
-      </div>
+      <StudyProgress
+        lawName={lawName}
+        studyTimeMinutes={studyTimeMinutes}
+        currentIndex={currentIndex}
+        totalCards={orderedFlashcards.length}
+      />
       
-      <div className="mb-6 space-y-4">
-        <div className="space-y-1">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-medium">Temas de estudo</label>
-            {loadingThemes && <Skeleton className="h-4 w-4 rounded-full" />}
-          </div>
-          <ThemeSelector 
-            themes={availableThemes}
-            onThemeSelect={handleThemeSelect}
-          />
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="order-mode"
-            checked={preferences?.order_mode === 'random'}
-            onCheckedChange={(checked) =>
-              updatePreferences.mutate({ 
-                order_mode: checked ? 'random' : 'sequential' 
-              })
-            }
-          />
-          <Label htmlFor="order-mode">Ordem aleatória</Label>
-        </div>
-      </div>
+      <StudySettings
+        themes={availableThemes}
+        onThemeSelect={handleThemeSelect}
+        loadingThemes={loadingThemes}
+      />
 
-      {isLoading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-[250px] w-full" />
-          <div className="flex justify-between">
-            <Skeleton className="h-9 w-24" />
-            <Skeleton className="h-9 w-24" />
-          </div>
-        </div>
-      ) : orderedFlashcards.length > 0 ? (
+      {orderedFlashcards.length > 0 && (
         <div className="mb-8">
           <FlashCard
             question={orderedFlashcards[currentIndex]?.pergunta || ""}
@@ -297,46 +241,9 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
             hasPrevious={currentIndex > 0}
           />
         </div>
-      ) : (
-        <div className="text-center py-6 neomorph">
-          <p className="text-gray-400">
-            {preferences?.selected_themes?.length 
-              ? "Nenhum flashcard disponível para os temas selecionados."
-              : "Nenhum flashcard disponível. Selecione pelo menos um tema."}
-          </p>
-          {!preferences?.selected_themes?.length && (
-            <Button
-              variant="outline"
-              className="mt-4 bg-primary/10 hover:bg-primary/20"
-              onClick={() => {
-                const scrollElement = document.querySelector('.space-y-1');
-                if (scrollElement) {
-                  scrollElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-              }}
-            >
-              Selecionar temas
-            </Button>
-          )}
-        </div>
       )}
       
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold text-primary-100 mb-3">
-          Desempenho por Tema
-        </h3>
-        <div className="neomorph p-4">
-          {performanceData.length > 0 ? (
-            <PerformanceChart data={performanceData} />
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-gray-400">
-                Estude alguns flashcards para ver seu desempenho aqui.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      <StudyPerformanceView performanceData={performanceData} />
     </div>
   );
 };
