@@ -31,7 +31,7 @@ const LawTabbedView = () => {
     handleSearch,
     hasMore,
     loadingRef
-  } = useLawArticles(lawName);
+  } = useLawArticles(lawName || '');
   
   const {
     showExplanation,
@@ -39,7 +39,7 @@ const LawTabbedView = () => {
     explanation,
     loadingExplanation,
     handleExplainArticle
-  } = useAIExplanation(lawName);
+  } = useAIExplanation(lawName || '');
   
   useEffect(() => {
     const handleScroll = () => {
@@ -136,7 +136,7 @@ const LawTabbedView = () => {
         </TabsContent>
 
         <TabsContent value="study" className="mt-0">
-          <StudyContent lawName={lawName} />
+          {lawName && <StudyContent lawName={lawName} />}
         </TabsContent>
 
         <TabsContent value="timeline" className="mt-0">

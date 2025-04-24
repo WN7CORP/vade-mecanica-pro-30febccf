@@ -36,7 +36,7 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
   const { progress, updateProgress } = useFlashcardsProgress();
   const { preferences, updatePreferences } = useThemePreferences();
   const { startSession, endSession } = useStudySession();
-  const [currentSessionId, setCurrentSessionId] = useState<string>();
+  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>();
   const [viewedCards, setViewedCards] = useState(0);
   const [correctCards, setCorrectCards] = useState(0);
 
@@ -46,7 +46,7 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
       try {
         const { data, error } = await supabase.from('flashcards_pro').select('*');
         if (error) throw error;
-        setFlashcards(data);
+        setFlashcards(data || []);
       } catch (error) {
         console.error("Erro ao buscar flashcards:", error);
         toast({
@@ -64,13 +64,22 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
   // Initialize session when starting study
   useEffect(() => {
     const initSession = async () => {
-      if (!currentSessionId && flashcards.length > 0) {
-        const session = await startSession.mutateAsync(preferences?.selected_themes[0]);
-        setCurrentSessionId(session.id);
+      if (!currentSessionId && flashcards.length > 0 && preferences?.selected_themes?.length > 0) {
+        try {
+          const session = await startSession.mutateAsync(preferences.selected_themes[0]);
+          if (session?.id) {
+            setCurrentSessionId(session.id);
+          }
+        } catch (error) {
+          console.error("Failed to start study session:", error);
+        }
       }
     };
-    initSession();
-  }, [currentSessionId, flashcards.length, startSession, preferences?.selected_themes]);
+    
+    if (preferences) {
+      initSession();
+    }
+  }, [currentSessionId, flashcards.length, startSession, preferences]);
 
   // End session when component unmounts or all cards are done
   useEffect(() => {
@@ -112,8 +121,10 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
 
   // Filter flashcards by selected themes
   const filteredFlashcards = useMemo(() => {
-    if (!preferences?.selected_themes.length) return flashcards;
-    return flashcards.filter(card => preferences.selected_themes.includes(card.tema));
+    if (!preferences?.selected_themes?.length) return flashcards;
+    return flashcards.filter(card => 
+      preferences.selected_themes.includes(card.tema)
+    );
   }, [flashcards, preferences?.selected_themes]);
 
   // Order flashcards based on preference
@@ -129,27 +140,27 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
   , [flashcards]);
 
   // Calculate performance data for the chart
-  const performanceData = flashcards.reduce((acc, card) => {
-    const cardProgress = progress?.find(p => p.flashcard_id === card.id);
-    if (cardProgress) {
-      const themeData = acc.find(d => d.theme === card.tema);
-      if (themeData) {
-        themeData.correct += cardProgress.correct_count;
-        themeData.total += cardProgress.viewed_count;
-      } else {
-        acc.push({
-          theme: card.tema,
-          correct: cardProgress.correct_count,
-          total: cardProgress.viewed_count
-        });
+  const performanceData = useMemo(() => {
+    if (!progress) return [];
+    
+    return flashcards.reduce((acc, card) => {
+      const cardProgress = progress?.find(p => p.flashcard_id === card.id);
+      if (cardProgress) {
+        const themeData = acc.find(d => d.theme === card.tema);
+        if (themeData) {
+          themeData.correct += cardProgress.correct_count;
+          themeData.total += cardProgress.viewed_count;
+        } else {
+          acc.push({
+            theme: card.tema,
+            correct: cardProgress.correct_count,
+            total: cardProgress.viewed_count
+          });
+        }
       }
-    }
-    return acc;
-  }, [] as {
-    theme: string;
-    correct: number;
-    total: number;
-  }[]);
+      return acc;
+    }, [] as { theme: string; correct: number; total: number; }[]);
+  }, [flashcards, progress]);
 
   return (
     <div className="space-y-4">
@@ -226,7 +237,7 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
       ) : (
         <div className="text-center py-6">
           <p className="text-gray-400">
-            {preferences?.selected_themes.length 
+            {preferences?.selected_themes?.length 
               ? "Nenhum flashcard disponível para os temas selecionados."
               : "Nenhum flashcard disponível. Selecione pelo menos um tema."}
           </p>
