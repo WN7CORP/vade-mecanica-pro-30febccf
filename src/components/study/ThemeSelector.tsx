@@ -26,7 +26,13 @@ export function ThemeSelector({ themes = [], onThemeSelect }: ThemeSelectorProps
   const [open, setOpen] = useState(false);
   const { preferences } = useThemePreferences();
 
-  const selectedThemes = preferences?.selected_themes || [];
+  // Ensure themes is always an array, even if empty
+  const safeThemes = Array.isArray(themes) ? themes : [];
+  
+  // Ensure selected_themes is always an array, even if undefined or null
+  const selectedThemes = Array.isArray(preferences?.selected_themes) 
+    ? preferences.selected_themes 
+    : [];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -48,7 +54,7 @@ export function ThemeSelector({ themes = [], onThemeSelect }: ThemeSelectorProps
           <CommandInput placeholder="Buscar tema..." />
           <CommandEmpty>Nenhum tema encontrado.</CommandEmpty>
           <CommandGroup>
-            {themes.map((theme) => (
+            {safeThemes.map((theme) => (
               <CommandItem
                 key={theme}
                 value={theme}
