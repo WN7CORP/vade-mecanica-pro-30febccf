@@ -1732,6 +1732,77 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_events: {
+        Row: {
+          created_at: string
+          error: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean | null
+          user_subscription_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          user_subscription_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          user_subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_user_subscription_id_fkey"
+            columns: ["user_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          cakto_plan_id: string
+          created_at: string
+          description: string | null
+          id: string
+          interval: string
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          cakto_plan_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          interval: string
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          cakto_plan_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          interval?: string
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tarefas_cronograma: {
         Row: {
           concluida: boolean | null
@@ -2129,6 +2200,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          cakto_subscription_id: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          plan_id: string
+          start_date: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cakto_subscription_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          plan_id: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cakto_subscription_id?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          plan_id?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_theme_preferences: {
         Row: {
           created_at: string
@@ -2266,6 +2381,10 @@ export type Database = {
       update_active_users: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      user_has_active_subscription: {
+        Args: { user_uuid: string }
+        Returns: boolean
       }
     }
     Enums: {
