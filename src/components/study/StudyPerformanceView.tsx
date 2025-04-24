@@ -1,7 +1,5 @@
 
-import { PerformanceChart } from "@/components/study/PerformanceChart";
-
-interface PerformanceData {
+export interface PerformanceData {
   theme: string;
   correct: number;
   total: number;

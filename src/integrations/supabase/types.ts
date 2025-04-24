@@ -1218,6 +1218,39 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_library: {
+        Row: {
+          author: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          pdf_url: string
+          publication_date: string | null
+          title: string
+        }
+        Insert: {
+          author?: string | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          pdf_url: string
+          publication_date?: string | null
+          title: string
+        }
+        Update: {
+          author?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          pdf_url?: string
+          publication_date?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       legal_movies: {
         Row: {
           average_rating: number | null
@@ -2181,6 +2214,32 @@ export type Database = {
       check_if_user_is_admin: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      fetch_all_legal_documents: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          author: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          pdf_url: string
+          publication_date: string | null
+          title: string
+        }[]
+      }
+      fetch_legal_document_by_id: {
+        Args: { document_id: string }
+        Returns: {
+          author: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          pdf_url: string
+          publication_date: string | null
+          title: string
+        }[]
       }
       get_unique_themes: {
         Args: { table_name: string }

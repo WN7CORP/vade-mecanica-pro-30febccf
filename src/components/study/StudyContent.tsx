@@ -8,7 +8,7 @@ import { useThemePreferences } from "@/hooks/useThemePreferences";
 import { useStudySession } from "@/hooks/useStudySession";
 import { StudyProgress } from "./StudyProgress";
 import { StudySettings } from "./StudySettings";
-import { StudyPerformanceView } from "./StudyPerformanceView";
+import { StudyStats } from "./StudyStats";
 
 interface FlashCardData {
   id: string;
@@ -245,7 +245,7 @@ const StudyContent = ({ lawName, studyTimeMinutes = 0 }: StudyContentProps) => {
         </div>
       )}
       
-      <StudyPerformanceView performanceData={performanceData} />
+      <StudyStats performanceData={performanceData} />
     </div>
   );
 };
