@@ -5,10 +5,12 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { RankingList } from "@/components/profile/RankingList";
 import { ActivityChart } from "@/components/profile/ActivityChart";
+import { SubscriptionPlans } from "@/components/profile/SubscriptionPlans";
 import { useRankings, useLoginStreak, useUserRank } from "@/hooks/useRankings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { BackButton } from "@/components/ui/BackButton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface UserStats {
   totalSearches: number;
@@ -46,7 +48,6 @@ const Profile = () => {
         lastLogin: null
       };
       
-      // Encontrar o último login
       const loginData = statsData
         .filter(s => s.action_type === 'login')
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -60,7 +61,7 @@ const Profile = () => {
       };
     },
     enabled: !!userId,
-    refetchInterval: 15000 // Atualiza a cada 15 segundos
+    refetchInterval: 15000
   });
 
   useEffect(() => {
@@ -70,12 +71,10 @@ const Profile = () => {
       await recordLogin();
       await calculateStreakLoss();
       
-      // Invalidar as queries para atualizar os dados
       queryClient.invalidateQueries({ queryKey: ['user-stats', userId] });
       queryClient.invalidateQueries({ queryKey: ['rankings'] });
       queryClient.invalidateQueries({ queryKey: ['user-rank', userId] });
       
-      // Mostrar toast de boas-vindas - apenas uma vez por sessão
       toast({
         title: "Bem-vindo(a) de volta!",
         description: "Você ganhou +20 pontos por acessar hoje!",
@@ -102,7 +101,6 @@ const Profile = () => {
           filter: `user_id=eq.${userId}`
         },
         () => {
-          // Atualizar os dados quando houver alterações
           queryClient.invalidateQueries({ queryKey: ['user-stats', userId] });
           queryClient.invalidateQueries({ queryKey: ['user-activity', userId] });
           queryClient.invalidateQueries({ queryKey: ['rankings'] });
@@ -153,20 +151,33 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="order-2 md:order-1">
-            <ActivityChart />
-          </div>
-          <div className="order-1 md:order-2">
-            {rankings && (
-              <RankingList 
-                rankings={rankings} 
-                currentUserId={userId} 
-                userRank={userRank || undefined}
-              />
-            )}
-          </div>
-        </div>
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="subscription">Assinatura</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="order-2 md:order-1">
+                <ActivityChart />
+              </div>
+              <div className="order-1 md:order-2">
+                {rankings && (
+                  <RankingList 
+                    rankings={rankings} 
+                    currentUserId={userId} 
+                    userRank={userRank || undefined}
+                  />
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="subscription">
+            <SubscriptionPlans />
+          </TabsContent>
+        </Tabs>
       </main>
       
       <Footer />
