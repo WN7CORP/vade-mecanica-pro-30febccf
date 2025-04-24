@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import FlashCard from "@/components/study/FlashCard";
 import { PerformanceChart } from "@/components/study/PerformanceChart";
 import { useFlashcardsProgress } from "@/hooks/useFlashcardsProgress";
@@ -12,6 +12,7 @@ import { useStudySession } from "@/hooks/useStudySession";
 import { ThemeSelector } from "@/components/study/ThemeSelector";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface FlashCardData {
   id: string;
