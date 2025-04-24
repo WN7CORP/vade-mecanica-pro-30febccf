@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, GraduationCap, BookClock } from "lucide-react";
+import { BookOpen, GraduationCap, Clock } from "lucide-react";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
@@ -10,8 +10,8 @@ import SearchBar from "@/components/ui/SearchBar";
 import { FloatingSearchButton } from "@/components/ui/FloatingSearchButton";
 import ComparisonTool from "@/components/law/ComparisonTool";
 import { Article } from "@/services/lawService";
-import { StudyMode } from "@/pages/StudyMode";
-import { LegalTimeline } from "@/pages/LegalTimeline";
+import StudyMode from "@/pages/StudyMode";
+import LegalTimeline from "@/pages/LegalTimeline";
 
 const LawTabbedView = () => {
   const { lawName } = useParams<{ lawName: string }>();
@@ -73,7 +73,7 @@ const LawTabbedView = () => {
             <span>Estudar</span>
           </TabsTrigger>
           <TabsTrigger value="timeline" className="w-full">
-            <BookClock className="mr-2 h-4 w-4" />
+            <Clock className="mr-2 h-4 w-4" />
             <span>Linha do Tempo</span>
           </TabsTrigger>
         </TabsList>
