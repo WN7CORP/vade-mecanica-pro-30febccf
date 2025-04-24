@@ -23,7 +23,10 @@ const LawView = () => {
     filteredArticles,
     isLoading,
     searchTerm,
-    handleSearch
+    handleSearch,
+    hasMore,
+    loadingRef,
+    totalCount
   } = useLawArticles(lawName);
 
   const {
@@ -75,6 +78,15 @@ const LawView = () => {
           />
         </div>
         
+        {!isLoading && filteredArticles.length > 0 && (
+          <div className="mb-4 text-sm text-gray-400">
+            {searchTerm ? 
+              `${filteredArticles.length} ${filteredArticles.length === 1 ? 'artigo encontrado' : 'artigos encontrados'}` : 
+              `Mostrando ${filteredArticles.length} de ${totalCount} artigos`
+            }
+          </div>
+        )}
+        
         <ArticleList
           isLoading={isLoading}
           searchTerm={searchTerm}
@@ -85,6 +97,8 @@ const LawView = () => {
           loadingExplanation={loadingExplanation}
           selectedArticle={selectedArticle}
           showChat={showChat}
+          loadingRef={loadingRef}
+          hasMore={hasMore}
           onExplainArticle={handleExplain}
           onAskQuestion={handleAskQuestion}
           onCloseChat={() => setShowChat(false)}

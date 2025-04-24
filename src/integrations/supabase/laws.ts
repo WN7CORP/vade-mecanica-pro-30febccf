@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -31,8 +32,9 @@ export const LAW_OPTIONS: LawOption[] = [
 ];
 
 /** Retorna apenas os nomes para popular um dropdown/menu */
-export const fetchAvailableLaws = (): string[] =>
-  LAW_OPTIONS.map((opt) => opt.display);
+export const fetchAvailableLaws = async (): Promise<string[]> => {
+  return LAW_OPTIONS.map((opt) => opt.display);
+}
 
 /** Busca o nome da tabela a partir do texto exibido */
 function getTableName(displayName: string): string | null {
@@ -42,7 +44,7 @@ function getTableName(displayName: string): string | null {
   return found?.table ?? null;
 }
 
-/** Logs a user action in the statistics table */
+/** Logs a user action in the statistics table in background */
 async function logUserAction(
   actionType: 'search' | 'explain' | 'favorite' | 'note',
   lawName?: string,
@@ -55,15 +57,32 @@ async function logUserAction(
     
     // Only proceed if we have a user ID
     if (userId) {
-      const { error } = await supabase.from('user_statistics').insert({
-        user_id: userId,
-        action_type: actionType,
-        law_name: lawName,
-        article_number: articleNumber
-      });
+      // Run in background - don't block the main flow
+      if (typeof EdgeRuntime !== 'undefined') {
+        EdgeRuntime.waitUntil((async () => {
+          const { error } = await supabase.from('user_statistics').insert({
+            user_id: userId,
+            action_type: actionType,
+            law_name: lawName,
+            article_number: articleNumber
+          });
 
-      if (error) {
-        console.error('Error logging user action:', error);
+          if (error) {
+            console.error('Error logging user action:', error);
+          }
+        })());
+      } else {
+        // Regular execution for environments without EdgeRuntime
+        const { error } = await supabase.from('user_statistics').insert({
+          user_id: userId,
+          action_type: actionType,
+          law_name: lawName,
+          article_number: articleNumber
+        });
+
+        if (error) {
+          console.error('Error logging user action:', error);
+        }
       }
     } else {
       console.log('User not authenticated, skipping action logging');
@@ -91,25 +110,57 @@ function mapRawArticle(dbRow: any): Article {
   };
 }
 
+// Cache for articles to avoid redundant API calls
+const articlesCache: Record<string, { timestamp: number, data: Article[] }> = {};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
+
 export const fetchLawArticles = async (
-  lawDisplayName: string
-): Promise<Article[]> => {
+  lawDisplayName: string,
+  page: number = 0,
+  pageSize: number = 20
+): Promise<{articles: Article[], totalCount: number}> => {
   const tableName = getTableName(lawDisplayName);
   if (!tableName) {
     console.error(`Lei inválida: "${lawDisplayName}"`);
     throw new Error(`Lei inválida: "${lawDisplayName}"`);
   }
 
-  let selectCols = "*";
+  // Check cache first
+  const cacheKey = `${lawDisplayName}-${page}-${pageSize}`;
+  const cachedData = articlesCache[cacheKey];
+  const now = Date.now();
   
-  console.log(`Buscando artigos da tabela: ${tableName}`);
-  await logUserAction('search', lawDisplayName);
+  if (cachedData && (now - cachedData.timestamp) < CACHE_TTL) {
+    console.log(`Using cached data for ${cacheKey}`);
+    return { 
+      articles: cachedData.data,
+      totalCount: cachedData.data.length // We'll update this when we implement pagination fully
+    };
+  }
+
+  // Select only essential columns for initial load
+  let selectCols = "*";
+  const offset = page * pageSize;
+  
+  console.log(`Buscando artigos da tabela: ${tableName}, página ${page}, tamanho ${pageSize}`);
+  
+  // Log user action in background to not block the main flow
+  logUserAction('search', lawDisplayName);
 
   try {
+    // Get total count first
+    const countResult = await supabase
+      .from(tableName as any)
+      .select('id', { count: 'exact', head: true });
+
+    const totalCount = countResult.count || 0;
+
+    // Then get the paginated data
     const { data, error } = await supabase
       .from(tableName as any)
       .select(selectCols)
-      .order('id', { ascending: true }); // Add explicit ordering by ID
+      .range(offset, offset + pageSize - 1)
+      .order('id', { ascending: true });
 
     if (error) {
       console.error("Erro ao buscar artigos:", error);
@@ -117,11 +168,19 @@ export const fetchLawArticles = async (
     }
     
     if (!data) {
-      return [];
+      return { articles: [], totalCount: 0 };
     }
 
-    // Faz o mapeamento para o tipo Article
-    return (data as any[]).map(mapRawArticle);
+    // Map the raw data to the Article interface
+    const articles = (data as any[]).map(mapRawArticle);
+    
+    // Save to cache
+    articlesCache[cacheKey] = {
+      timestamp: now,
+      data: articles
+    };
+
+    return { articles, totalCount };
   } catch (error) {
     console.error("Erro ao buscar artigos:", error);
     throw new Error("Falha ao carregar artigos");

@@ -18,6 +18,8 @@ interface ArticleListProps {
   loadingExplanation: boolean;
   selectedArticle: Article | null;
   showChat: boolean;
+  loadingRef?: React.MutableRefObject<HTMLDivElement | null>;
+  hasMore?: boolean;
   onExplainArticle: (article: Article, type: 'technical' | 'formal') => void;
   onAskQuestion: (article: Article) => void;
   onCloseChat: () => void;
@@ -34,6 +36,8 @@ const ArticleList = ({
   loadingExplanation,
   selectedArticle,
   showChat,
+  loadingRef,
+  hasMore,
   onExplainArticle,
   onAskQuestion,
   onCloseChat,
@@ -56,19 +60,13 @@ const ArticleList = ({
     setIsNarratingExplanation(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 text-primary-300 animate-spin" />
-      </div>
-    );
-  }
-
-  if (filteredArticles.length === 0) {
+  if (filteredArticles.length === 0 && !isLoading) {
     return (
       <div className="text-center py-8 neomorph">
         <p className="text-gray-400">
-          Nenhum artigo encontrado com o termo "{searchTerm}".
+          {searchTerm 
+            ? `Nenhum artigo encontrado com o termo "${searchTerm}".`
+            : "Nenhum artigo disponível para esta lei."}
         </p>
       </div>
     );
@@ -78,7 +76,7 @@ const ArticleList = ({
     <div>
       {filteredArticles.map((article, index) => (
         <ArticleCard
-          key={index}
+          key={`${article.id}-${index}`}
           articleNumber={article.numero}
           content={article.conteudo}
           example={article.exemplo1}
@@ -87,6 +85,16 @@ const ArticleList = ({
           onAskQuestion={() => onAskQuestion(article)}
         />
       ))}
+      
+      {/* Loading indicator for infinite scroll */}
+      {(hasMore || isLoading) && (
+        <div
+          ref={loadingRef}
+          className="flex justify-center items-center py-6"
+        >
+          <Loader2 className="h-8 w-8 text-primary-300 animate-spin" />
+        </div>
+      )}
       
       {showExplanation && selectedArticle && (
         <AIExplanation

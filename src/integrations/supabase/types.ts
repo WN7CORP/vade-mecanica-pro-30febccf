@@ -151,23 +151,26 @@ export type Database = {
       }
       codigo_civil: {
         Row: {
-          conteudo: string | null
-          created_at: string
+          artigo: string | null
           exemplo: string | null
+          "explicacao formal": string
+          "explicacao tecnica": string | null
           id: number
           numero: string | null
         }
         Insert: {
-          conteudo?: string | null
-          created_at?: string
+          artigo?: string | null
           exemplo?: string | null
+          "explicacao formal": string
+          "explicacao tecnica"?: string | null
           id?: number
           numero?: string | null
         }
         Update: {
-          conteudo?: string | null
-          created_at?: string
+          artigo?: string | null
           exemplo?: string | null
+          "explicacao formal"?: string
+          "explicacao tecnica"?: string | null
           id?: number
           numero?: string | null
         }
