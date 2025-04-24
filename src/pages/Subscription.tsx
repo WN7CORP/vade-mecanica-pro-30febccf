@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,9 +60,7 @@ export default function Subscription() {
       toast.success("Assinatura realizada com sucesso!", {
         description: "Agradecemos a confiança em nossos serviços."
       });
-      // Remove query params
       navigate("/subscription", { replace: true });
-      // Force a subscription check
       checkSubscription();
     } else if (canceled === "true") {
       toast.error("Processo de assinatura cancelado", {
@@ -77,7 +74,6 @@ export default function Subscription() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Fetch plans
         const { data: plansData, error: plansError } = await supabase
           .from("subscription_plans")
           .select("*");
@@ -118,12 +114,11 @@ export default function Subscription() {
           price: Number(plan.price),
           interval: plan.interval,
           features: parseFeatures(plan.features),
-          is_popular: Boolean(plan.is_popular) || false
+          is_popular: Boolean(plan.is_popular || false)
         })) || [];
         
         setPlans(formattedPlans);
 
-        // Check subscription
         await checkSubscription();
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -135,7 +130,6 @@ export default function Subscription() {
 
     fetchData();
 
-    // Set up polling to check subscription status periodically
     const intervalId = setInterval(checkSubscription, 15000);
 
     return () => {
@@ -253,7 +247,7 @@ export default function Subscription() {
             interval={plan.interval}
             features={plan.features || []}
             isCurrentPlan={subscriptionStatus?.plan?.id === plan.id}
-            isPopular={plan.is_popular}
+            isPopular={Boolean(plan.is_popular)}
           />
         ))}
       </div>
@@ -310,4 +304,3 @@ export default function Subscription() {
     </div>
   );
 }
-

@@ -63,7 +63,8 @@ export function SubscriptionPlans() {
           interval: plan.interval,
           features: Array.isArray(plan.features) ? plan.features : 
                    typeof plan.features === 'string' ? JSON.parse(plan.features) : [],
-          is_popular: Boolean(plan.is_popular) || false
+          // Safely handle is_popular which might not exist in the database schema
+          is_popular: Boolean(plan.is_popular || false)
         })) || [];
 
         setPlans(formattedPlans);
@@ -153,11 +154,10 @@ export function SubscriptionPlans() {
             interval={plan.interval}
             features={plan.features || []}
             isCurrentPlan={subscriptionStatus?.subscription_tier === plan.name}
-            isPopular={plan.is_popular}
+            isPopular={Boolean(plan.is_popular)}
           />
         ))}
       </div>
     </div>
   );
 }
-
