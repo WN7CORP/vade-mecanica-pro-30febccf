@@ -18,7 +18,7 @@ export interface Notification {
 }
 
 export function useNotifications() {
-  const queryClient = useQueryClient(); // This was missing or incorrectly defined
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const { data: notifications = [] } = useQuery({
