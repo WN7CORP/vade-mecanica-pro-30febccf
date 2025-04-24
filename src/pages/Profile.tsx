@@ -76,8 +76,8 @@ const Profile = () => {
       queryClient.invalidateQueries({ queryKey: ['rankings'] });
       queryClient.invalidateQueries({ queryKey: ['user-rank', userId] });
       
-      toast({
-        title: "Bem-vindo(a) de volta!",
+      // Updated toast method to use Sonner's syntax
+      toast.success("Bem-vindo(a) de volta!", {
         description: "Você ganhou +20 pontos por acessar hoje!",
       });
       
