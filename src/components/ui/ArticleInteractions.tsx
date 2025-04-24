@@ -1,8 +1,9 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { MessageCircle, BookOpen, Bookmark, Volume2, MessageSquareMore, PenLine, BarChart2, Scale, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
+import { motion } from "framer-motion";
 
 interface ArticleInteractionsProps {
   articleNumber: string;
@@ -30,109 +31,194 @@ const ArticleInteractions = ({
 }: ArticleInteractionsProps) => {
   const [showExplanationOptions, setShowExplanationOptions] = useState(false);
   const navigate = useNavigate();
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  
+  const buttonVariants = {
+    initial: { scale: 1 },
+    hover: { scale: 1.05 },
+    tap: { scale: 0.95 }
+  };
+  
+  const explainPopupVariants = {
+    hidden: { opacity: 0, y: 10, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { 
+        duration: 0.2,
+        ease: "easeOut"
+      }
+    }
+  };
+  
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const staggerItem = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0 }
+  };
   
   return (
-    <div className="mt-6 flex justify-center pt-3 animate-fade-in">
-      <div className="flex items-center flex-wrap justify-center space-x-2 space-y-2">
-        
+    <motion.div 
+      className="mt-6 flex justify-center pt-3"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+    >
+      <motion.div 
+        className="flex items-center flex-wrap justify-center gap-2"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+      >
         {/* Narração */}
-        <button 
-          className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+        <motion.button 
+          className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
           onClick={() => onStartNarration('article')}
+          variants={staggerItem}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          ref={(el) => (buttonRefs.current[0] = el)}
         >
           <Volume2 size={16} />
           <span className="text-xs">Narrar</span>
-        </button>
+        </motion.button>
           
         {/* Explicação */}
         <div className="relative">
-          <button 
-            className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+          <motion.button 
+            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
             onClick={() => setShowExplanationOptions(!showExplanationOptions)}
+            variants={staggerItem}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            ref={(el) => (buttonRefs.current[1] = el)}
           >
             <MessageCircle size={16} />
             <span className="text-xs">Explicar</span>
-          </button>
+          </motion.button>
           
           {showExplanationOptions && (
-            <div className="absolute top-full left-0 mt-2 bg-background/95 backdrop-blur border border-border rounded-lg shadow-lg p-2 z-20 animate-fade-in-fast min-w-[150px]">
-              <button 
+            <motion.div 
+              className="absolute top-full left-0 mt-2 bg-background/95 backdrop-blur border border-border rounded-lg shadow-lg p-2 z-20 min-w-[150px]"
+              variants={explainPopupVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              <motion.button 
                 className="w-full text-left px-3 py-2 rounded hover:bg-primary/10 text-gray-300 text-sm flex items-center gap-2 transition-colors"
                 onClick={() => {
                   onExplain('technical');
                   setShowExplanationOptions(false);
                 }}
+                whileHover={{ backgroundColor: "rgba(155, 135, 245, 0.2)" }}
+                whileTap={{ scale: 0.98 }}
               >
                 <BookOpen size={14} />
                 <span>Técnica</span>
-              </button>
+              </motion.button>
               
-              <button 
+              <motion.button 
                 className="w-full text-left px-3 py-2 rounded hover:bg-primary/10 text-gray-300 text-sm flex items-center gap-2 transition-colors"
                 onClick={() => {
                   onExplain('formal');
                   setShowExplanationOptions(false);
                 }}
+                whileHover={{ backgroundColor: "rgba(155, 135, 245, 0.2)" }}
+                whileTap={{ scale: 0.98 }}
               >
                 <BarChart2 size={14} />
                 <span>Formal</span>
-              </button>
+              </motion.button>
               
-              <button 
+              <motion.button 
                 className="w-full text-left px-3 py-2 rounded hover:bg-primary/10 text-gray-300 text-sm flex items-center gap-2 transition-colors"
                 onClick={() => {
                   navigate(`/duvidas?article=${articleNumber}&content=${encodeURIComponent(typeof content === 'string' ? content : JSON.stringify(content))}`);
                   setShowExplanationOptions(false);
                 }}
+                whileHover={{ backgroundColor: "rgba(155, 135, 245, 0.2)" }}
+                whileTap={{ scale: 0.98 }}
               >
                 <MessageSquareMore size={14} />
                 <span>Personalizada</span>
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           )}
         </div>
           
         {/* Adicionar anotação */}
-        <button 
-          className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+        <motion.button 
+          className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
           onClick={onAddComment}
+          variants={staggerItem}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          ref={(el) => (buttonRefs.current[2] = el)}
         >
           <PenLine size={16} />
           <span className="text-xs">Anotar</span>
-        </button>
+        </motion.button>
         
         {/* Favorito */}
-        <button 
-          className={`shadow-button px-3 py-2 ${isFavorite ? 'bg-primary/30 text-primary-foreground' : 'bg-primary/10 text-primary'} text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95`}
+        <motion.button 
+          className={`article-button shadow-button px-3 py-2 ${isFavorite ? 'bg-primary/30 text-primary-foreground' : 'bg-primary/10 text-primary'} text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30`}
           onClick={onToggleFavorite}
+          variants={staggerItem}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ scale: isFavorite ? 1.05 : 1 }}
+          animate={{ 
+            scale: isFavorite ? [1, 1.2, 1] : 1,
+            transition: { duration: isFavorite ? 0.3 : 0 }
+          }}
+          ref={(el) => (buttonRefs.current[3] = el)}
         >
           <Bookmark size={16} fill={isFavorite ? "currentColor" : "none"} />
           <span className="text-xs">{isFavorite ? "Favoritado" : "Favoritar"}</span>
-        </button>
+        </motion.button>
 
         {/* Comparar (novo) */}
         {onCompare && (
-          <button 
-            className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+          <motion.button 
+            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
             onClick={onCompare}
+            variants={staggerItem}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            ref={(el) => (buttonRefs.current[4] = el)}
           >
             <Scale size={16} />
             <span className="text-xs">Comparar</span>
-          </button>
+          </motion.button>
         )}
 
         {/* Modo de estudo (novo) */}
         {onStudyMode && (
-          <button 
-            className="shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30 active:scale-95"
+          <motion.button 
+            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
             onClick={onStudyMode}
+            variants={staggerItem}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            ref={(el) => (buttonRefs.current[5] = el)}
           >
             <GraduationCap size={16} />
             <span className="text-xs">Estudar</span>
-          </button>
+          </motion.button>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
