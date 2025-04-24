@@ -29,17 +29,30 @@ export function useFlashcardsProgress(theme?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as FlashcardProgress[];
+      
+      // Transform the data to ensure it matches the FlashcardProgress interface
+      return (data || []).map(item => ({
+        id: item.id,
+        flashcard_id: item.flashcard_id,
+        viewed_count: item.viewed_count || 0,
+        correct_count: item.correct_count || 0,
+        last_viewed: item.last_viewed || new Date().toISOString(),
+        proficiency_level: item.proficiency_level || 0,
+        streak: item.streak || 0,
+        theme: item.theme || ''
+      })) as FlashcardProgress[];
     }
   });
 
   const updateProgress = useMutation({
     mutationFn: async ({ 
       flashcardId, 
-      correct 
+      correct,
+      theme: cardTheme 
     }: { 
       flashcardId: string; 
-      correct: boolean 
+      correct: boolean;
+      theme?: string;
     }) => {
       const { data: existing } = await supabase
         .from('user_flashcard_progress')
@@ -53,13 +66,28 @@ export function useFlashcardsProgress(theme?: string) {
           .update({
             viewed_count: existing.viewed_count + 1,
             correct_count: existing.correct_count + (correct ? 1 : 0),
-            streak: correct ? existing.streak + 1 : 0,
+            streak: (existing.streak || 0) + (correct ? 1 : 0),
             proficiency_level: correct 
-              ? Math.min(existing.proficiency_level + 1, 5)
-              : Math.max(existing.proficiency_level - 1, 0),
+              ? Math.min((existing.proficiency_level || 0) + 1, 5)
+              : Math.max((existing.proficiency_level || 0) - 1, 0),
             last_viewed: new Date().toISOString()
           })
           .eq('id', existing.id);
+
+        if (error) throw error;
+      } else {
+        // Create a new progress entry if none exists
+        const { error } = await supabase
+          .from('user_flashcard_progress')
+          .insert({
+            flashcard_id: flashcardId,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            viewed_count: 1,
+            correct_count: correct ? 1 : 0,
+            streak: correct ? 1 : 0,
+            proficiency_level: correct ? 1 : 0,
+            theme: cardTheme || theme || null
+          });
 
         if (error) throw error;
       }
