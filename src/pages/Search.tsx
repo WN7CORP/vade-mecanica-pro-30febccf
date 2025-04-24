@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -128,6 +127,7 @@ const Search = () => {
     debounce(async (term: string, law: string) => {
       if (term.length < 2 || !law) {
         setSearchPreviews([]);
+        setShowPreviews(false);
         return;
       }
       
@@ -140,7 +140,7 @@ const Search = () => {
         if (article && article.numero) {
           previews.push({
             article: article.numero,
-            content: article.conteudo.substring(0, 100) + "...",
+            content: article.conteudo,
             lawName: law,
             previewType: 'article'
           });
@@ -154,7 +154,7 @@ const Search = () => {
             if (!previews.some(p => p.article === result.numero)) {
               previews.push({
                 article: result.numero,
-                content: result.conteudo.substring(0, 100) + "...",
+                content: result.conteudo,
                 lawName: law,
                 previewType: 'term'
               });
@@ -163,10 +163,11 @@ const Search = () => {
         }
         
         setSearchPreviews(previews);
-        setShowPreviews(previews.length > 0 && isFocused);
+        setShowPreviews(previews.length > 0);
       } catch (error) {
         console.error("Erro na busca prévia:", error);
         setSearchPreviews([]);
+        setShowPreviews(false);
       }
     }, 300)
   ).current;
@@ -190,8 +191,8 @@ const Search = () => {
   };
   
   const handlePreviewClick = (preview: SearchPreview) => {
-    setInputValue(preview.article || preview.content.substring(0, 20));
-    handleSearch(preview.article || preview.content.substring(0, 20));
+    setInputValue(preview.article || "");
+    handleSearch(preview.article || "");
     setShowPreviews(false);
   };
   
@@ -261,29 +262,10 @@ const Search = () => {
             onFocus={handleSearchFocus}
             onBlur={handleSearchBlur}
             ref={searchInputRef}
+            searchPreviews={searchPreviews}
+            showPreviews={showPreviews}
+            onPreviewClick={handlePreviewClick}
           />
-          
-          {/* Previews de busca */}
-          {showPreviews && searchPreviews.length > 0 && (
-            <div className="absolute z-50 left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto animate-fade-in">
-              {searchPreviews.map((preview, index) => (
-                <div 
-                  key={index}
-                  className="p-3 border-b border-border hover:bg-accent/20 cursor-pointer transition-colors"
-                  onClick={() => handlePreviewClick(preview)}
-                >
-                  <div className="flex items-center gap-2">
-                    <BookOpen size={16} className="text-primary-300" />
-                    <div className="text-sm text-primary-100">
-                      {preview.previewType === 'article' ? 'Artigo' : 'Contém'} {preview.article && `${preview.article} - `} 
-                      <span className="text-gray-400">{preview.lawName}</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1 line-clamp-1">{preview.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
         
         {/* Seletor de lei */}
