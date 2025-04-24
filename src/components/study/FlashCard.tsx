@@ -4,6 +4,7 @@ import { ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight, BookOpen, HelpCircle, 
 import { motion, AnimatePresence } from "framer-motion";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { toast } from "@/hooks/use-toast";
+
 interface FlashCardProps {
   question: string;
   answer: string;
@@ -15,6 +16,7 @@ interface FlashCardProps {
   hasNext: boolean;
   hasPrevious: boolean;
 }
+
 const FlashCard = ({
   question,
   answer,
@@ -24,11 +26,13 @@ const FlashCard = ({
   onPrevious,
   onRate,
   hasNext,
-  hasPrevious
-}: FlashCardProps) => {
+  hasPrevious,
+  theme
+}: FlashCardProps & { theme?: string }) => {
   const [showExplanation, setShowExplanation] = useState(false);
   const [hasRated, setHasRated] = useState(false);
   const [fontSize, setFontSize] = useState(16);
+
   const handleRate = (correct: boolean) => {
     onRate(correct);
     setHasRated(true);
@@ -38,41 +42,38 @@ const FlashCard = ({
       variant: correct ? "default" : "destructive"
     });
   };
+
   const handleNext = () => {
     onNext();
     setShowExplanation(false);
     setHasRated(false);
   };
+
   const handlePrevious = () => {
     onPrevious();
     setShowExplanation(false);
     setHasRated(false);
   };
-  return <div className="w-full max-w-md mx-auto">
-      <motion.div initial={{
-      opacity: 0,
-      y: 10
-    }} animate={{
-      opacity: 1,
-      y: 0
-    }} transition={{
-      duration: 0.3,
-      ease: "easeOut"
-    }}>
+
+  return (
+    <div className="w-full max-w-md mx-auto">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: "easeOut" }}>
         <div className="neomorph p-5 min-h-[250px] flex flex-col">
+          {theme && (
+            <div className="mb-4 text-sm text-primary-300 font-medium">
+              Tema: {theme}
+            </div>
+          )}
+          
           <div className="flex flex-col justify-between flex-1 space-y-4">
             <div className="py-0 my-0 mx-0 px-0">
               <h3 className="text-md font-semibold text-primary-100 mb-2">Questão</h3>
-              <p className="text-white mb-4" style={{
-              fontSize: `${fontSize}px`
-            }}>{question}</p>
+              <p className="text-white mb-4" style={{ fontSize: `${fontSize}px` }}>{question}</p>
               
               <div className="h-px w-full bg-gray-700/30 my-3"></div>
               
               <h3 className="text-md font-semibold text-primary-100 mb-2">Resposta</h3>
-              <p className="text-white" style={{
-              fontSize: `${fontSize}px`
-            }}>{answer}</p>
+              <p className="text-white" style={{ fontSize: `${fontSize}px` }}>{answer}</p>
             </div>
 
             {!showExplanation && explanation && <Button variant="outline" onClick={() => setShowExplanation(true)} className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2 mt-4">
@@ -80,20 +81,12 @@ const FlashCard = ({
                 Ver Explicação
               </Button>}
 
-            {showExplanation && explanation && <motion.div initial={{
-            opacity: 0,
-            y: 10
-          }} animate={{
-            opacity: 1,
-            y: 0
-          }} className="mt-4 p-3 rounded-md bg-primary-900/20 border border-primary-500/20">
+            {showExplanation && explanation && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-3 rounded-md bg-primary-900/20 border border-primary-500/20">
                 <h4 className="text-sm font-medium text-primary-300 mb-2 flex items-center gap-2">
                   <Info className="h-4 w-4" />
                   Explicação
                 </h4>
-                <p className="text-gray-200" style={{
-              fontSize: `${fontSize}px`
-            }}>{explanation}</p>
+                <p className="text-gray-200" style={{ fontSize: `${fontSize}px` }}>{explanation}</p>
                 <Button variant="ghost" size="sm" onClick={() => setShowExplanation(false)} className="mt-2">
                   Fechar
                 </Button>
@@ -113,16 +106,7 @@ const FlashCard = ({
                 </HoverCard>
               </div>}
             
-            {!hasRated && <motion.div className="flex justify-center gap-4 mt-4" initial={{
-            opacity: 0,
-            y: 10
-          }} animate={{
-            opacity: 1,
-            y: 0
-          }} transition={{
-            delay: 0.3,
-            duration: 0.3
-          }}>
+            {!hasRated && <motion.div className="flex justify-center gap-4 mt-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.3 }}>
                 <div className="flex items-center justify-center w-full gap-3">
                   <span className="text-sm text-gray-400">Como foi seu desempenho?</span>
                   <Button variant="outline" className="bg-red-500/20 text-red-300 hover:bg-red-500/30 hover:text-red-200" onClick={() => handleRate(false)}>
@@ -149,16 +133,7 @@ const FlashCard = ({
         </div>
       </motion.div>
 
-      <motion.div className="flex justify-between items-center mt-4" initial={{
-      opacity: 0,
-      y: 10
-    }} animate={{
-      opacity: 1,
-      y: 0
-    }} transition={{
-      delay: 0.2,
-      duration: 0.3
-    }}>
+      <motion.div className="flex justify-between items-center mt-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}>
         <Button variant="outline" onClick={handlePrevious} disabled={!hasPrevious} className="bg-primary/10 text-primary hover:bg-primary/20">
           <ChevronLeft className="mr-2 h-4 w-4" />
           Anterior
@@ -169,6 +144,8 @@ const FlashCard = ({
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       </motion.div>
-    </div>;
+    </div>
+  );
 };
+
 export default FlashCard;

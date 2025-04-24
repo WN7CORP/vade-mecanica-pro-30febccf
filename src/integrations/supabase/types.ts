@@ -1876,6 +1876,9 @@ export type Database = {
           flashcard_id: string
           id: string
           last_viewed: string | null
+          proficiency_level: number | null
+          streak: number | null
+          theme: string | null
           user_id: string
           viewed_count: number | null
         }
@@ -1885,6 +1888,9 @@ export type Database = {
           flashcard_id: string
           id?: string
           last_viewed?: string | null
+          proficiency_level?: number | null
+          streak?: number | null
+          theme?: string | null
           user_id: string
           viewed_count?: number | null
         }
@@ -1894,6 +1900,9 @@ export type Database = {
           flashcard_id?: string
           id?: string
           last_viewed?: string | null
+          proficiency_level?: number | null
+          streak?: number | null
+          theme?: string | null
           user_id?: string
           viewed_count?: number | null
         }
@@ -2047,6 +2056,72 @@ export type Database = {
           created_at?: string
           id?: string
           law_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_study_sessions: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          flashcards_correct: number | null
+          flashcards_viewed: number | null
+          id: string
+          started_at: string
+          theme: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          flashcards_correct?: number | null
+          flashcards_viewed?: number | null
+          id?: string
+          started_at?: string
+          theme?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          flashcards_correct?: number | null
+          flashcards_viewed?: number | null
+          id?: string
+          started_at?: string
+          theme?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_theme_preferences: {
+        Row: {
+          created_at: string
+          font_size: number | null
+          id: string
+          order_mode: string | null
+          selected_themes: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          font_size?: number | null
+          id?: string
+          order_mode?: string | null
+          selected_themes?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          font_size?: number | null
+          id?: string
+          order_mode?: string | null
+          selected_themes?: string[] | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
