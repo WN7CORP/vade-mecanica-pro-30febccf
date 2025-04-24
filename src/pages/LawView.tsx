@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -79,7 +80,7 @@ const LawView = () => {
           <div className="mb-4 text-sm text-gray-400">
             {searchTerm ? 
               `${filteredArticles.length} ${filteredArticles.length === 1 ? 'artigo encontrado' : 'artigos encontrados'}` : 
-              `Mostrando ${filteredArticles.length} de ${totalCount} artigos`
+              ``  // Removed the article count as requested
             }
           </div>
         )}
