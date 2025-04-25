@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,8 +13,10 @@ import { Article } from "@/services/lawService";
 import StudyMode from "@/pages/StudyMode";
 import LegalTimeline from "@/pages/LegalTimeline";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const LawTabbedView = () => {
+  const navigate = useNavigate();
   const {
     lawName
   } = useParams<{
@@ -78,6 +81,11 @@ const LawTabbedView = () => {
         setShowComparison(true);
       }
     }
+  };
+
+  // Add onStudyMode method to navigate to study mode
+  const onStudyMode = () => {
+    navigate(`/study/${lawName}`);
   };
 
   return (
@@ -173,3 +181,4 @@ const LawTabbedView = () => {
 };
 
 export default LawTabbedView;
+
