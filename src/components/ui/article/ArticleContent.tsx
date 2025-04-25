@@ -18,10 +18,21 @@ const ArticleContent = ({
   articleNumber,
   centerContent = false
 }: ArticleContentProps) => {
-  // Convert content to string if it's an object
-  const contentText = typeof content === 'string' 
-    ? content 
-    : (content?.artigo || content?.conteudo || JSON.stringify(content));
+  // Extract text content from either string or object
+  const getTextContent = (data: string | { [key: string]: any }): string => {
+    if (typeof data === 'string') return data;
+    
+    // Try to extract content from common field names
+    if (data.artigo) return data.artigo;
+    if (data.conteudo) return data.conteudo;
+    if (data.content) return data.content;
+    
+    // Fallback to JSON string
+    return JSON.stringify(data);
+  };
+  
+  // Get the content text
+  const contentText = getTextContent(content);
   
   const renderContent = () => {
     return contentText.split('\n').map((line, i) => {

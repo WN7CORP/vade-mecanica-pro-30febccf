@@ -51,10 +51,21 @@ const ArticleCard = ({
   const [hasCompareSelection, setHasCompareSelection] = useState(false);
   const { logUserActivity } = useUserActivity(userId);
   
-  // Updated: Safely convert content to string
+  // Updated: Safely convert content and example to string
   const safeContent = typeof content === 'string' ? content : JSON.stringify(content);
   const safeExample = typeof example === 'string' ? example : JSON.stringify(example);
   const hasExample = safeExample && safeExample !== '""' && safeExample !== '{}';
+
+  // Extract readable content from object if needed
+  const getReadableContent = (data: string | { [key: string]: any }): string => {
+    if (typeof data === 'string') return data;
+    
+    // Try to extract content from common fields
+    return data.artigo || data.conteudo || data.content || JSON.stringify(data);
+  };
+
+  // Get the content to display
+  const displayContent = typeof content === 'object' ? getReadableContent(content) : safeContent;
 
   useEffect(() => {
     if (globalFontSize) {
@@ -86,8 +97,8 @@ const ArticleCard = ({
   
   const copyArticle = () => {
     const textToCopy = (articleNumber && articleNumber !== "0")
-      ? `Art. ${articleNumber}. ${safeContent}`
-      : safeContent;
+      ? `Art. ${articleNumber}. ${displayContent}`
+      : displayContent;
     navigator.clipboard.writeText(textToCopy)
       .then(() => {
         setShowCopyToast(true);
@@ -120,6 +131,30 @@ const ArticleCard = ({
     } catch (error) {
       console.error("Erro ao gerenciar favoritos:", error);
     }
+  };
+
+  const getExplanationFromContent = (
+    content: any, 
+    example: any, 
+    possibleKeys: string[]
+  ): string | null => {
+    if (typeof content === 'object' && content !== null) {
+      for (const key of possibleKeys) {
+        if (key in content && content[key]) {
+          return typeof content[key] === 'string' ? content[key] : JSON.stringify(content[key]);
+        }
+      }
+    }
+    
+    if (typeof example === 'object' && example !== null) {
+      for (const key of possibleKeys) {
+        if (key in example && example[key]) {
+          return typeof example[key] === 'string' ? example[key] : JSON.stringify(example[key]);
+        }
+      }
+    }
+    
+    return null;
   };
 
   const handleExplain = (type: 'technical' | 'formal') => {
@@ -171,30 +206,6 @@ const ArticleCard = ({
       logUserActivity('explain', lawName, articleNumber);
     }
   };
-  
-  const getExplanationFromContent = (
-    content: any, 
-    example: any, 
-    possibleKeys: string[]
-  ): string | null => {
-    if (typeof content === 'object' && content !== null) {
-      for (const key of possibleKeys) {
-        if (key in content && content[key]) {
-          return typeof content[key] === 'string' ? content[key] : JSON.stringify(content[key]);
-        }
-      }
-    }
-    
-    if (typeof example === 'object' && example !== null) {
-      for (const key of possibleKeys) {
-        if (key in example && example[key]) {
-          return typeof example[key] === 'string' ? example[key] : JSON.stringify(example[key]);
-        }
-      }
-    }
-    
-    return null;
-  };
 
   const handleShowExample = () => {
     setShowExample(true);
@@ -221,10 +232,11 @@ const ArticleCard = ({
     }
     
     if (contentType === 'article') {
-      setReadingContent({ text: safeContent, title: 'Artigo' });
+      setReadingContent({ text: displayContent, title: 'Artigo' });
       if (userId) logUserActivity('narrate', lawName, articleNumber);
     } else if (contentType === 'example') {
-      setReadingContent({ text: safeExample, title: 'Exemplo' });
+      const exampleText = typeof example === 'object' ? getReadableContent(example) : safeExample;
+      setReadingContent({ text: exampleText, title: 'Exemplo' });
     } else if (contentType === 'explanation' && customExplanation) {
       setReadingContent({ 
         text: customExplanation, 
@@ -327,7 +339,7 @@ const ArticleCard = ({
         isOpen={showNotes}
         onClose={() => setShowNotes(false)}
         articleNumber={articleNumber}
-        articleContent={safeContent}
+        articleContent={displayContent}
         lawName={lawName}
       />
 
@@ -337,7 +349,7 @@ const ArticleCard = ({
             className="mb-4 whitespace-pre-wrap transition-all duration-200 text-left text-white"
             style={{ fontSize: `${fontSize + 2}px` }}
           >
-            {safeContent}
+            {displayContent}
           </p>
         </div>
       )}
