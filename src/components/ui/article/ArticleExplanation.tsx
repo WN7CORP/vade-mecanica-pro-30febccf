@@ -26,7 +26,7 @@ export const ArticleExplanation = ({
       {isOpen && (
         <>
           <motion.div
-            className="fixed inset-0 bg-background/90 backdrop-blur-lg z-[9998]"
+            className="fixed inset-0 bg-background/90 backdrop-blur-md z-[9998]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

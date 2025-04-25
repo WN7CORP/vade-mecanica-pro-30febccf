@@ -35,18 +35,25 @@ const checkForExplanation = (content: any, type: 'technical' | 'formal'): string
     return null;
   }
 
-  // Try different possible column names
+  // Try different possible column names with correct spacing
   const possibleKeys = type === 'technical' 
-    ? ['explicacao_tecnica', 'explicacao tecnica', 'explicacao-tecnica'] 
-    : ['explicacao_formal', 'explicacao formal', 'explicacao-formal'];
+    ? ['explicacao tecnica', 'explicacao_tecnica', 'explicacao-tecnica'] 
+    : ['explicacao formal', 'explicacao_formal', 'explicacao-formal'];
 
+  // First try direct access with space in column name
+  const spaceKey = type === 'technical' ? 'explicacao tecnica' : 'explicacao formal';
+  if (content[spaceKey]) {
+    return content[spaceKey];
+  }
+
+  // Then try other variations
   for (const key of possibleKeys) {
     if (key in content && content[key]) {
       return content[key];
     }
   }
 
-  // If the content has nested properties, try to find the explanation there
+  // If content has nested properties, try to find the explanation there
   for (const prop in content) {
     if (typeof content[prop] === 'object') {
       const nestedResult = checkForExplanation(content[prop], type);
