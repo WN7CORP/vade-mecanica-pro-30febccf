@@ -1,8 +1,7 @@
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Atualizar para a chave da API fornecida pelo usuário
-const API_KEY = "AIzaSyBto9zJDNJCvz76qz56oeMPOBfHhxjPTKA";
+// Atualizar a chave da API para uma chave válida
+const API_KEY = "AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0";
 
 // Inicializar a API do Gemini
 const genAI = new GoogleGenerativeAI(API_KEY);
@@ -38,8 +37,8 @@ const checkForExplanation = (content: any, type: 'technical' | 'formal'): string
 
   // Try different possible column names
   const possibleKeys = type === 'technical' 
-    ? ['explicacao_tecnica', 'explicacao tecnica', 'explicacao-tecnica', 'explicacao', 'explicacaoTecnica'] 
-    : ['explicacao_formal', 'explicacao formal', 'explicacao-formal', 'explicacaoFormal'];
+    ? ['explicacao_tecnica', 'explicacao tecnica', 'explicacao-tecnica'] 
+    : ['explicacao_formal', 'explicacao formal', 'explicacao-formal'];
 
   for (const key of possibleKeys) {
     if (key in content && content[key]) {
@@ -70,18 +69,17 @@ export const generateArticleExplanation = async (
     console.log("Iniciando geração de explicação...");
     console.log(`Tipo: ${type}, Lei: ${lawName}, Artigo: ${articleNumber}`);
     
-    // Handle when content is an object and check all possible field names
-    let content: string;
-    
+    // Handle when content is an object
+    const content = typeof articleContent === 'object' 
+      ? articleContent.conteudo || articleContent.artigo
+      : articleContent;
+
+    // Check for existing explanation in the content
     if (typeof articleContent === 'object') {
-      content = articleContent.conteudo || 
-                articleContent.artigo || 
-                articleContent.texto || 
-                (typeof articleContent === 'string' ? articleContent : JSON.stringify(articleContent));
-                
-      // Check for existing explanation in the content with expanded key possibilities
-      const existingExplanation = checkForExplanation(articleContent, type);
-      
+      const existingExplanation = type === 'technical' 
+        ? articleContent['explicacao_tecnica'] || articleContent['explicacao tecnica']
+        : articleContent['explicacao_formal'] || articleContent['explicacao formal'];
+
       if (existingExplanation) {
         console.log("Usando explicação existente do banco de dados");
         return {
@@ -90,8 +88,6 @@ export const generateArticleExplanation = async (
           examples: [existingExplanation]
         };
       }
-    } else {
-      content = articleContent;
     }
 
     const prompt = `
