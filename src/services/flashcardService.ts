@@ -28,11 +28,12 @@ export const generateFlashcardsForArticle = async (
     return existingFlashcards as LawFlashcard[];
   }
 
-  // Initialize Gemini AI
-  const genAI = new GoogleGenerativeAI(
-    Deno.env.get('GOOGLE_API_KEY') ?? 
-    'AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0'
-  );
+  // Initialize Gemini AI with API key
+  // Use environment variable or fallback to a default for development
+  const apiKey = process.env.GOOGLE_API_KEY || 
+    'AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0';
+  
+  const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
   // Prompt for generating flashcards
