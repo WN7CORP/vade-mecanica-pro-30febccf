@@ -83,8 +83,8 @@ const LawTabbedView = () => {
     }
   };
 
-  // Add onStudyMode method to navigate to study mode
-  const onStudyMode = () => {
+  // Method to navigate to study mode
+  const handleStudyMode = () => {
     navigate(`/study/${lawName}`);
   };
 
@@ -151,7 +151,7 @@ const LawTabbedView = () => {
             onCloseExplanation={() => setShowExplanation(false)}
             onAddToComparison={handleAddToComparison}
             globalFontSize={globalFontSize}
-            onStudyMode={onStudyMode}
+            onStudyMode={handleStudyMode}
           />
         </TabsContent>
 
@@ -181,4 +181,3 @@ const LawTabbedView = () => {
 };
 
 export default LawTabbedView;
-
