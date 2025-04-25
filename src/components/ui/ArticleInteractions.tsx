@@ -3,6 +3,7 @@ import { MessageCircle, BookOpen, Bookmark, Volume2, PenLine, FileText } from "l
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArticleExplanation } from "./article/ArticleExplanation";
+
 interface ArticleInteractionsProps {
   articleNumber: string;
   content: string | {
@@ -17,10 +18,11 @@ interface ArticleInteractionsProps {
   onShowExample?: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  onCompare?: () => void; // Added missing prop
-  onStudyMode?: () => void; // Added missing prop
-  hasCompareSelection?: boolean; // Added missing prop
+  onCompare?: () => void;
+  onStudyMode?: () => void;
+  hasCompareSelection?: boolean;
 }
+
 const ArticleInteractions = ({
   articleNumber,
   content,
@@ -38,6 +40,7 @@ const ArticleInteractions = ({
   const [showExplanationMenu, setShowExplanationMenu] = useState(false);
   const isMobile = useIsMobile();
   const hasExample = example && example !== "" && example !== "{}" && example !== "null";
+
   const buttonVariants = {
     initial: {
       scale: 1
@@ -49,6 +52,7 @@ const ArticleInteractions = ({
       scale: 0.95
     }
   };
+
   return <motion.div className="mt-6 flex justify-center pt-3" initial={{
     opacity: 0,
     y: 20
@@ -63,8 +67,6 @@ const ArticleInteractions = ({
           <Volume2 size={16} />
           <span className="text-xs">Narrar</span>
         </motion.button>
-
-        
 
         {hasExample && <motion.button className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30" onClick={onShowExample} variants={buttonVariants} whileHover="hover" whileTap="tap">
             <FileText size={16} />
@@ -86,10 +88,22 @@ const ArticleInteractions = ({
             <span className="text-xs">Comparar</span>
           </motion.button>}
         
-        {onStudyMode}
+        {onStudyMode && (
+          <motion.button 
+            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
+            onClick={onStudyMode}
+            variants={buttonVariants}
+            whileHover="hover" 
+            whileTap="tap"
+          >
+            <BookOpen size={16} />
+            <span className="text-xs">Modo Estudo</span>
+          </motion.button>
+        )}
       </div>
 
       <ArticleExplanation isOpen={showExplanationMenu} onClose={() => setShowExplanationMenu(false)} onExplain={onExplain} articleNumber={articleNumber} content={content} />
     </motion.div>;
 };
+
 export default ArticleInteractions;
