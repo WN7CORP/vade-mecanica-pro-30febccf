@@ -1,6 +1,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { fetchLawArticles, searchByTerm, Article, normalizeArticleNumber } from "@/services/lawService";
+import { 
+  fetchLawArticles, 
+  searchByTerm, 
+  Article, 
+  normalizeArticleNumber,
+  isNumberSearch
+} from "@/services/lawService";
 import { useToast } from "@/hooks/use-toast";
 
 // Cache object to store articles by law name
@@ -45,8 +51,9 @@ export const useLawArticles = (lawName: string | undefined) => {
 
       setArticles(currentArticles);
       
-      // If there's an active search, apply it
+      // Only apply search filter if there's an active search term
       if (searchTerm) {
+        console.log("Aplicando filtro de busca:", searchTerm);
         setFilteredArticles(searchResults);
       } else {
         setFilteredArticles(currentArticles);
@@ -72,7 +79,7 @@ export const useLawArticles = (lawName: string | undefined) => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading && !isSearching) {
+        if (entries[0].isIntersecting && hasMore && !isLoading && !isSearching && !searchTerm) {
           setPage((prev) => prev + 1);
         }
       },
@@ -84,12 +91,13 @@ export const useLawArticles = (lawName: string | undefined) => {
     }
 
     return () => observer.disconnect();
-  }, [hasMore, isLoading, isSearching]);
+  }, [hasMore, isLoading, isSearching, searchTerm]);
 
   // Handle initial load and law changes
   useEffect(() => {
     setPage(1);
     setSearchTerm("");
+    setSearchResults([]);
     loadArticles();
   }, [lawName]);
 
@@ -113,14 +121,20 @@ export const useLawArticles = (lawName: string | undefined) => {
     setIsSearching(true);
     
     try {
+      console.log("Executando busca por:", term, "em:", lawName);
+      
       // First, try local search in already loaded articles for instant feedback
-      const localResults = articles.filter(
-        (article) =>
-          (article.numero &&
-            article.numero.toLowerCase().includes(term.toLowerCase())) ||
-          (article.conteudo &&
-            article.conteudo.toLowerCase().includes(term.toLowerCase()))
-      );
+      // Correctly checking if the term is in the "numero" column
+      const localResults = articles.filter(article => {
+        const articleNumberMatch = article.numero && 
+          normalizeArticleNumber(article.numero)
+            .includes(normalizeArticleNumber(term));
+            
+        const contentMatch = article.conteudo && 
+          article.conteudo.toLowerCase().includes(term.toLowerCase());
+          
+        return articleNumberMatch || contentMatch;
+      });
       
       // Update UI immediately with local results
       setSearchResults(localResults);
@@ -130,11 +144,33 @@ export const useLawArticles = (lawName: string | undefined) => {
       
       // Then fetch more comprehensive results from the database
       const serverResults = await searchByTerm(decodeURIComponent(lawName), term);
-      console.log("Server search results:", serverResults);
+      console.log("Resultados da busca no servidor:", serverResults);
       
       if (serverResults.length > 0) {
-        setSearchResults(serverResults);
-        setFilteredArticles(serverResults);
+        // Sort results - prioritize exact matches on article number
+        const sortedResults = serverResults.sort((a, b) => {
+          // If exactly matches article.numero, put it first
+          if (isNumberSearch(term)) {
+            // Exact number match gets highest priority
+            if (normalizeArticleNumber(a.numero) === normalizeArticleNumber(term)) return -1;
+            if (normalizeArticleNumber(b.numero) === normalizeArticleNumber(term)) return 1;
+            
+            // Starts with gets second highest
+            if (normalizeArticleNumber(a.numero).startsWith(normalizeArticleNumber(term))) return -1;
+            if (normalizeArticleNumber(b.numero).startsWith(normalizeArticleNumber(term))) return 1;
+          }
+          return 0;
+        });
+        
+        setSearchResults(sortedResults);
+        setFilteredArticles(sortedResults);
+      } else if (localResults.length === 0) {
+        // If no results, show a toast
+        toast({
+          title: "Nenhum resultado",
+          description: `Nenhum artigo encontrado para "${term}"`,
+          variant: "default",
+        });
       }
     } catch (error) {
       console.error("Erro na busca:", error);

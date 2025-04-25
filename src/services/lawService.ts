@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export type { 
@@ -23,7 +24,9 @@ export {
 } from "@/integrations/supabase/laws";
 
 // Enhanced number normalization function
-export const enhancedNormalizeArticleNumber = (number: string): string => {
+export const enhancedNormalizeArticleNumber = (number: string | null | undefined): string => {
+  if (!number) return '';
+  
   // Remove anything that's not a number
   const normalized = number.replace(/[^0-9]/g, '');
   
@@ -40,7 +43,9 @@ export const isAdvancedNumberPattern = (term: string): boolean => {
 };
 
 // New function to check advanced number patterns
-export const matchesAdvancedPattern = (articleNumber: string, searchTerm: string): boolean => {
+export const matchesAdvancedPattern = (articleNumber: string | null | undefined, searchTerm: string): boolean => {
+  if (!articleNumber) return false;
+  
   // Import needed functions from laws.ts
   const { normalizeArticleNumber } = require("@/integrations/supabase/laws");
   
@@ -60,9 +65,11 @@ export const matchesAdvancedPattern = (articleNumber: string, searchTerm: string
 
 // Calculate search relevance score
 export const calculateRelevanceScore = (
-  articleNumber: string, 
+  articleNumber: string | null | undefined, 
   searchTerm: string
 ): number => {
+  if (!articleNumber) return 0;
+  
   // Import needed functions from laws.ts
   const { normalizeArticleNumber } = require("@/integrations/supabase/laws");
   

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +8,7 @@ import { useAIExplanation } from "@/hooks/use-ai-explanation";
 import SearchBar from "@/components/ui/SearchBar";
 import { FloatingSearchButton } from "@/components/ui/FloatingSearchButton";
 import ComparisonTool from "@/components/law/ComparisonTool";
-import { Article, searchAcrossAllLaws } from "@/services/lawService";
+import { Article, searchAcrossAllLaws, normalizeArticleNumber } from "@/services/lawService";
 import StudyMode from "@/pages/StudyMode";
 import LegalTimeline from "@/pages/LegalTimeline";
 import { Button } from "@/components/ui/button";
@@ -73,9 +72,10 @@ const LawTabbedView = () => {
 
   useEffect(() => {
     if (highlightedArticleNumber && filteredArticles.length > 0 && !isLoading) {
-      const articleToHighlight = filteredArticles.find(
-        article => article.numero === highlightedArticleNumber
-      );
+      const articleToHighlight = filteredArticles.find(article => {
+        if (!article.numero) return false;
+        return normalizeArticleNumber(article.numero) === normalizeArticleNumber(highlightedArticleNumber);
+      });
       
       if (articleToHighlight) {
         setTimeout(() => {
@@ -86,7 +86,7 @@ const LawTabbedView = () => {
             });
             
             toast({
-              title: `Artigo ${highlightedArticleNumber}`,
+              title: `Artigo ${articleToHighlight.numero}`,
               description: "Artigo encontrado e destacado",
               duration: 3000
             });
@@ -96,7 +96,6 @@ const LawTabbedView = () => {
     }
   }, [highlightedArticleNumber, filteredArticles, isLoading]);
   
-  // Fetch search previews when input changes
   useEffect(() => {
     const loadSearchPreviews = async () => {
       if (debouncedSearchInput.length < 2) {
@@ -105,9 +104,9 @@ const LawTabbedView = () => {
       }
       
       try {
-        // Search across all laws for previews
+        console.log("Buscando previews para:", debouncedSearchInput);
         const results = await searchAcrossAllLaws(debouncedSearchInput);
-        console.log("Search across laws results:", results);
+        console.log("Resultados da busca em todas as leis:", results);
         
         const formattedPreviews = results.flatMap(lawResult => 
           lawResult.articles.map(article => ({
@@ -165,15 +164,22 @@ const LawTabbedView = () => {
   const handleArticleSearch = (term: string) => {
     if (!term) return;
     
+    console.log("Iniciando busca por artigo:", term);
     handleSearch(term);
     
-    // Try to find an exact match by article number
     setTimeout(() => {
-      const article = filteredArticles.find(article => 
-        article.numero.toLowerCase() === term.toLowerCase()
-      );
+      if (!filteredArticles || filteredArticles.length === 0) {
+        console.log("Nenhum artigo encontrado para:", term);
+        return;
+      }
+      
+      const article = filteredArticles.find(article => {
+        if (!article.numero) return false;
+        return normalizeArticleNumber(article.numero) === normalizeArticleNumber(term);
+      });
 
       if (article) {
+        console.log("Artigo encontrado:", article.numero);
         const articleElement = document.getElementById(`article-${article.numero}`);
         if (articleElement) {
           articleElement.scrollIntoView({ 
@@ -200,10 +206,8 @@ const LawTabbedView = () => {
     if (!preview.article) return;
 
     if (preview.lawName !== lawName) {
-      // Navigate to the selected law and highlight the article
       navigate(`/lei/${encodeURIComponent(preview.lawName)}?artigo=${preview.article}`);
     } else {
-      // Stay on the same page but scroll to the article
       handleArticleSearch(preview.article);
     }
   };
@@ -310,19 +314,16 @@ const LawTabbedView = () => {
         </Button>
       )}
 
-      {/* Adding styles for article highlighting */}
-      <style>
-        {`
-          @keyframes highlight {
-            0% { background-color: rgba(var(--primary), 0.2); }
-            100% { background-color: transparent; }
-          }
-          
-          .highlight-article {
-            animation: highlight 2s ease-out;
-          }
-        `}
-      </style>
+      <style jsx global>{`
+        @keyframes highlight {
+          0% { background-color: rgba(var(--primary), 0.2); }
+          100% { background-color: transparent; }
+        }
+        
+        .highlight-article {
+          animation: highlight 2s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
