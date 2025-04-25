@@ -1,6 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { toast } from "@/hooks/use-toast";
 
 export interface LawFlashcard {
   id?: string;
