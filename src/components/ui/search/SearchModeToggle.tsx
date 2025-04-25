@@ -1,6 +1,6 @@
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Text123, FileText } from "lucide-react";
+import { Text, FileText } from "lucide-react";
 
 interface SearchModeToggleProps {
   mode: 'number' | 'exact';
@@ -20,7 +20,7 @@ const SearchModeToggle = ({ mode, onModeChange }: SearchModeToggleProps) => {
         aria-label="Search by number"
         className="data-[state=on]:bg-primary/20 data-[state=on]:text-primary-foreground"
       >
-        <Text123 className="h-4 w-4 mr-1" />
+        <Text className="h-4 w-4 mr-1" />
         <span className="text-xs">Número</span>
       </ToggleGroupItem>
       

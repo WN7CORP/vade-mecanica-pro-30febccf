@@ -50,12 +50,6 @@ const ArticleCard = ({
   const [hasCompareSelection, setHasCompareSelection] = useState(false);
   const { logUserActivity } = useUserActivity(userId);
   
-  const safeContent = typeof content === 'string' ? content : 
-    (content ? typeof content === 'object' ? getReadableContent(content) : String(content) : "");
-  const safeExample = typeof example === 'string' ? example : 
-    (example ? typeof example === 'object' ? getReadableContent(example) : String(example) : "");
-  const hasExample = safeExample && safeExample !== '""' && safeExample !== '{}';
-
   const getReadableContent = (data: string | { [key: string]: any }): string => {
     if (data === null || data === undefined) return "";
     if (typeof data === 'string') return data;
@@ -72,6 +66,12 @@ const ArticleCard = ({
       return "Erro ao processar conteúdo";
     }
   };
+
+  const safeContent = typeof content === 'string' ? content : 
+    (content ? typeof content === 'object' ? getReadableContent(content) : String(content) : "");
+  const safeExample = typeof example === 'string' ? example : 
+    (example ? typeof example === 'object' ? getReadableContent(example) : String(example) : "");
+  const hasExample = safeExample && safeExample !== '""' && safeExample !== '{}';
 
   const displayContent = typeof content === 'object' ? getReadableContent(content) : safeContent;
 
