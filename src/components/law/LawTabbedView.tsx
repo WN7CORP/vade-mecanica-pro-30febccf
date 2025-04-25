@@ -314,16 +314,18 @@ const LawTabbedView = () => {
         </Button>
       )}
 
-      <style jsx global>{`
-        @keyframes highlight {
-          0% { background-color: rgba(var(--primary), 0.2); }
-          100% { background-color: transparent; }
-        }
-        
-        .highlight-article {
-          animation: highlight 2s ease-out;
-        }
-      `}</style>
+      <style>
+        {`
+          @keyframes highlight {
+            0% { background-color: rgba(var(--primary), 0.2); }
+            100% { background-color: transparent; }
+          }
+          
+          .highlight-article {
+            animation: highlight 2s ease-out;
+          }
+        `}
+      </style>
     </div>
   );
 };
