@@ -1,224 +1,340 @@
-import { useState } from "react";
-import ArticleFavoriteCollections from "@/components/law/ArticleFavoriteCollections";
-import ArticleNavigation from "@/components/law/ArticleNavigation";
-import ArticleContent from "@/components/ui/article/ArticleContent";
-import ArticleHeader from "@/components/ui/article/ArticleHeader";
-import { ArticleExplanation } from "@/components/ui/article/ArticleExplanation";
-import { ArticleCustomExplanation } from "@/components/ui/article/ArticleCustomExplanation";
-import { ArticleExample } from "@/components/ui/article/ArticleExample";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { Button } from "./button";
+import { Plus } from "lucide-react";
+import ArticleHeader from "./article/ArticleHeader";
+import ArticleContent from "./article/ArticleContent";
+import { ArticleActions } from "./article/ArticleActions";
+import { ArticleExample } from "./article/ArticleExample";
+import { ArticleCustomExplanation } from "./article/ArticleCustomExplanation";
+import CopyToast from "./article/CopyToast";
+import VoiceNarration from "./VoiceNarration";
+import ArticleNotes from "./ArticleNotes";
+import { useUserActivity } from "@/hooks/useUserActivity";
+import { supabase } from "@/integrations/supabase/client";
+import ArticleInteractions from "./ArticleInteractions";
 
 interface ArticleCardProps {
-  article?: {
-    id: number;
-    numero: string;
-    conteudo: string;
-    exemplo?: string;
-    explicacao_tecnica?: string;
-    explicacao_formal?: string;
-    titulo?: string;
-  };
-  articleNumber?: string;
-  content?: string;
-  example?: string;
-  lawName?: string;
+  articleNumber: string;
+  content?: string | { [key: string]: any };
+  example?: string | { [key: string]: any };
+  lawName: string;
   onExplainRequest?: (type: 'technical' | 'formal') => void;
   onAskQuestion?: () => void;
   onAddToComparison?: () => void;
   onStudyMode?: () => void;
   globalFontSize?: number;
-  onPrevious?: () => void;
-  onNext?: () => void;
-  hasHistory?: boolean;
 }
 
 const ArticleCard = ({
-  article,
   articleNumber,
-  content,
-  example,
-  lawName = "Lei não especificada",
+  content = "",
+  example = "",
+  lawName,
   onExplainRequest,
   onAskQuestion,
   onAddToComparison,
   onStudyMode,
-  globalFontSize,
-  onPrevious,
-  onNext,
-  hasHistory
+  globalFontSize
 }: ArticleCardProps) => {
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [fontSize, setFontSize] = useState(globalFontSize || 16);
-  const [showExplanationMenu, setShowExplanationMenu] = useState(false);
+  const [fontSize, setFontSize] = useState(16);
+  const [isReading, setIsReading] = useState(false);
+  const [readingContent, setReadingContent] = useState<{text: string, title: string}>({text: '', title: ''});
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>();
+  const [showExample, setShowExample] = useState(false);
   const [customExplanation, setCustomExplanation] = useState<string | null>(null);
   const [showCustomExplanation, setShowCustomExplanation] = useState(false);
   const [explanationTitle, setExplanationTitle] = useState("");
-  const [showExample, setShowExample] = useState(false);
-  const { toast } = useToast();
+  const [hasCompareSelection, setHasCompareSelection] = useState(false);
+  const { logUserActivity } = useUserActivity(userId);
+  
+  const safeContent = typeof content === 'string' ? content : JSON.stringify(content);
+  const safeExample = typeof example === 'string' ? example : JSON.stringify(example);
+  const hasExample = safeExample && safeExample !== '""' && safeExample !== '{}';
 
-  const numero = article?.numero || articleNumber;
-  const conteudo = article?.conteudo || content;
-  const exemplo = article?.exemplo || example;
+  useEffect(() => {
+    if (globalFontSize) {
+      setFontSize(globalFontSize);
+    }
+  }, [globalFontSize]);
 
-  const handleFavorite = (collectionName: string) => {
-    console.log(`Adding to collection: ${collectionName}`);
-    setIsFavorited(true);
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+      }
+    };
+    checkAuth();
+  }, []);
+  
+  useEffect(() => {
+    try {
+      const favoritedArticles = localStorage.getItem('favoritedArticles');
+      if (favoritedArticles) {
+        const favorites = JSON.parse(favoritedArticles);
+        setIsFavorite(!!favorites[`${lawName}-${articleNumber}`]);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar status de favorito:", error);
+    }
+  }, [lawName, articleNumber]);
+  
+  const copyArticle = () => {
+    const textToCopy = (articleNumber && articleNumber !== "0")
+      ? `Art. ${articleNumber}. ${safeContent}`
+      : safeContent;
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        setShowCopyToast(true);
+        setTimeout(() => setShowCopyToast(false), 2000);
+        if (userId) logUserActivity('copy', lawName, articleNumber);
+      })
+      .catch(err => console.error("Erro ao copiar: ", err));
+  };
+  
+  const toggleFavorite = () => {
+    try {
+      const newStatus = !isFavorite;
+      setIsFavorite(newStatus);
+      const favoritedArticles = localStorage.getItem('favoritedArticles');
+      const favorites = favoritedArticles ? JSON.parse(favoritedArticles) : {};
+      const key = `${lawName}-${articleNumber}`;
+      if (newStatus) {
+        favorites[key] = { 
+          articleNumber, 
+          content: safeContent, 
+          example: safeExample, 
+          lawName,
+          timestamp: new Date().toISOString()
+        };
+        if (userId) logUserActivity('favorite', lawName, articleNumber);
+      } else {
+        delete favorites[key];
+      }
+      localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
+    } catch (error) {
+      console.error("Erro ao gerenciar favoritos:", error);
+    }
   };
 
   const handleExplain = (type: 'technical' | 'formal') => {
-    if (onExplainRequest) {
-      onExplainRequest(type);
-      return;
-    }
-
-    setShowExplanationMenu(false);
-    let explanation = null;
+    setShowCustomExplanation(false);
+    setCustomExplanation(null);
+    setExplanationTitle("");
     let title = "";
-
-    if (type === 'technical') {
-      explanation = article?.explicacao_tecnica;
+    
+    if (type === "technical") {
       title = "Explicação Técnica";
+      
+      const technicalExplanation = getExplanationFromContent(content, example, [
+        'explicacao_tecnica',
+        'explicacao tecnica'
+      ]);
+      
+      if (technicalExplanation) {
+        setCustomExplanation(technicalExplanation);
+      } else {
+        if (onExplainRequest) {
+          onExplainRequest(type);
+          return;
+        }
+        setCustomExplanation("Não há explicação técnica disponível para este artigo.");
+      }
     } else {
-      explanation = article?.explicacao_formal;
       title = "Explicação Formal";
+      
+      const formalExplanation = getExplanationFromContent(content, example, [
+        'explicacao_formal',
+        'explicacao formal'
+      ]);
+      
+      if (formalExplanation) {
+        setCustomExplanation(formalExplanation);
+      } else {
+        if (onExplainRequest) {
+          onExplainRequest(type);
+          return;
+        }
+        setCustomExplanation("Não há explicação formal disponível para este artigo.");
+      }
     }
-
-    if (explanation) {
-      setCustomExplanation(explanation);
-      setExplanationTitle(title);
-      setShowCustomExplanation(true);
-    } else {
-      toast({
-        title: "Explicação não disponível",
-        description: `Não há explicação ${type === 'technical' ? 'técnica' : 'formal'} disponível para este artigo.`,
-        variant: "destructive",
-      });
+    
+    setExplanationTitle(title);
+    setShowCustomExplanation(true);
+    
+    if (userId) {
+      logUserActivity('explain', lawName, articleNumber);
     }
+  };
+  
+  const getExplanationFromContent = (
+    content: any, 
+    example: any, 
+    possibleKeys: string[]
+  ): string | null => {
+    if (typeof content === 'object' && content !== null) {
+      for (const key of possibleKeys) {
+        if (key in content && content[key]) {
+          return content[key];
+        }
+      }
+    }
+    
+    if (typeof example === 'object' && example !== null) {
+      for (const key of possibleKeys) {
+        if (key in example && example[key]) {
+          return example[key];
+        }
+      }
+    }
+    
+    return null;
   };
 
   const handleShowExample = () => {
-    if (exemplo) {
-      setShowExample(true);
-    } else {
-      toast({
-        title: "Exemplo não disponível",
-        description: "Não há exemplo disponível para este artigo.",
-        variant: "destructive",
+    setShowExample(true);
+    if (userId) logUserActivity('view_example', lawName, articleNumber);
+  };
+
+  const handleComment = () => {
+    setShowNotes(true);
+    if (userId) logUserActivity('note_view', lawName, articleNumber);
+  };
+  
+  const handleNarration = (contentType: 'article' | 'example' | 'explanation') => {
+    if (isReading) {
+      if ((contentType === 'article' && readingContent.title === 'Artigo') ||
+          (contentType === 'example' && readingContent.title === 'Exemplo') ||
+          (contentType === 'explanation' && readingContent.title.includes('Explicação'))) {
+        setIsReading(false);
+        if (window.currentAudio) {
+          window.currentAudio.pause();
+          window.currentAudio.currentTime = 0;
+        }
+        return;
+      }
+    }
+    
+    if (contentType === 'article') {
+      setReadingContent({ text: safeContent, title: 'Artigo' });
+      if (userId) logUserActivity('narrate', lawName, articleNumber);
+    } else if (contentType === 'example') {
+      setReadingContent({ text: safeExample, title: 'Exemplo' });
+    } else if (contentType === 'explanation' && customExplanation) {
+      setReadingContent({ 
+        text: customExplanation, 
+        title: `Narração: ${explanationTitle}` 
       });
+    }
+    setIsReading(true);
+  };
+
+  const handleCompare = () => {
+    if (onAddToComparison) {
+      setHasCompareSelection(true);
+      onAddToComparison();
     }
   };
 
-  const handleIncreaseFontSize = () => {
-    setFontSize(prev => Math.min(prev + 1, 24));
-  };
-
-  const handleDecreaseFontSize = () => {
-    setFontSize(prev => Math.max(prev - 1, 12));
-  };
-
-  if (!numero || !conteudo) {
-    console.error("ArticleCard: Missing required props numero or conteudo");
-    return null;
-  }
+  const shouldLeftAlign = articleNumber === "esquerda nas linhas";
+  const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
   return (
-    <div className="card-article mb-4 hover:shadow-lg transition-all duration-300 animate-fade-in relative">
+    <div className="card-article mb-4 hover:shadow-lg transition-all duration-300 animate-fade-in">
+      <CopyToast show={showCopyToast} />
+      
       <ArticleHeader
-        articleNumber={numero}
+        articleNumber={shouldCenterContent ? "" : articleNumber}
         lawName={lawName}
-        onCopy={() => console.log("Copy article")}
-        onToggleHighlight={() => console.log("Toggle highlight")}
+        onCopy={copyArticle}
+        onToggleHighlight={() => {}}
         showHighlightTools={false}
-        isFavorite={isFavorited}
-        onToggleFavorite={() => setIsFavorited(!isFavorited)}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
+      />
+      
+      <ArticleContent
+        content={safeContent}
+        fontSize={fontSize}
+        onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 1, 24))}
+        onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 1, 12))}
+        articleNumber={shouldCenterContent ? "" : articleNumber}
+        centerContent={shouldCenterContent}
       />
 
-      <ArticleContent 
-        content={conteudo} 
-        articleNumber={numero}
-        fontSize={fontSize}
-        onIncreaseFontSize={handleIncreaseFontSize}
-        onDecreaseFontSize={handleDecreaseFontSize}
-      />
+      {!showExample && hasExample && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            className="max-w-xs mx-auto mt-3 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95 animate-fade-in"
+            onClick={handleShowExample}
+          >
+            Ver Exemplo
+          </Button>
+        </div>
+      )}
+
+      {showExample && hasExample && (
+        <ArticleExample
+          example={safeExample}
+          onClose={() => setShowExample(false)}
+          onNarrate={() => handleNarration('example')}
+        />
+      )}
 
       {showCustomExplanation && customExplanation && (
         <ArticleCustomExplanation
           title={explanationTitle}
           explanation={customExplanation}
-          onNarrate={() => {}}
+          onNarrate={() => handleNarration('explanation')}
         />
       )}
 
-      {showExample && exemplo && (
-        <ArticleExample
-          example={exemplo}
-          onClose={() => setShowExample(false)}
-          onNarrate={() => {}}
+      {!shouldLeftAlign && (
+        <ArticleInteractions
+          articleNumber={articleNumber}
+          content={content}
+          example={example}
+          onExplain={handleExplain}
+          onAddComment={handleComment}
+          onStartNarration={() => handleNarration('article')}
+          onShowExample={safeExample ? handleShowExample : undefined}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
+          onCompare={onAddToComparison ? handleCompare : undefined}
+          onStudyMode={onStudyMode}
+          hasCompareSelection={hasCompareSelection}
         />
       )}
 
-      <ArticleExplanation
-        isOpen={showExplanationMenu}
-        onClose={() => setShowExplanationMenu(false)}
-        onExplain={handleExplain}
-        articleNumber={numero}
-        content={conteudo}
+      <VoiceNarration
+        text={readingContent.text}
+        title={readingContent.title}
+        isActive={isReading}
+        onComplete={() => setIsReading(false)}
+        onStop={() => setIsReading(false)}
       />
 
-      <div className="flex flex-wrap gap-2 justify-center mt-4">
-        {(article?.explicacao_tecnica || article?.explicacao_formal || onExplainRequest) && (
-          <button
-            onClick={() => setShowExplanationMenu(true)}
-            className="px-3 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors"
-          >
-            Explicar
-          </button>
-        )}
+      <ArticleNotes
+        isOpen={showNotes}
+        onClose={() => setShowNotes(false)}
+        articleNumber={articleNumber}
+        articleContent={safeContent}
+        lawName={lawName}
+      />
 
-        {exemplo && (
-          <button
-            onClick={handleShowExample}
-            className="px-3 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors"
+      {shouldLeftAlign && (
+        <div className="mt-6 mb-8 animate-fade-in">
+          <p
+            className="mb-4 whitespace-pre-wrap transition-all duration-200 text-left text-white"
+            style={{ fontSize: `${fontSize + 2}px` }}
           >
-            Ver Exemplo
-          </button>
-        )}
-
-        {onAskQuestion && (
-          <button
-            onClick={onAskQuestion}
-            className="px-3 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors"
-          >
-            Perguntar
-          </button>
-        )}
-
-        {onAddToComparison && (
-          <button
-            onClick={onAddToComparison}
-            className="px-3 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors"
-          >
-            Comparar
-          </button>
-        )}
-
-        {onStudyMode && (
-          <button
-            onClick={onStudyMode}
-            className="px-3 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors"
-          >
-            Estudar
-          </button>
-        )}
-      </div>
-
-      {(onPrevious || onNext) && (
-        <ArticleNavigation
-          currentArticleNumber={numero}
-          onPrevious={onPrevious || (() => {})}
-          onNext={onNext || (() => {})}
-          hasHistory={hasHistory}
-        />
+            {safeContent}
+          </p>
+        </div>
       )}
     </div>
   );
