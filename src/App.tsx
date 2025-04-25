@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +20,7 @@ import Profile from "./pages/Profile";
 import Community from "./pages/Community";
 import Admin from "./pages/Admin";
 import Subscription from "./pages/Subscription";
+import StudyMode from "./pages/StudyMode";
 import { useSessionTracking } from "./hooks/useSessionTracking";
 
 const queryClient = new QueryClient();
@@ -41,6 +43,7 @@ function AppWithProviders() {
         <Route path="/comunidade" element={<Community />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/subscription" element={<Subscription />} />
+        <Route path="/study/:lawName" element={<StudyMode />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <FloatingTimer
