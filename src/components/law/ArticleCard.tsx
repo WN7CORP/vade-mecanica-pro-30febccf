@@ -20,29 +20,39 @@ const ArticleCard = ({
   hasHistory
 }: ArticleCardProps) => {
   const [isFavorited, setIsFavorited] = useState(false);
+  const [fontSize, setFontSize] = useState(16); // Default font size
 
   const handleFavorite = (collectionName: string) => {
     console.log(`Adding to collection: ${collectionName}`);
     setIsFavorited(true);
   };
 
+  const handleIncreaseFontSize = () => {
+    setFontSize(prev => Math.min(prev + 1, 24)); // Max font size 24
+  };
+
+  const handleDecreaseFontSize = () => {
+    setFontSize(prev => Math.max(prev - 1, 12)); // Min font size 12
+  };
+
   return (
     <div className="card-article mb-4 hover:shadow-lg transition-all duration-300 animate-fade-in relative">
       <ArticleHeader
         articleNumber={article.numero}
-        content={article.conteudo}
-        rightSlot={
-          <ArticleFavoriteCollections
-            article={article}
-            onFavorite={handleFavorite}
-            isFavorited={isFavorited}
-          />
-        }
+        lawName={article.lei || "Lei não especificada"}
+        onCopy={() => console.log("Copy article")}
+        onToggleHighlight={() => console.log("Toggle highlight")}
+        showHighlightTools={false}
+        isFavorite={isFavorited}
+        onToggleFavorite={() => setIsFavorited(!isFavorited)}
       />
 
       <ArticleContent 
         content={article.conteudo} 
         articleNumber={article.numero}
+        fontSize={fontSize}
+        onIncreaseFontSize={handleIncreaseFontSize}
+        onDecreaseFontSize={handleDecreaseFontSize}
       />
 
       {(onPrevious || onNext) && (
