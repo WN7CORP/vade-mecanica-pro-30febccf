@@ -1,3 +1,4 @@
+
 import { Search, X, History } from "lucide-react";
 import { useState, useEffect, forwardRef, useMemo } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
@@ -6,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SearchModeToggle from "./search/SearchModeToggle";
-import { highlightSearchTerm, HighlightedPart } from "@/utils/textExpansion";
+import { highlightSearchTerm } from "@/utils/textExpansion";
 
 interface SearchPreview {
   article?: string;
@@ -17,7 +18,7 @@ interface SearchPreview {
 }
 
 interface SearchBarProps {
-  onSearch: (term: string, mode?: 'number' | 'exact') => void;
+  onSearch: (term: string, mode?: 'number') => void;
   initialValue?: string;
   placeholder?: string;
   onInputChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -27,14 +28,12 @@ interface SearchBarProps {
   showPreviews?: boolean;
   onPreviewClick?: (preview: SearchPreview) => void;
   showInstantResults?: boolean;
-  searchMode?: 'number' | 'exact';
-  onSearchModeChange?: (mode: 'number' | 'exact') => void;
 }
 
 const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({ 
   onSearch, 
   initialValue = "", 
-  placeholder = "Buscar artigo ou termo...",
+  placeholder = "Buscar artigo...",
   onInputChange,
   onFocus: propOnFocus,
   onBlur: propOnBlur,
@@ -42,12 +41,10 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   showPreviews = false,
   onPreviewClick,
   showInstantResults = false,
-  searchMode = 'number',
-  onSearchModeChange
 }, ref) => {
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
-  const [localSearchMode, setLocalSearchMode] = useState<'number' | 'exact'>(searchMode);
+  const [localSearchMode] = useState<'number'>('number');
   const isMobile = useIsMobile();
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -103,14 +100,6 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     const value = e.target.value;
     setSearchTerm(value);
     
-    if (value.length >= 2) {
-      console.log('Search pattern:', {
-        isNumber: /^\d+/.test(value),
-        term: value,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
     if (!value) {
       setShowHistory(true);
     } else {
@@ -141,14 +130,6 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
         propOnBlur();
       }
     }, 200);
-  };
-
-  const handleModeChange = (mode: 'number' | 'exact') => {
-    setLocalSearchMode(mode);
-    
-    if (onSearchModeChange) {
-      onSearchModeChange(mode);
-    }
   };
 
   const clearHistory = () => {
@@ -226,7 +207,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              placeholder={localSearchMode === 'number' ? "Digite o número do artigo..." : "Digite o texto exato..."}
+              placeholder="Digite o número do artigo..."
               className="flex-1 bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground"
               autoComplete="off"
               ref={ref}
@@ -245,7 +226,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
           
           <SearchModeToggle 
             mode={localSearchMode} 
-            onModeChange={handleModeChange} 
+            onModeChange={() => {}} 
           />
         </div>
       </motion.div>

@@ -4,6 +4,7 @@ import { MessageCircle, BookOpen, Bookmark, Volume2, PenLine, FileText } from "l
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArticleExplanation } from "./article/ArticleExplanation";
+import { toast } from "@/hooks/use-toast";
 
 interface ArticleInteractionsProps {
   articleNumber: string;
@@ -54,6 +55,23 @@ const ArticleInteractions = ({
     }
   };
 
+  const handleFavoriteClick = () => {
+    onToggleFavorite();
+    
+    // Show feedback toast when favoriting/unfavoriting
+    if (!isFavorite) {
+      toast({
+        description: "Artigo adicionado aos favoritos",
+        variant: "default"
+      });
+    } else {
+      toast({
+        description: "Artigo removido dos favoritos",
+        variant: "default"
+      });
+    }
+  };
+
   return <motion.div className="mt-6 flex justify-center pt-3" initial={{
     opacity: 0,
     y: 20
@@ -79,7 +97,13 @@ const ArticleInteractions = ({
           <span className="text-xs">Anotar</span>
         </motion.button>
 
-        <motion.button className={`article-button shadow-button px-3 py-2 ${isFavorite ? 'bg-primary/30 text-primary-foreground' : 'bg-primary/10 text-primary'} text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30`} onClick={onToggleFavorite} variants={buttonVariants} whileHover="hover" whileTap="tap">
+        <motion.button 
+          className={`article-button shadow-button px-3 py-2 ${isFavorite ? 'bg-primary/30 text-primary-foreground' : 'bg-primary/10 text-primary'} text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30`} 
+          onClick={handleFavoriteClick} 
+          variants={buttonVariants} 
+          whileHover="hover" 
+          whileTap="tap"
+        >
           <Bookmark size={16} fill={isFavorite ? "currentColor" : "none"} />
           <span className="text-xs">{isFavorite ? "Favoritado" : "Favoritar"}</span>
         </motion.button>

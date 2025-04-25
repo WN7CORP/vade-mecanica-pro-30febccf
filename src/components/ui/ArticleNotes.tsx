@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "./button";
 import { Textarea } from "./textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
-import { BookmarkPlus, Edit, Trash2, MessageSquareText, X } from "lucide-react";
+import { BookmarkPlus, Edit, Trash2, MessageSquareText, X, Italic, Bold, List } from "lucide-react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "./drawer";
 import { askAIQuestion } from "@/services/aiService";
 import { Badge } from "./badge";
@@ -11,6 +11,8 @@ import { toast } from "@/hooks/use-toast";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "./alert";
+import { debounce } from "lodash";
+import ReactMarkdown from 'react-markdown';
 
 interface ArticleNotesProps {
   isOpen: boolean;
@@ -39,8 +41,30 @@ const ArticleNotes = ({
   const { logUserActivity } = useUserActivity(userId);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const notesInputRef = useRef<HTMLTextAreaElement>(null);
   
   const storageKey = `article-notes-${articleNumber}-${lawName}`;
+
+  // Debounced save function to prevent excessive saving while typing
+  const debouncedSave = useRef(
+    debounce((content: string, topicsList: string[]) => {
+      try {
+        const dataToSave = {
+          notes: content,
+          topics: topicsList,
+          lastUpdated: new Date().toISOString()
+        };
+        localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+        
+        if (userId) {
+          logUserActivity('note', lawName, articleNumber);
+        }
+      } catch (error) {
+        console.error("Erro ao salvar anotações:", error);
+      }
+    }, 800)
+  ).current;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -66,6 +90,13 @@ const ArticleNotes = ({
       console.error("Erro ao carregar anotações:", error);
     }
   }, [storageKey]);
+
+  // Auto-save when notes or topics change while editing
+  useEffect(() => {
+    if (isEditing && notes) {
+      debouncedSave(notes, topics);
+    }
+  }, [notes, topics, isEditing, debouncedSave]);
 
   // Scroll para o topo quando o AI help for exibido
   useEffect(() => {
@@ -116,6 +147,9 @@ const ArticleNotes = ({
     const updatedTopics = [...topics];
     updatedTopics.splice(index, 1);
     setTopics(updatedTopics);
+
+    // Auto-save topics when removed
+    debouncedSave(notes, updatedTopics);
   };
 
   const handleAskAI = async () => {
@@ -129,7 +163,7 @@ const ArticleNotes = ({
 
     setLoading(true);
     try {
-      const question = `Estou estudando este artigo para ${studyPurpose}. Pode me ajudar a fazer uma anotação concisa e útil sobre ele?`;
+      const question = `Estou estudando este artigo para ${studyPurpose}. Pode me ajudar a fazer uma anotação concisa e útil sobre ele? Formate a resposta em markdown para facilitar a leitura.`;
       const response = await askAIQuestion(question, articleNumber, articleContent, lawName);
       setAiResponse(response);
     } catch (error) {
@@ -146,6 +180,7 @@ const ArticleNotes = ({
   const useAISuggestion = () => {
     setNotes(aiResponse);
     setShowAiHelp(false);
+    setIsEditing(true);
   };
   
   const handleDeleteNotes = () => {
@@ -170,9 +205,54 @@ const ArticleNotes = ({
     }
   };
 
+  const handleTextFormat = (format: 'bold' | 'italic' | 'list') => {
+    if (!notesInputRef.current) return;
+    
+    const textarea = notesInputRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    
+    let formattedText = '';
+    let cursorAdjustment = 0;
+    
+    switch (format) {
+      case 'bold':
+        formattedText = `**${selectedText}**`;
+        cursorAdjustment = 2;
+        break;
+      case 'italic':
+        formattedText = `*${selectedText}*`;
+        cursorAdjustment = 1;
+        break;
+      case 'list':
+        formattedText = selectedText
+          .split('\n')
+          .map(line => line.trim() ? `- ${line}` : line)
+          .join('\n');
+        break;
+    }
+    
+    const newText = 
+      textarea.value.substring(0, start) + 
+      formattedText + 
+      textarea.value.substring(end);
+    
+    setNotes(newText);
+    
+    // Restore focus and selection after state update
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + cursorAdjustment, 
+        start + formattedText.length - cursorAdjustment
+      );
+    }, 0);
+  };
+
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="max-h-[85vh] overflow-y-auto animate-slide-in">
+      <DrawerContent className="max-h-[85vh] overflow-y-auto animate-slide-in bg-gradient-to-b from-[#12141D] to-[#1A1F2C]">
         <DrawerHeader>
           <DrawerTitle className="flex items-center justify-between">
             <span className="text-primary-300">Anotações - Art. {articleNumber}</span>
@@ -210,7 +290,9 @@ const ArticleNotes = ({
           )}
 
           {showAiHelp && (
-            <Card className="mb-4 border-primary/20 animate-fade-in z-50" ref={aiHelpRef} style={{ position: 'relative', zIndex: 50 }}>
+            <Card className="mb-4 border-primary/20 animate-fade-in z-50 bg-[#1A1F2C]/80 shadow-lg" 
+                  ref={aiHelpRef} 
+                  style={{ position: 'relative', zIndex: 50 }}>
               <CardHeader>
                 <CardTitle className="text-sm text-primary-300">Assistente Jurídico IA</CardTitle>
               </CardHeader>
@@ -223,14 +305,16 @@ const ArticleNotes = ({
                     placeholder="Ex: para uma prova da OAB, para entender meus direitos..."
                     value={studyPurpose}
                     onChange={(e) => setStudyPurpose(e.target.value)}
-                    className="mt-2"
+                    className="mt-2 bg-[#12141D]/80 border-[#403E43]"
                   />
                 </div>
                 
                 {aiResponse && (
                   <div className="mt-4 p-3 bg-muted/40 rounded-md text-sm animate-fade-in">
                     <p className="mb-2 font-medium text-primary-300">Sugestão da IA:</p>
-                    <p className="whitespace-pre-wrap">{aiResponse}</p>
+                    <div className="whitespace-pre-wrap prose prose-invert prose-sm max-w-none">
+                      <ReactMarkdown>{aiResponse}</ReactMarkdown>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -280,7 +364,7 @@ const ArticleNotes = ({
                 onChange={(e) => setNewTopic(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addTopic()}
                 placeholder="Novo tópico..."
-                className="px-2 py-1 text-sm border rounded-md bg-background transition-all focus:ring-1 focus:ring-primary-300"
+                className="px-2 py-1 text-sm border rounded-md bg-[#12141D]/80 border-[#403E43] transition-all focus:ring-1 focus:ring-primary-300"
               />
               <Button 
                 variant="ghost" 
@@ -293,13 +377,66 @@ const ArticleNotes = ({
             </div>
           </div>
           
-          <Textarea
-            placeholder="Suas anotações sobre este artigo..."
-            className="min-h-[200px] mb-4 transition-all focus:ring-1 focus:ring-primary-300"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            disabled={!isEditing && notes.length > 0}
-          />
+          {isEditing || !notes ? (
+            <div className="mb-2">
+              {/* Formatting toolbar */}
+              {isEditing && (
+                <div className="flex items-center gap-2 mb-2 p-1 rounded-md bg-[#12141D]/60">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleTextFormat('bold')}
+                    className="h-8 px-2 hover:bg-primary/10 text-gray-300"
+                  >
+                    <Bold size={16} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleTextFormat('italic')}
+                    className="h-8 px-2 hover:bg-primary/10 text-gray-300"
+                  >
+                    <Italic size={16} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleTextFormat('list')}
+                    className="h-8 px-2 hover:bg-primary/10 text-gray-300"
+                  >
+                    <List size={16} />
+                  </Button>
+                  <div className="flex-1"></div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPreview(!preview)}
+                    className={`h-8 px-2 ${preview ? 'bg-primary/20 text-primary' : 'text-gray-300'}`}
+                  >
+                    Prévia
+                  </Button>
+                </div>
+              )}
+              
+              {preview ? (
+                <div className="min-h-[200px] p-3 border rounded-md border-[#403E43] bg-[#12141D]/80 mb-4 prose prose-invert prose-sm max-w-none">
+                  <ReactMarkdown>{notes}</ReactMarkdown>
+                </div>
+              ) : (
+                <Textarea
+                  ref={notesInputRef}
+                  placeholder="Suas anotações sobre este artigo..."
+                  className="min-h-[200px] mb-4 transition-all focus:ring-1 focus:ring-primary-300 bg-[#12141D]/80 border-[#403E43]"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              )}
+            </div>
+          ) : (
+            <div className="min-h-[200px] p-3 border rounded-md border-[#403E43] bg-[#12141D]/80 mb-4 prose prose-invert prose-sm max-w-none">
+              <ReactMarkdown>{notes}</ReactMarkdown>
+            </div>
+          )}
           
           <div className="flex flex-wrap gap-2 mb-6">
             {!isEditing && notes.length > 0 ? (

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "./button";
 import { Plus } from "lucide-react";
@@ -12,6 +13,7 @@ import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
 import ArticleInteractions from "./ArticleInteractions";
+import { toast } from "@/hooks/use-toast";
 
 interface ArticleCardProps {
   articleNumber: string;
@@ -91,13 +93,29 @@ const ArticleCard = ({
     checkAuth();
   }, []);
   
+  // Load favorite status when the component mounts or when lawName/articleNumber changes
   useEffect(() => {
     try {
-      const favoritedArticles = localStorage.getItem('favoritedArticles');
-      if (favoritedArticles) {
-        const favorites = JSON.parse(favoritedArticles);
-        setIsFavorite(!!favorites[`${lawName}-${articleNumber}`]);
-      }
+      const checkFavoriteStatus = () => {
+        const favoritedArticles = localStorage.getItem('favoritedArticles');
+        if (favoritedArticles) {
+          const favorites = JSON.parse(favoritedArticles);
+          const key = `${lawName}-${articleNumber}`;
+          setIsFavorite(!!favorites[key]);
+        }
+      };
+      
+      checkFavoriteStatus();
+      
+      // Add event listener for storage changes to update favorites in real-time across tabs
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'favoritedArticles') {
+          checkFavoriteStatus();
+        }
+      };
+      
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
     } catch (error) {
       console.error("Erro ao carregar status de favorito:", error);
     }
@@ -120,10 +138,15 @@ const ArticleCard = ({
     try {
       const newStatus = !isFavorite;
       setIsFavorite(newStatus);
+      
+      // Get current favorites from localStorage
       const favoritedArticles = localStorage.getItem('favoritedArticles');
       const favorites = favoritedArticles ? JSON.parse(favoritedArticles) : {};
+      
       const key = `${lawName}-${articleNumber}`;
+      
       if (newStatus) {
+        // Add to favorites
         favorites[key] = { 
           articleNumber, 
           content: safeContent, 
@@ -131,13 +154,27 @@ const ArticleCard = ({
           lawName,
           timestamp: new Date().toISOString()
         };
+        
         if (userId) logUserActivity('favorite', lawName, articleNumber);
       } else {
+        // Remove from favorites
         delete favorites[key];
       }
+      
+      // Save updated favorites back to localStorage
       localStorage.setItem('favoritedArticles', JSON.stringify(favorites));
+      
+      // Dispatch a custom event to notify other components
+      const event = new Event('favoritesUpdated');
+      window.dispatchEvent(event);
+      
     } catch (error) {
       console.error("Erro ao gerenciar favoritos:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar seus favoritos",
+        variant: "destructive"
+      });
     }
   };
 
