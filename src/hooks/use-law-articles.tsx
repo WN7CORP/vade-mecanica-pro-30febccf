@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   fetchLawArticles, 
@@ -108,7 +107,6 @@ export const useLawArticles = (lawName: string | undefined) => {
     }
   }, [page, loadArticles]);
 
-  // Enhanced search function that uses both local cache and database search
   const handleSearch = async (term: string) => {
     setSearchTerm(term);
     
@@ -123,12 +121,11 @@ export const useLawArticles = (lawName: string | undefined) => {
     try {
       console.log("Executando busca por:", term, "em:", lawName);
       
-      // First, try local search in already loaded articles for instant feedback
-      // Correctly checking if the term is in the "numero" column
+      // First, try local search in already loaded articles
+      const normalizedTerm = normalizeArticleNumber(term);
       const localResults = articles.filter(article => {
         const articleNumberMatch = article.numero && 
-          normalizeArticleNumber(article.numero)
-            .includes(normalizeArticleNumber(term));
+          normalizeArticleNumber(article.numero) === normalizedTerm;
             
         const contentMatch = article.conteudo && 
           article.conteudo.toLowerCase().includes(term.toLowerCase());
@@ -150,22 +147,15 @@ export const useLawArticles = (lawName: string | undefined) => {
         // Sort results - prioritize exact matches on article number
         const sortedResults = serverResults.sort((a, b) => {
           // If exactly matches article.numero, put it first
-          if (isNumberSearch(term)) {
-            // Exact number match gets highest priority
-            if (normalizeArticleNumber(a.numero) === normalizeArticleNumber(term)) return -1;
-            if (normalizeArticleNumber(b.numero) === normalizeArticleNumber(term)) return 1;
-            
-            // Starts with gets second highest
-            if (normalizeArticleNumber(a.numero).startsWith(normalizeArticleNumber(term))) return -1;
-            if (normalizeArticleNumber(b.numero).startsWith(normalizeArticleNumber(term))) return 1;
-          }
+          const normalizedSearch = normalizeArticleNumber(term);
+          if (normalizeArticleNumber(a.numero) === normalizedSearch) return -1;
+          if (normalizeArticleNumber(b.numero) === normalizedSearch) return 1;
           return 0;
         });
         
         setSearchResults(sortedResults);
         setFilteredArticles(sortedResults);
       } else if (localResults.length === 0) {
-        // If no results, show a toast
         toast({
           title: "Nenhum resultado",
           description: `Nenhum artigo encontrado para "${term}"`,

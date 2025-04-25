@@ -25,7 +25,7 @@ interface ArticleCardProps {
   globalFontSize?: number;
 }
 
-const ArticleCard = ({
+const ArticleCard = ({ 
   articleNumber,
   content = "",
   example = "",
@@ -34,7 +34,7 @@ const ArticleCard = ({
   onAskQuestion,
   onAddToComparison,
   onStudyMode,
-  globalFontSize
+  globalFontSize 
 }: ArticleCardProps) => {
   const [fontSize, setFontSize] = useState(16);
   const [isReading, setIsReading] = useState(false);
@@ -260,7 +260,7 @@ const ArticleCard = ({
       />
       
       <ArticleContent
-        content={safeContent}
+        content={content}
         fontSize={fontSize}
         onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 1, 24))}
         onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 1, 12))}

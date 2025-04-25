@@ -274,25 +274,28 @@ export type Database = {
       }
       codigo_tributario: {
         Row: {
-          conteudo: string | null
-          created_at: string
+          artigo: string | null
           exemplo: string | null
+          formal: string
           id: number
           numero: string | null
+          tecnica: string | null
         }
         Insert: {
-          conteudo?: string | null
-          created_at?: string
+          artigo?: string | null
           exemplo?: string | null
+          formal: string
           id?: number
           numero?: string | null
+          tecnica?: string | null
         }
         Update: {
-          conteudo?: string | null
-          created_at?: string
+          artigo?: string | null
           exemplo?: string | null
+          formal?: string
           id?: number
           numero?: string | null
+          tecnica?: string | null
         }
         Relationships: []
       }

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type { 
@@ -23,15 +22,18 @@ export {
   getLawCategory
 } from "@/integrations/supabase/laws";
 
-// Enhanced number normalization function
+// Enhanced number normalization function that handles article prefixes 
 export const enhancedNormalizeArticleNumber = (number: string | null | undefined): string => {
   if (!number) return '';
   
-  // Remove anything that's not a number
-  const normalized = number.replace(/[^0-9]/g, '');
+  // Remove prefixes like "art.", "artigo", etc.
+  const cleanNumber = number.toLowerCase()
+    .replace(/^art\.?\s*/i, '')
+    .replace(/^artigo\s*/i, '')
+    .replace(/º|o|°/g, '');
   
-  // If no numbers found, return empty string
-  if (!normalized) return '';
+  // Remove anything that's not a number
+  const normalized = cleanNumber.replace(/[^0-9]/g, '');
   
   return normalized;
 };
