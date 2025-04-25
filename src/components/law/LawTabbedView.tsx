@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import ArticleHistory from "./ArticleHistory";
+import { motion } from "framer-motion";
 
 const LawTabbedView = () => {
   const navigate = useNavigate();
@@ -30,6 +31,8 @@ const LawTabbedView = () => {
   const [showChat, setShowChat] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [globalFontSize, setGlobalFontSize] = useState(16);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const {
     filteredArticles,
@@ -113,15 +116,58 @@ const LawTabbedView = () => {
     navigate(`/study/${lawName}`);
   };
 
+  const handleSearch = (term: string) => {
+    if (!term) return;
+    
+    const article = filteredArticles.find(article => 
+      article.numero.toLowerCase() === term.toLowerCase() ||
+      article.conteudo.toLowerCase().includes(term.toLowerCase())
+    );
+
+    if (article) {
+      const articleElement = document.getElementById(`article-${article.numero}`);
+      if (articleElement) {
+        articleElement.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'center'
+        });
+        
+        articleElement.classList.add('highlight-article');
+        setTimeout(() => {
+          articleElement.classList.remove('highlight-article');
+        }, 2000);
+
+        toast({
+          title: `Artigo ${article.numero} encontrado`,
+          description: "Artigo encontrado e destacado",
+          duration: 3000
+        });
+      }
+    } else {
+      toast({
+        title: "Artigo não encontrado",
+        description: "Tente usar outro termo ou número",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className={`transition-all duration-300 ${showSearchBar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-lg mb-6"
+      >
         <SearchBar 
-          onSearch={handleSearch} 
-          initialValue={searchTerm} 
-          placeholder="Buscar artigo específico..."
+          onSearch={handleSearch}
+          initialValue={searchTerm}
+          placeholder="Buscar por número do artigo ou conteúdo..."
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          showInstantResults
         />
-      </div>
+      </motion.div>
 
       <Tabs defaultValue="articles" className="w-full">
         <TabsList className="w-full mb-4">
@@ -204,3 +250,14 @@ const LawTabbedView = () => {
 };
 
 export default LawTabbedView;
+
+<style jsx global>{`
+  @keyframes highlight {
+    0% { background-color: rgba(var(--primary), 0.2); }
+    100% { background-color: transparent; }
+  }
+  
+  .highlight-article {
+    animation: highlight 2s ease-out;
+  }
+`}</style>

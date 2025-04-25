@@ -24,6 +24,7 @@ interface SearchBarProps {
   searchPreviews?: SearchPreview[];
   showPreviews?: boolean;
   onPreviewClick?: (preview: SearchPreview) => void;
+  showInstantResults?: boolean;
 }
 
 const DEBOUNCE_MS = 150;
@@ -37,7 +38,8 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   onBlur: propOnBlur,
   searchPreviews = [],
   showPreviews = false,
-  onPreviewClick
+  onPreviewClick,
+  showInstantResults = false
 }, ref) => {
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
@@ -46,6 +48,16 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   useEffect(() => {
     setSearchTerm(initialValue);
   }, [initialValue]);
+
+  useEffect(() => {
+    if (showInstantResults && searchTerm.length >= 2) {
+      const timer = setTimeout(() => {
+        handleSearch();
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchTerm, showInstantResults]);
 
   const handleSearch = () => {
     if (searchTerm.trim()) {

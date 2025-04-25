@@ -243,7 +243,10 @@ const ArticleCard = ({
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
   return (
-    <div className="card-article mb-4 hover:shadow-lg transition-all duration-300 animate-fade-in">
+    <div 
+      id={`article-${articleNumber}`}
+      className="card-article mb-4 hover:shadow-lg transition-all duration-300 animate-fade-in"
+    >
       <CopyToast show={showCopyToast} />
       
       <ArticleHeader
