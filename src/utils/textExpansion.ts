@@ -1,4 +1,3 @@
-
 /**
  * Normalizes text by removing accents and converting to lowercase
  * @param text The text to normalize
@@ -78,4 +77,28 @@ export const highlightSearchTerm = (text: string, searchTerm: string): string | 
     console.error('Error highlighting text:', e);
     return text;
   }
+};
+
+/**
+ * Expands abbreviated or shortened text for better text-to-speech narration
+ * @param text Original text to expand
+ * @returns Expanded text with abbreviations and references fully written out
+ */
+export const expandText = (text: string): string => {
+  if (!text) return '';
+  
+  // Expand common legal abbreviations
+  let expandedText = text
+    .replace(/\bArt\./gi, 'Artigo')
+    .replace(/\b§/g, 'Parágrafo')
+    .replace(/\bn\./gi, 'número')
+    .replace(/\binciso\./gi, 'inciso')
+    .replace(/\balín\./gi, 'alínea')
+    .replace(/\bc\/c\b/gi, 'combinado com')
+    .replace(/\bc\./gi, 'com')
+    .replace(/\bparágrafo único\b/gi, 'Parágrafo único')
+    .replace(/\bCF\b/gi, 'Constituição Federal')
+    .replace(/\bCLT\b/gi, 'Consolidação das Leis do Trabalho');
+  
+  return expandedText;
 };
