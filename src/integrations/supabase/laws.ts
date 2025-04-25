@@ -65,6 +65,14 @@ function getTableName(displayName: string): string | null {
   return found?.table ?? null;
 }
 
+/** Busca a categoria (código ou estatuto) a partir do nome */
+function getLawCategory(displayName: string): 'codigo' | 'estatuto' | undefined {
+  const found = LAW_OPTIONS.find(
+    (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
+  );
+  return found?.category;
+}
+
 /** Logs a user action in the statistics table in background */
 async function logUserAction(
   actionType: 'search' | 'explain' | 'favorite' | 'note',
@@ -114,8 +122,8 @@ function mapRawArticle(dbRow: any): Article {
     numero: dbRow.numero,
     titulo: dbRow.titulo || undefined,
     conteudo: dbRow.artigo || dbRow.conteudo || "",
-    explicacao_tecnica: dbRow["explicacao tecnica"] || undefined,
-    explicacao_formal: dbRow["explicacao formal"] || undefined,
+    explicacao_tecnica: dbRow["explicacao tecnica"] || dbRow.explicacao_tecnica || undefined,
+    explicacao_formal: dbRow["explicacao formal"] || dbRow.explicacao_formal || undefined,
     exemplo1: dbRow.exemplo1 || undefined,
     exemplo2: dbRow.exemplo2 || undefined,
     created_at: dbRow.created_at
@@ -136,6 +144,14 @@ export const fetchLawArticles = async (
   }
 
   console.log(`Buscando todos os artigos da tabela: ${tableName}`);
+  
+  // Check cache first
+  if (articlesCache[lawDisplayName] && 
+      (Date.now() - articlesCache[lawDisplayName].timestamp) < CACHE_TTL) {
+    console.log(`Usando cache para ${lawDisplayName}`);
+    const cachedData = articlesCache[lawDisplayName].data;
+    return { articles: cachedData, totalCount: cachedData.length };
+  }
   
   // Log user action in background to not block the main flow
   logUserAction('search', lawDisplayName);
@@ -158,6 +174,12 @@ export const fetchLawArticles = async (
 
     // Map the raw data to the Article interface
     const articles = (data as any[]).map(mapRawArticle);
+    
+    // Update cache
+    articlesCache[lawDisplayName] = {
+      timestamp: Date.now(),
+      data: articles
+    };
     
     return { 
       articles,
@@ -204,6 +226,15 @@ export const searchArticle = async (
   return mapRawArticle(data);
 };
 
+/**
+ * Normaliza o texto para busca removendo acentos e fazendo lowercase
+ */
+function normalizeText(text: string): string {
+  return text.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
 export const searchByTerm = async (
   lawDisplayName: string,
   searchTerm: string
@@ -221,7 +252,26 @@ export const searchByTerm = async (
     selectCols = "id,numero,titulo,artigo,\"explicacao tecnica\",\"explicacao formal\",exemplo1,exemplo2,created_at";
   }
 
-  const term = searchTerm.toLowerCase();
+  // Normalize search term
+  const term = normalizeText(searchTerm);
+  
+  // Try to get articles from cache first
+  if (articlesCache[lawDisplayName] && 
+      (Date.now() - articlesCache[lawDisplayName].timestamp) < CACHE_TTL) {
+    
+    // Simple client-side search in cached data
+    const cachedResults = articlesCache[lawDisplayName].data.filter(article => {
+      const normalizedContent = normalizeText(article.conteudo);
+      const normalizedNumero = normalizeText(article.numero);
+      return normalizedContent.includes(term) || normalizedNumero.includes(term);
+    });
+    
+    if (cachedResults.length > 0) {
+      return cachedResults;
+    }
+  }
+  
+  // If no cache hit, perform DB search
   // Busca nos campos relevantes (numero, artigo/titulo/conteudo)
   const { data, error } = await supabase
     .from(tableName as any)
@@ -245,12 +295,19 @@ export const searchByTerm = async (
   return (data as any[]).map(mapRawArticle);
 };
 
+// Interface for combined search results
+interface LawSearchResults {
+  lawName: string;
+  lawCategory: 'codigo' | 'estatuto';
+  articles: Article[];
+  total: number;
+}
+
 // Busca em todas as leis simultaneamente
 export const searchAcrossAllLaws = async (
   searchTerm: string
-): Promise<Array<{lawName: string, articles: Article[]}>
-> => {
-  const results: Array<{lawName: string, articles: Article[]}> = [];
+): Promise<LawSearchResults[]> => {
+  const results: LawSearchResults[] = [];
   const term = searchTerm.toLowerCase();
 
   // Limitamos a 5 resultados por lei para não sobrecarregar
@@ -260,7 +317,9 @@ export const searchAcrossAllLaws = async (
       if (articles.length > 0) {
         results.push({
           lawName: law.display,
-          articles: articles.slice(0, 5) // limita a 5 resultados por lei
+          lawCategory: law.category,
+          articles: articles.slice(0, 5), // limita a 5 resultados por lei
+          total: articles.length
         });
       }
     } catch (err) {
@@ -269,5 +328,9 @@ export const searchAcrossAllLaws = async (
   });
 
   await Promise.all(searchPromises);
+  
+  // Sort by relevance (by number of matches)
+  results.sort((a, b) => b.total - a.total);
+  
   return results;
 };
