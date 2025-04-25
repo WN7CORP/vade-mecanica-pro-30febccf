@@ -1,4 +1,3 @@
-
 import { Search, X, History } from "lucide-react";
 import { useState, useEffect, forwardRef, useMemo } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
@@ -7,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SearchModeToggle from "./search/SearchModeToggle";
+import { highlightSearchTerm, HighlightedPart } from "@/utils/textExpansion";
 
 interface SearchPreview {
   article?: string;
@@ -53,7 +53,6 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
-    // Load search history from localStorage
     const storedHistory = localStorage.getItem('searchHistory');
     if (storedHistory) {
       setSearchHistory(JSON.parse(storedHistory));
@@ -76,12 +75,10 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
-      // Save search to history
       const newHistory = [searchTerm, ...searchHistory.filter(item => item !== searchTerm)].slice(0, 10);
       setSearchHistory(newHistory);
       localStorage.setItem('searchHistory', JSON.stringify(newHistory));
       
-      // Perform the search
       onSearch(searchTerm.trim(), localSearchMode);
       setShowHistory(false);
     }
@@ -131,7 +128,6 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
       propOnFocus();
     }
     
-    // Show search history when focused and input is empty
     if (!searchTerm.trim() && searchHistory.length > 0) {
       setShowHistory(true);
     }
@@ -184,34 +180,23 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     return content.substring(0, maxLength) + '...';
   };
 
-  const highlightText = (text: string, term: string) => {
+  const renderHighlightedText = (text: string, term: string) => {
     if (!term || !text) return text;
     
     try {
-      const isNumberSearch = /^\d+/.test(term);
-      if (isNumberSearch) {
-        const numberPattern = `(Art\\.?\\s*${term}|${term})`;
-        const parts = text.split(new RegExp(numberPattern, 'gi'));
-        
-        return parts.map((part, i) => {
-          if (new RegExp(numberPattern, 'gi').test(part)) {
-            return <mark key={i} className="bg-primary-300/20 font-semibold not-italic">{part}</mark>;
-          }
-          return part;
-        });
+      const result = highlightSearchTerm(text, term);
+      
+      if (typeof result === 'string') {
+        return result;
       }
       
-      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const parts = text.split(new RegExp(`(${escapedTerm})`, 'gi'));
-      
-      return parts.map((part, i) => {
-        if (part.toLowerCase() === term.toLowerCase()) {
-          return <mark key={i} className="bg-primary-300/20 font-medium not-italic">{part}</mark>;
-        }
-        return part;
-      });
+      return result.map((part, index) => (
+        part.highlight 
+          ? <mark key={index} className="bg-primary-300/20 font-semibold not-italic">{part.text}</mark>
+          : part.text
+      ));
     } catch (e) {
-      console.error('Error in highlightText:', e);
+      console.error('Error in renderHighlightedText:', e);
       return text;
     }
   };
@@ -352,7 +337,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
                         </div>
                       </div>
                       <div className="text-xs text-gray-400 mt-1 line-clamp-2 group-hover:text-gray-300 transition-colors">
-                        {highlightText(truncateContent(preview.content), searchTerm)}
+                        {renderHighlightedText(truncateContent(preview.content), searchTerm)}
                       </div>
                     </motion.div>
                   );

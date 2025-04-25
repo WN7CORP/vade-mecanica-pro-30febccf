@@ -45,13 +45,18 @@ export const truncateText = (text: string, maxLength: number = 100): string => {
   return text.substring(0, maxLength) + '...';
 };
 
+export interface HighlightedPart {
+  text: string;
+  highlight: boolean;
+}
+
 /**
  * Highlights search terms in text
  * @param text Text to highlight terms in
  * @param searchTerm Term to highlight
- * @returns JSX with highlighted terms
+ * @returns Array of text parts with highlight information
  */
-export const highlightSearchTerm = (text: string, searchTerm: string): JSX.Element | string => {
+export const highlightSearchTerm = (text: string, searchTerm: string): string | HighlightedPart[] => {
   if (!searchTerm || !text) return text;
   
   try {
@@ -64,14 +69,11 @@ export const highlightSearchTerm = (text: string, searchTerm: string): JSX.Eleme
     const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     const parts = text.split(regex);
     
-    // Return JSX with proper type annotation and correct JSX syntax
-    return (
-      <>
-        {parts.map((part, i) => 
-          regex.test(part) ? <mark key={i} className="bg-primary/20">{part}</mark> : part
-        )}
-      </>
-    );
+    // Return an array of parts with highlight information
+    return parts.map((part, i) => ({
+      text: part,
+      highlight: regex.test(part)
+    }));
   } catch (e) {
     console.error('Error highlighting text:', e);
     return text;
