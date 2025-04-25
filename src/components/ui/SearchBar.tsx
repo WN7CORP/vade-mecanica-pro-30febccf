@@ -1,3 +1,4 @@
+
 import { Search, X, History } from "lucide-react";
 import { useState, useEffect, forwardRef, useMemo } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
@@ -115,7 +116,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     try {
       // Create a fuzzy matching pattern
       const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const parts = text.split(new RegExp(`(${escapedTerm})`, 'gi');
+      const parts = text.split(new RegExp(`(${escapedTerm})`, 'gi'));
       
       return parts.map((part, i) => {
         if (part.toLowerCase() === term.toLowerCase()) {
