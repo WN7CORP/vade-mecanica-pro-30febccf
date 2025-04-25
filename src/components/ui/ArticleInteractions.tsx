@@ -1,30 +1,29 @@
 
 import { useState } from "react";
-import { MessageCircle, BookOpen, Bookmark, Volume2, PenLine, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { BookOpen, Bookmark, Volume2, PenLine, FileText } from "lucide-react";
 import { motion } from "framer-motion";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { ArticleExplanation } from "./article/ArticleExplanation";
+import { generateFlashcardsForArticle } from "@/services/flashcardService";
+import { toast } from "@/hooks/use-toast";
 
 interface ArticleInteractionsProps {
   articleNumber: string;
   content: string | { [key: string]: any };
   example?: string | { [key: string]: any };
-  onExplain: (type: 'technical' | 'formal') => void;
   onAddComment: () => void;
   onStartNarration: (contentType: 'article') => void;
   onShowExample?: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  onCompare?: () => void; // Added missing prop
-  onStudyMode?: () => void; // Added missing prop
-  hasCompareSelection?: boolean; // Added missing prop
+  onCompare?: () => void;
+  onStudyMode?: () => void;
+  hasCompareSelection?: boolean;
 }
 
 const ArticleInteractions = ({
   articleNumber,
   content,
   example,
-  onExplain,
   onAddComment,
   onStartNarration,
   onShowExample,
@@ -34,15 +33,46 @@ const ArticleInteractions = ({
   onStudyMode,
   hasCompareSelection,
 }: ArticleInteractionsProps) => {
-  const [showExplanationMenu, setShowExplanationMenu] = useState(false);
-  const isMobile = useIsMobile();
-  
-  const hasExample = example && example !== "" && example !== "{}" && example !== "null";
+  const navigate = useNavigate();
+  const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
 
-  const buttonVariants = {
-    initial: { scale: 1 },
-    hover: { scale: 1.05 },
-    tap: { scale: 0.95 }
+  const handleStudyMode = async () => {
+    // Ensure content is a string
+    const safeContent = typeof content === 'string' 
+      ? content 
+      : JSON.stringify(content);
+
+    setIsGeneratingFlashcards(true);
+    
+    try {
+      const flashcards = await generateFlashcardsForArticle(
+        "Constituição Federal", 
+        articleNumber, 
+        safeContent
+      );
+
+      if (flashcards.length > 0) {
+        // Navigate to study mode with generated flashcards
+        navigate(`/study/${encodeURIComponent("Constituição Federal")}`, {
+          state: { generatedFlashcards: flashcards }
+        });
+      } else {
+        toast({
+          title: "Erro ao gerar flashcards",
+          description: "Não foi possível criar flashcards para este artigo.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Flashcard generation error:', error);
+      toast({
+        title: "Erro ao gerar flashcards",
+        description: "Ocorreu um erro ao tentar criar flashcards.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingFlashcards(false);
+    }
   };
 
   return (
@@ -53,101 +83,69 @@ const ArticleInteractions = ({
       transition={{ duration: 0.3 }}
     >
       <div className="flex items-center flex-wrap justify-center gap-2">
-        <motion.button 
-          className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
-          onClick={() => onStartNarration('article')}
-          variants={buttonVariants}
-          whileHover="hover"
-          whileTap="tap"
+        <button 
+          onClick={onStartNarration} 
+          className="article-button bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1"
         >
           <Volume2 size={16} />
           <span className="text-xs">Narrar</span>
-        </motion.button>
+        </button>
 
-        <motion.button 
-          className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
-          onClick={() => setShowExplanationMenu(true)}
-          variants={buttonVariants}
-          whileHover="hover"
-          whileTap="tap"
+        <button 
+          onClick={handleStudyMode} 
+          disabled={isGeneratingFlashcards}
+          className={`article-button ${
+            isGeneratingFlashcards 
+              ? 'bg-primary/20 text-primary/50 cursor-not-allowed' 
+              : 'bg-primary/10 text-primary hover:bg-primary/20'
+          } flex items-center gap-1`}
         >
-          <MessageCircle size={16} />
-          <span className="text-xs">Explicar</span>
-        </motion.button>
+          <BookOpen size={16} />
+          <span className="text-xs">
+            {isGeneratingFlashcards ? 'Gerando...' : 'Estudar'}
+          </span>
+        </button>
 
-        {hasExample && (
-          <motion.button 
-            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
-            onClick={onShowExample}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
+        {onShowExample && (
+          <button 
+            onClick={onShowExample} 
+            className="article-button bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1"
           >
             <FileText size={16} />
-            <span className="text-xs">Exemplo Prático</span>
-          </motion.button>
+            <span className="text-xs">Exemplo</span>
+          </button>
         )}
 
-        <motion.button 
-          className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
-          onClick={onAddComment}
-          variants={buttonVariants}
-          whileHover="hover"
-          whileTap="tap"
+        <button 
+          onClick={onAddComment} 
+          className="article-button bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1"
         >
           <PenLine size={16} />
           <span className="text-xs">Anotar</span>
-        </motion.button>
+        </button>
 
-        <motion.button 
-          className={`article-button shadow-button px-3 py-2 ${
-            isFavorite ? 'bg-primary/30 text-primary-foreground' : 'bg-primary/10 text-primary'
-          } text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30`}
-          onClick={onToggleFavorite}
-          variants={buttonVariants}
-          whileHover="hover"
-          whileTap="tap"
+        <button 
+          onClick={onToggleFavorite} 
+          className={`article-button ${
+            isFavorite 
+              ? 'bg-primary/30 text-primary-foreground' 
+              : 'bg-primary/10 text-primary hover:bg-primary/20'
+          } flex items-center gap-1`}
         >
           <Bookmark size={16} fill={isFavorite ? "currentColor" : "none"} />
           <span className="text-xs">{isFavorite ? "Favoritado" : "Favoritar"}</span>
-        </motion.button>
-        
+        </button>
+
         {onCompare && (
-          <motion.button 
-            className={`article-button shadow-button px-3 py-2 ${
-              hasCompareSelection ? 'bg-primary/30 text-primary-foreground' : 'bg-primary/10 text-primary'
-            } text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30`}
-            onClick={onCompare}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
+          <button 
+            onClick={onCompare} 
+            className="article-button bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1"
           >
             <BookOpen size={16} />
             <span className="text-xs">Comparar</span>
-          </motion.button>
-        )}
-        
-        {onStudyMode && (
-          <motion.button 
-            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
-            onClick={onStudyMode}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-          >
-            <BookOpen size={16} />
-            <span className="text-xs">Estudar</span>
-          </motion.button>
+          </button>
         )}
       </div>
-
-      <ArticleExplanation
-        isOpen={showExplanationMenu}
-        onClose={() => setShowExplanationMenu(false)}
-        onExplain={onExplain}
-        articleNumber={articleNumber}
-        content={content}
-      />
     </motion.div>
   );
 };
