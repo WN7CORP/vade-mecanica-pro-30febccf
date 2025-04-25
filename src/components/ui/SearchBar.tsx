@@ -1,12 +1,15 @@
+
 import { Search, X } from "lucide-react";
 import { useState, useEffect, forwardRef } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SearchPreview {
   article?: string;
   content: string;
   lawName: string;
   previewType: 'article' | 'term';
+  category?: 'codigo' | 'estatuto';
 }
 
 interface SearchBarProps {
@@ -78,6 +81,16 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     }
   };
 
+  // Group previews by category
+  const groupedPreviews = searchPreviews.reduce<Record<string, SearchPreview[]>>((acc, preview) => {
+    const category = preview.category || 'outros';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(preview);
+    return acc;
+  }, {});
+
   return (
     <div className="relative">
       <div className={`transition-all duration-300 neomorph ${
@@ -116,28 +129,49 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
         </div>
       </div>
       
-      {showPreviews && searchPreviews.length > 0 && (
+      {showPreviews && Object.keys(groupedPreviews).length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto animate-fade-in">
-          {searchPreviews.map((preview, index) => {
-            const abbreviation = getLawAbbreviation(preview.lawName);
-            return (
-              <div 
-                key={index}
-                onClick={() => onPreviewClick?.(preview)}
-                className="group p-3 border-b border-border hover:bg-accent/20 cursor-pointer transition-all duration-200"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-primary-300/70">{abbreviation}</span>
-                  <div className="text-sm text-primary-100 group-hover:text-primary-300 transition-colors">
-                    {preview.previewType === 'article' ? 'Art.' : ''} {preview.article}
+          {Object.entries(groupedPreviews).map(([category, categoryPreviews]) => (
+            <div key={category} className="border-b border-border last:border-0">
+              {category !== 'outros' && (
+                <div className="text-xs font-semibold text-primary-300/70 px-3 pt-2 pb-1 uppercase">
+                  {category === 'codigo' ? 'Códigos' : category === 'estatuto' ? 'Estatutos' : 'Outros'}
+                </div>
+              )}
+              
+              {categoryPreviews.map((preview, index) => {
+                const abbreviation = getLawAbbreviation(preview.lawName);
+                return (
+                  <div 
+                    key={`${category}-${index}`}
+                    onClick={() => onPreviewClick?.(preview)}
+                    className="group p-3 hover:bg-accent/20 cursor-pointer transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs font-medium text-primary-300/70 bg-primary-300/10 px-2 py-0.5 rounded">
+                              {abbreviation}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{preview.lawName}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <div className="text-sm text-primary-100 group-hover:text-primary-300 transition-colors">
+                        {preview.previewType === 'article' ? 'Art.' : ''} {preview.article}
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 line-clamp-2 group-hover:text-gray-300 transition-colors">
+                      {preview.content}
+                    </div>
                   </div>
-                </div>
-                <div className="text-xs text-gray-400 mt-1 line-clamp-2 group-hover:text-gray-300 transition-colors">
-                  {preview.content}
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
     </div>

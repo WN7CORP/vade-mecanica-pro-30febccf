@@ -4,16 +4,21 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { Loader2, Bookmark, PieChart } from "lucide-react";
+import { Loader2, Bookmark, PieChart, X } from "lucide-react";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { toast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const Favorites = () => {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | undefined>();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [selectedFavorite, setSelectedFavorite] = useState<any>(null);
   const {
     logUserActivity
   } = useUserActivity(userId);
@@ -33,33 +38,35 @@ const Favorites = () => {
   }, []);
 
   useEffect(() => {
-    const loadFavorites = () => {
-      try {
-        const favoritedArticles = localStorage.getItem('favoritedArticles');
-        if (favoritedArticles) {
-          const parsed = JSON.parse(favoritedArticles);
-          const favoritesList = Object.entries(parsed).map(([key, value]) => {
-            const [lawName, articleNumber] = key.split('-');
-            return {
-              ...(value as any),
-              lawName,
-              articleNumber
-            };
-          });
-          setFavorites(favoritesList);
-        }
-      } catch (error) {
-        console.error("Erro ao carregar favoritos:", error);
-        toast({
-          description: "Erro ao carregar favoritos. Tente novamente.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
     loadFavorites();
   }, []);
+
+  const loadFavorites = () => {
+    try {
+      const favoritedArticles = localStorage.getItem('favoritedArticles');
+      if (favoritedArticles) {
+        const parsed = JSON.parse(favoritedArticles);
+        const favoritesList = Object.entries(parsed).map(([key, value]) => {
+          const [lawName, articleNumber] = key.split('-');
+          return {
+            ...(value as any),
+            lawName,
+            articleNumber,
+            key
+          };
+        });
+        setFavorites(favoritesList);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar favoritos:", error);
+      toast({
+        description: "Erro ao carregar favoritos. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Function to navigate to an article with highlighting
   const navigateToArticle = (lawName: string, articleNumber: string) => {
@@ -67,6 +74,48 @@ const Favorites = () => {
     
     if (userId) {
       logUserActivity('favorite_view', lawName, articleNumber);
+    }
+  };
+
+  // Function to remove favorite
+  const removeFavorite = (favorite: any) => {
+    setSelectedFavorite(favorite);
+    setConfirmDialogOpen(true);
+  };
+
+  const confirmRemoveFavorite = () => {
+    try {
+      const favoritedArticles = localStorage.getItem('favoritedArticles');
+      if (favoritedArticles && selectedFavorite) {
+        const parsed = JSON.parse(favoritedArticles);
+        const key = `${selectedFavorite.lawName}-${selectedFavorite.articleNumber}`;
+        
+        if (parsed[key]) {
+          delete parsed[key];
+          localStorage.setItem('favoritedArticles', JSON.stringify(parsed));
+          
+          // Update state to refresh UI
+          setFavorites(favorites.filter(f => f.key !== key));
+          
+          toast({
+            title: "Favorito removido",
+            description: "O artigo foi removido dos favoritos",
+          });
+          
+          if (userId) {
+            logUserActivity('unfavorite', selectedFavorite.lawName, selectedFavorite.articleNumber);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao remover favorito:", error);
+      toast({
+        description: "Erro ao remover favorito. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setConfirmDialogOpen(false);
+      setSelectedFavorite(null);
     }
   };
 
@@ -88,19 +137,32 @@ const Favorites = () => {
             <p className="text-gray-400">Carregando seus favoritos...</p>
           </div> : favorites.length > 0 ? <div className="space-y-4 animate-fade-in">
             {favorites.map((fav, index) => (
-              <button 
-                key={index} 
-                onClick={() => navigateToArticle(fav.lawName, fav.articleNumber)} 
-                className="w-full p-4 neomorph flex items-center justify-between hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
+              <motion.div 
+                key={index}
+                className="w-full p-4 neomorph flex items-center justify-between hover:scale-[1.01] transition-all duration-300"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
               >
-                <div className="flex items-center gap-3">
+                <div 
+                  onClick={() => navigateToArticle(fav.lawName, fav.articleNumber)}
+                  className="flex-1 flex items-center gap-3 cursor-pointer"
+                >
                   <Bookmark size={18} className="text-primary-300 fill-current" />
                   <div className="text-left">
                     <h3 className="text-primary-200 font-medium">{fav.lawName}</h3>
                     <p className="text-sm text-gray-400">Art. {fav.articleNumber}</p>
                   </div>
                 </div>
-              </button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => removeFavorite(fav)}
+                  className="text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                >
+                  <X size={18} />
+                </Button>
+              </motion.div>
             ))}
           </div> : <div className="text-center py-8 neomorph">
             <Bookmark className="h-12 w-12 text-gray-500 mx-auto mb-4" />
@@ -114,6 +176,28 @@ const Favorites = () => {
       </main>
       
       <Footer />
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remover favorito</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja remover este artigo dos favoritos?
+            </DialogDescription>
+          </DialogHeader>
+          {selectedFavorite && (
+            <div className="p-4 bg-muted/30 rounded-md">
+              <p className="font-medium text-primary-200">{selectedFavorite.lawName}</p>
+              <p className="text-sm text-gray-400">Art. {selectedFavorite.articleNumber}</p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmRemoveFavorite}>Remover</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>;
 };
 

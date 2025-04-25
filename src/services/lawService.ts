@@ -9,5 +9,7 @@ export {
   searchArticle,
   searchByTerm,
   fetchAvailableLaws,
+  fetchCategorizedLaws,
+  searchAcrossAllLaws,
   LAW_OPTIONS 
 } from "@/integrations/supabase/laws";

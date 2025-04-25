@@ -1,5 +1,5 @@
 
-import { Home, BookOpen, MessageCircle, Award, Scale, PenLine } from "lucide-react";
+import { Home, MessageCircle, Scale, Users, Award } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Footer = () => {
@@ -10,32 +10,32 @@ const Footer = () => {
 
   const navItems = [
     {
-      icon: <Home size={18} />,
+      icon: <Home size={24} />,
       label: "Início",
       path: "/",
       active: isActive("/")
     },
     {
-      icon: <MessageCircle size={18} />,
+      icon: <MessageCircle size={24} />,
       label: "Dúvidas",
       path: "/duvidas",
       active: isActive("/duvidas")
     },
     {
-      icon: <Scale size={18} />,
+      icon: <Scale size={24} />,
       label: "Leis",
       path: "/leis",
       active: isActive("/leis")
     },
     {
-      icon: <PenLine size={18} />,
-      label: "Anotações",
-      path: "/anotacoes",
-      active: isActive("/anotacoes")
+      icon: <Users size={24} />,
+      label: "Comunidade",
+      path: "/comunidade",
+      active: isActive("/comunidade")
     },
     {
-      icon: <Award size={18} />,
-      label: "Perfil",
+      icon: <Award size={24} />,
+      label: "Ranking",
       path: "/perfil",
       active: isActive("/perfil")
     }

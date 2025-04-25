@@ -1,15 +1,20 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
 import { Book, Search, Scale, BookOpen, Bookmark, ScrollText } from "lucide-react";
-import { fetchAvailableLaws, LAW_OPTIONS } from "@/services/lawService";
+import { fetchAvailableLaws, fetchCategorizedLaws, searchAcrossAllLaws } from "@/services/lawService";
+import debounce from 'lodash/debounce';
 
 const Index = () => {
   const navigate = useNavigate();
   const [recentLaws, setRecentLaws] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchPreviews, setSearchPreviews] = useState<any[]>([]);
+  const [showPreviews, setShowPreviews] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const loadRecentLaws = async () => {
@@ -32,6 +37,59 @@ const Index = () => {
     }
   };
 
+  const debouncedSearch = debounce(async (term: string) => {
+    if (term.length < 2) {
+      setSearchPreviews([]);
+      setShowPreviews(false);
+      return;
+    }
+
+    try {
+      const results = await searchAcrossAllLaws(term);
+      const previews = results.flatMap(lawResult => 
+        lawResult.articles.map(article => ({
+          article: article.numero,
+          content: article.conteudo.substring(0, 100) + "...",
+          lawName: lawResult.lawName,
+          previewType: 'article',
+          category: getLawCategory(lawResult.lawName)
+        }))
+      );
+      setSearchPreviews(previews.slice(0, 10)); // Limit to 10 results total
+      setShowPreviews(previews.length > 0);
+    } catch (error) {
+      console.error("Error searching:", error);
+      setSearchPreviews([]);
+      setShowPreviews(false);
+    }
+  }, 300);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    
+    if (term.length >= 2) {
+      debouncedSearch(term);
+    } else {
+      setSearchPreviews([]);
+      setShowPreviews(false);
+    }
+  };
+
+  const handlePreviewClick = (preview: any) => {
+    navigate(`/lei/${encodeURIComponent(preview.lawName)}?artigo=${preview.article}`);
+  };
+
+  // Helper to get category from law name
+  const getLawCategory = (lawName: string): 'codigo' | 'estatuto' | 'outros' => {
+    if (lawName.toLowerCase().includes('código') || lawName === 'Constituição Federal' || lawName.includes('Consolidação')) {
+      return 'codigo';
+    } else if (lawName.toLowerCase().includes('estatuto')) {
+      return 'estatuto'; 
+    }
+    return 'outros';
+  };
+
   return (
     <div className="flex flex-col min-h-screen pb-16 pt-20 px-4">
       <Header />
@@ -46,10 +104,14 @@ const Index = () => {
           </p>
         </div>
         
-        <div className="mb-10">
+        <div className="mb-10 relative">
           <SearchBar 
             onSearch={handleSearch} 
             placeholder="Buscar artigo, lei ou assunto..." 
+            onInputChange={handleInputChange}
+            searchPreviews={searchPreviews}
+            showPreviews={showPreviews}
+            onPreviewClick={handlePreviewClick}
           />
         </div>
         

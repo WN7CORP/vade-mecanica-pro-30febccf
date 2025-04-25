@@ -7,11 +7,12 @@ import ArticleCard from "@/components/ui/ArticleCard";
 import AIExplanation from "@/components/ui/AIExplanation";
 import AIChat from "@/components/ui/AIChat";
 import PDFExporter from "@/components/ui/PDFExporter";
-import { Loader2, FileText, BookOpen } from "lucide-react";
+import { Loader2, FileText, BookOpen, Codepen } from "lucide-react";
 import { 
   searchArticle, 
   searchByTerm,
   fetchAvailableLaws,
+  fetchCategorizedLaws,
   LAW_OPTIONS
 } from "@/services/lawService";
 import { 
@@ -19,6 +20,7 @@ import {
   AIExplanation as AIExplanationType 
 } from "@/services/aiService";
 import debounce from 'lodash/debounce';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SearchResult {
   article: string;
@@ -31,6 +33,7 @@ interface SearchPreview {
   content: string;
   lawName: string;
   previewType: 'article' | 'term';
+  category?: 'codigo' | 'estatuto';
 }
 
 const Search = () => {
@@ -42,6 +45,8 @@ const Search = () => {
   const [inputValue, setInputValue] = useState(query);
   const [selectedLaw, setSelectedLaw] = useState<string>("");
   const [availableLaws, setAvailableLaws] = useState<string[]>([]);
+  const [categorizedLaws, setCategorizedLaws] = useState<Record<string, any[]>>({});
+  const [selectedCategory, setSelectedCategory] = useState<string>("todos");
   const [isLoading, setIsLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -58,7 +63,9 @@ const Search = () => {
     const loadLaws = async () => {
       try {
         const laws = await fetchAvailableLaws();
+        const categorized = await fetchCategorizedLaws();
         setAvailableLaws(laws);
+        setCategorizedLaws(categorized);
         
         if (!selectedLaw && laws.length > 0) {
           setSelectedLaw(laws[0]);
@@ -73,35 +80,73 @@ const Search = () => {
 
   useEffect(() => {
     const performSearch = async () => {
-      if (!query || !selectedLaw) return;
+      if (!query) return;
       
       setIsLoading(true);
       setNoResults(false);
       
       try {
-        const article = await searchArticle(selectedLaw, query);
-        
-        if (article && article.numero) {
-          setSearchResults([{
-            article: article.numero,
-            content: article.conteudo,
-            lawName: selectedLaw
-          }]);
-        } else {
-          const results = await searchByTerm(selectedLaw, query);
+        if (selectedLaw) {
+          const article = await searchArticle(selectedLaw, query);
           
-          if (results.length > 0) {
-            setSearchResults(
-              results.map(result => ({
+          if (article && article.numero) {
+            setSearchResults([{
+              article: article.numero,
+              content: article.conteudo,
+              lawName: selectedLaw
+            }]);
+          } else {
+            const results = await searchByTerm(selectedLaw, query);
+            
+            if (results.length > 0) {
+              setSearchResults(
+                results.map(result => ({
+                  article: result.numero,
+                  content: result.conteudo,
+                  lawName: selectedLaw
+                }))
+              );
+            } else {
+              setSearchResults([]);
+              setNoResults(true);
+            }
+          }
+        } else {
+          let lawsToSearch: string[] = [];
+          
+          if (selectedCategory === 'codigo' || selectedCategory === 'estatuto') {
+            lawsToSearch = categorizedLaws[selectedCategory]?.map(law => law.display) || [];
+          } else {
+            lawsToSearch = availableLaws;
+          }
+          
+          const results: SearchResult[] = [];
+          
+          for (const lawName of lawsToSearch) {
+            const article = await searchArticle(lawName, query);
+            
+            if (article && article.numero) {
+              results.push({
+                article: article.numero,
+                content: article.conteudo,
+                lawName
+              });
+              continue;
+            }
+            
+            const termResults = await searchByTerm(lawName, query);
+            
+            if (termResults.length > 0) {
+              results.push(...termResults.map(result => ({
                 article: result.numero,
                 content: result.conteudo,
-                lawName: selectedLaw
-              }))
-            );
-          } else {
-            setSearchResults([]);
-            setNoResults(true);
+                lawName
+              })));
+            }
           }
+          
+          setSearchResults(results);
+          setNoResults(results.length === 0);
         }
       } catch (error) {
         console.error("Erro na pesquisa:", error);
@@ -113,11 +158,11 @@ const Search = () => {
     };
     
     performSearch();
-  }, [query, selectedLaw]);
+  }, [query, selectedLaw, selectedCategory, availableLaws, categorizedLaws]);
 
   const debouncedSearchPreview = useRef(
     debounce(async (term: string, law: string) => {
-      if (term.length < 2 || !law) {
+      if (term.length < 2) {
         setSearchPreviews([]);
         setShowPreviews(false);
         return;
@@ -132,7 +177,8 @@ const Search = () => {
             article: article.numero,
             content: article.conteudo.substring(0, 100) + "...",
             lawName: law,
-            previewType: 'article'
+            previewType: 'article',
+            category: getLawCategory(law)
           });
         }
         
@@ -144,7 +190,8 @@ const Search = () => {
                 article: result.numero,
                 content: result.conteudo.substring(0, 100) + "...",
                 lawName: law,
-                previewType: 'term'
+                previewType: 'term',
+                category: getLawCategory(law)
               });
             }
           });
@@ -202,6 +249,11 @@ const Search = () => {
       debouncedSearchPreview(inputValue, lawName);
     }
   };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedLaw("");
+  };
   
   const handleExplainArticle = async (result: SearchResult, type: 'technical' | 'formal' = 'technical') => {
     if (!result.article) return;
@@ -235,6 +287,11 @@ const Search = () => {
     setShowChat(false);
   };
 
+  const getLawCategory = (lawName: string): 'codigo' | 'estatuto' | undefined => {
+    const law = LAW_OPTIONS.find(opt => opt.display === lawName);
+    return law?.category;
+  };
+
   return (
     <div className="flex flex-col min-h-screen pb-16 pt-20 px-4">
       <Header />
@@ -255,21 +312,79 @@ const Search = () => {
           />
         </div>
         
-        <div className="mb-6 overflow-x-auto scrollbar-thin pb-2">
-          <div className="flex space-x-2">
-            {LAW_OPTIONS.map((law) => (
-              <button
-                key={law.table}
-                onClick={() => handleLawChange(law.display)}
-                className={`px-4 py-2 whitespace-nowrap text-sm ${
-                  selectedLaw === law.display
-                    ? "neomorph text-primary-300 hover:scale-[1.02] transition-transform"
-                    : "text-gray-400 hover:text-gray-300 hover:bg-primary/5 rounded-md transition-colors"
-                }`}
-              >
-                {law.display}
-              </button>
-            ))}
+        <div className="mb-6">
+          <Tabs 
+            defaultValue="todos" 
+            value={selectedCategory}
+            onValueChange={handleCategoryChange}
+            className="w-full"
+          >
+            <TabsList className="mb-2 grid grid-cols-3 gap-1">
+              <TabsTrigger value="todos">
+                <Codepen className="mr-2 h-4 w-4" />
+                Todos
+              </TabsTrigger>
+              <TabsTrigger value="codigo">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Códigos
+              </TabsTrigger>
+              <TabsTrigger value="estatuto">
+                <FileText className="mr-2 h-4 w-4" />
+                Estatutos
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          <div className="overflow-x-auto scrollbar-thin pb-2">
+            <div className="flex space-x-2">
+              {selectedCategory === "todos" && 
+                LAW_OPTIONS.map((law) => (
+                  <button
+                    key={law.table}
+                    onClick={() => handleLawChange(law.display)}
+                    className={`px-4 py-2 whitespace-nowrap text-sm ${
+                      selectedLaw === law.display
+                        ? "neomorph text-primary-300 hover:scale-[1.02] transition-transform"
+                        : "text-gray-400 hover:text-gray-300 hover:bg-primary/5 rounded-md transition-colors"
+                    }`}
+                  >
+                    {law.display}
+                  </button>
+                ))
+              }
+              
+              {selectedCategory === "codigo" && 
+                categorizedLaws.codigo?.map((law) => (
+                  <button
+                    key={law.table}
+                    onClick={() => handleLawChange(law.display)}
+                    className={`px-4 py-2 whitespace-nowrap text-sm ${
+                      selectedLaw === law.display
+                        ? "neomorph text-primary-300 hover:scale-[1.02] transition-transform"
+                        : "text-gray-400 hover:text-gray-300 hover:bg-primary/5 rounded-md transition-colors"
+                    }`}
+                  >
+                    {law.display}
+                  </button>
+                ))
+              }
+              
+              {selectedCategory === "estatuto" && 
+                categorizedLaws.estatuto?.map((law) => (
+                  <button
+                    key={law.table}
+                    onClick={() => handleLawChange(law.display)}
+                    className={`px-4 py-2 whitespace-nowrap text-sm ${
+                      selectedLaw === law.display
+                        ? "neomorph text-primary-300 hover:scale-[1.02] transition-transform"
+                        : "text-gray-400 hover:text-gray-300 hover:bg-primary/5 rounded-md transition-colors"
+                    }`}
+                  >
+                    {law.display}
+                  </button>
+                ))
+              }
+            </div>
           </div>
         </div>
         

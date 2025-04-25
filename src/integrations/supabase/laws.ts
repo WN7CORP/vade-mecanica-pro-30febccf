@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -15,33 +16,45 @@ export interface Article {
 export interface LawOption {
   display: string;
   table: string;
+  category: 'codigo' | 'estatuto';
+  abbreviation: string;
 }
 
 export const LAW_OPTIONS: LawOption[] = [
-  { display: "Constituição Federal",         table: "constituicao_federal"      },
-  { display: "Código Civil",                 table: "codigo_civil"              },
-  { display: "Código Penal",                 table: "codigo_penal"              },
-  { display: "Código de Processo Civil",     table: "codigo_processo_civil"     },
-  { display: "Código de Processo Penal",     table: "codigo_processo_penal"     },
-  { display: "Código de Defesa do Consumidor", table: "codigo_defesa_consumidor" },
-  { display: "Código Tributário Nacional",   table: "codigo_tributario"         },
-  { display: "Consolidação das Leis do Trabalho", table: "consolidacao_leis_trabalho" },
-  { display: "Código de Trânsito Brasileiro", table: "codigo_transito"          },
-  { display: "Estatuto da Criança e do Adolescente", table: "estatuto_da_crianca_e_do_adolescente" },
-  { display: "Estatuto do Idoso", table: "estatuto_do_idoso" },
-  { display: "Estatuto da Pessoa com Deficiência", table: "estatuto_da_pessoa_com_deficiencia" },
-  { display: "Estatuto da Igualdade Racial", table: "estatuto_da_igualdade_racial" },
-  { display: "Estatuto do Desarmamento", table: "estatuto_do_desarmamento" },
-  { display: "Estatuto da Juventude", table: "estatuto_da_juventude" },
-  { display: "Estatuto da Cidade", table: "estatuto_da_cidade" },
-  { display: "Estatuto do Torcedor", table: "estatuto_do_torcedor" },
-  { display: "Estatuto da Terra", table: "estatuto_da_terra" },
-  { display: "Estatuto da Advocacia e da OAB", table: "estatuto_da_advocacia_e_da_oab" }
+  { display: "Constituição Federal",         table: "constituicao_federal",      category: 'codigo', abbreviation: "CF" },
+  { display: "Código Civil",                 table: "codigo_civil",              category: 'codigo', abbreviation: "CC" },
+  { display: "Código Penal",                 table: "codigo_penal",              category: 'codigo', abbreviation: "CP" },
+  { display: "Código de Processo Civil",     table: "codigo_processo_civil",     category: 'codigo', abbreviation: "CPC" },
+  { display: "Código de Processo Penal",     table: "codigo_processo_penal",     category: 'codigo', abbreviation: "CPP" },
+  { display: "Código de Defesa do Consumidor", table: "codigo_defesa_consumidor", category: 'codigo', abbreviation: "CDC" },
+  { display: "Código Tributário Nacional",   table: "codigo_tributario",         category: 'codigo', abbreviation: "CTN" },
+  { display: "Consolidação das Leis do Trabalho", table: "consolidacao_leis_trabalho", category: 'codigo', abbreviation: "CLT" },
+  { display: "Código de Trânsito Brasileiro", table: "codigo_transito",          category: 'codigo', abbreviation: "CTB" },
+  { display: "Estatuto da Criança e do Adolescente", table: "estatuto_da_crianca_e_do_adolescente", category: 'estatuto', abbreviation: "ECA" },
+  { display: "Estatuto do Idoso", table: "estatuto_do_idoso", category: 'estatuto', abbreviation: "EI" },
+  { display: "Estatuto da Pessoa com Deficiência", table: "estatuto_da_pessoa_com_deficiencia", category: 'estatuto', abbreviation: "EPD" },
+  { display: "Estatuto da Igualdade Racial", table: "estatuto_da_igualdade_racial", category: 'estatuto', abbreviation: "EIR" },
+  { display: "Estatuto do Desarmamento", table: "estatuto_do_desarmamento", category: 'estatuto', abbreviation: "ED" },
+  { display: "Estatuto da Juventude", table: "estatuto_da_juventude", category: 'estatuto', abbreviation: "EJ" },
+  { display: "Estatuto da Cidade", table: "estatuto_da_cidade", category: 'estatuto', abbreviation: "EC" },
+  { display: "Estatuto do Torcedor", table: "estatuto_do_torcedor", category: 'estatuto', abbreviation: "ET" },
+  { display: "Estatuto da Terra", table: "estatuto_da_terra", category: 'estatuto', abbreviation: "ETr" },
+  { display: "Estatuto da Advocacia e da OAB", table: "estatuto_da_advocacia_e_da_oab", category: 'estatuto', abbreviation: "EAOB" }
 ];
 
 /** Retorna apenas os nomes para popular um dropdown/menu */
 export const fetchAvailableLaws = async (): Promise<string[]> => {
   return LAW_OPTIONS.map((opt) => opt.display);
+}
+
+/** Retorna leis agrupadas por categoria (códigos e estatutos) */
+export const fetchCategorizedLaws = async (): Promise<Record<string, LawOption[]>> => {
+  const categorized: Record<string, LawOption[]> = {
+    'codigo': LAW_OPTIONS.filter(law => law.category === 'codigo'),
+    'estatuto': LAW_OPTIONS.filter(law => law.category === 'estatuto')
+  };
+  
+  return categorized;
 }
 
 /** Busca o nome da tabela a partir do texto exibido */
@@ -230,4 +243,31 @@ export const searchByTerm = async (
   }
 
   return (data as any[]).map(mapRawArticle);
+};
+
+// Busca em todas as leis simultaneamente
+export const searchAcrossAllLaws = async (
+  searchTerm: string
+): Promise<Array<{lawName: string, articles: Article[]}>
+> => {
+  const results: Array<{lawName: string, articles: Article[]}> = [];
+  const term = searchTerm.toLowerCase();
+
+  // Limitamos a 5 resultados por lei para não sobrecarregar
+  const searchPromises = LAW_OPTIONS.map(async (law) => {
+    try {
+      const articles = await searchByTerm(law.display, term);
+      if (articles.length > 0) {
+        results.push({
+          lawName: law.display,
+          articles: articles.slice(0, 5) // limita a 5 resultados por lei
+        });
+      }
+    } catch (err) {
+      console.error(`Erro ao buscar em ${law.display}:`, err);
+    }
+  });
+
+  await Promise.all(searchPromises);
+  return results;
 };
