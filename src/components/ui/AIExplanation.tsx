@@ -72,14 +72,14 @@ const AIExplanation = ({
   if (isLoading) {
     return (
       <motion.div 
-        className="fixed inset-0 bg-background/80 backdrop-blur-md z-[100]"
+        className="fixed inset-0 bg-background/80 backdrop-blur-md z-[9998]"
         initial="hidden"
         animate="visible"
         exit="exit"
         variants={overlayVariants}
       >
         <motion.div 
-          className="fixed inset-x-0 top-1/2 transform -translate-y-1/2 max-w-2xl mx-auto p-4"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl mx-auto p-4 z-[9999]"
           variants={containerVariants}
         >
           <div className="card-article animate-pulse">
@@ -124,14 +124,14 @@ const AIExplanation = ({
   return (
     <AnimatePresence>
       <motion.div 
-        className="fixed inset-0 bg-background/80 backdrop-blur-md z-[100]"
+        className="fixed inset-0 bg-background/80 backdrop-blur-md z-[9998]"
         initial="hidden"
         animate="visible"
         exit="exit"
         variants={overlayVariants}
       >
         <motion.div 
-          className="fixed inset-x-0 top-1/2 transform -translate-y-1/2 max-w-2xl mx-auto p-4"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl mx-auto p-4 z-[9999]"
           variants={containerVariants}
         >
           <div className="card-article">
