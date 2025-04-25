@@ -41,6 +41,9 @@ export const isAdvancedNumberPattern = (term: string): boolean => {
 
 // New function to check advanced number patterns
 export const matchesAdvancedPattern = (articleNumber: string, searchTerm: string): boolean => {
+  // Import needed functions from laws.ts
+  const { normalizeArticleNumber } = require("@/integrations/supabase/laws");
+  
   const normalizedArticle = normalizeArticleNumber(articleNumber).toLowerCase();
   const normalizedSearch = searchTerm.toLowerCase();
   
@@ -60,6 +63,9 @@ export const calculateRelevanceScore = (
   articleNumber: string, 
   searchTerm: string
 ): number => {
+  // Import needed functions from laws.ts
+  const { normalizeArticleNumber } = require("@/integrations/supabase/laws");
+  
   const normalizedArticle = normalizeArticleNumber(articleNumber);
   const normalizedSearch = normalizeArticleNumber(searchTerm);
   
@@ -90,6 +96,9 @@ export const logSearchAnalytics = (
   lawName: string, 
   resultsFound: boolean
 ): void => {
+  // Import needed functions from laws.ts
+  const { isNumberSearch, normalizeArticleNumber } = require("@/integrations/supabase/laws");
+  
   // Log search pattern for analytics and future improvements
   console.log('Search Analytics:', {
     term,

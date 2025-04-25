@@ -187,11 +187,11 @@ export const fetchLawArticles = async (
   logUserAction('search', lawDisplayName);
 
   try {
-    // Get all articles at once - using type assertion to handle dynamic table names
+    // Get all articles at once - Fix: Using 'any' type and type assertion for dynamic table access
     const { data, error, count } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*', { count: 'exact' })
-      .order('id', { ascending: true }) as any;
+      .order('id', { ascending: true });
 
     if (error) {
       console.error("Erro ao buscar artigos:", error);
@@ -243,12 +243,12 @@ export const searchArticle = async (
   try {
     const normalizedSearchTerm = normalizeArticleNumber(searchTerm);
     
-    // Try exact match first - using type assertion for dynamic table names
+    // Try exact match first - Fix: Using 'any' type and type assertion for dynamic table access
     const { data: exactMatch } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select("*")
       .eq("numero", searchTerm)
-      .maybeSingle() as any;
+      .maybeSingle();
 
     if (exactMatch) {
       return mapRawArticle(exactMatch);
@@ -256,17 +256,16 @@ export const searchArticle = async (
 
     // If no exact match and it's a number search, try partial matches
     if (isNumberSearch(searchTerm)) {
-      // Using type assertion for dynamic table names
+      // Fix: Using 'any' type and type assertion for dynamic table access
       const { data } = await supabase
-        .from(tableName)
-        .select("*") as any;
+        .from(tableName as any)
+        .select("*");
 
       if (!data || data.length === 0) {
         return null;
       }
 
-      // Sort results by relevance - Here we handle strong typing by using type assertions
-      // since we've validated that these are article rows
+      // Sort results by relevance
       const sortedResults = (data as any[])
         .filter(article => isPartialNumberMatch(article.numero, searchTerm))
         .sort((a, b) => {
@@ -335,17 +334,16 @@ export const searchByTerm = async (
   }
   
   // If no cache hit, perform DB search
-  // Busca nos campos relevantes (numero, artigo/titulo/conteudo)
-  // Using type assertion for dynamic table names
+  // Fix: Using 'any' type and type assertion for dynamic table access
   const { data, error } = await supabase
-    .from(tableName)
+    .from(tableName as any)
     .select(selectCols)
     .or([
       `numero.ilike.%${term}%`,
       `artigo.ilike.%${term}%`,
       `titulo.ilike.%${term}%`,
       `conteudo.ilike.%${term}%`
-    ].join(",")) as any;
+    ].join(","));
 
   if (error) {
     console.error("Erro na busca por termo:", error);
