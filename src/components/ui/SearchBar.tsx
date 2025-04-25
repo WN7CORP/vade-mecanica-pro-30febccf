@@ -1,10 +1,10 @@
-
 import { Search, X, History } from "lucide-react";
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect, forwardRef, useMemo } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SearchPreview {
   article?: string;
@@ -26,6 +26,8 @@ interface SearchBarProps {
   onPreviewClick?: (preview: SearchPreview) => void;
 }
 
+const DEBOUNCE_MS = 150;
+
 const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({ 
   onSearch, 
   initialValue = "", 
@@ -39,6 +41,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
 }, ref) => {
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setSearchTerm(initialValue);
@@ -58,6 +61,10 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
 
   const handleClear = () => {
     setSearchTerm("");
+    if (onInputChange) {
+      const event = { target: { value: "" } } as React.ChangeEvent<HTMLInputElement>;
+      onInputChange(event);
+    }
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,15 +90,17 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     }
   };
 
-  // Group previews by category
-  const groupedPreviews = searchPreviews.reduce<Record<string, SearchPreview[]>>((acc, preview) => {
-    const category = preview.category || 'outros';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(preview);
-    return acc;
-  }, {});
+  // Group previews by category with memoization
+  const groupedPreviews = useMemo(() => {
+    return searchPreviews.reduce<Record<string, SearchPreview[]>>((acc, preview) => {
+      const category = preview.category || 'outros';
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(preview);
+      return acc;
+    }, {});
+  }, [searchPreviews]);
 
   // Truncate content for preview with ellipsis
   const truncateContent = (content: string, maxLength = 90) => {
@@ -99,17 +108,21 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     return content.substring(0, maxLength) + '...';
   };
 
-  // Highlight the search term in content
+  // Highlight the search term in content with fuzzy matching
   const highlightText = (text: string, term: string) => {
     if (!term || !text) return text;
     
     try {
-      const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      const parts = text.split(regex);
+      // Create a fuzzy matching pattern
+      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const parts = text.split(new RegExp(`(${escapedTerm})`, 'gi');
       
-      return parts.map((part, i) => 
-        regex.test(part) ? <mark key={i} className="bg-primary-300/20 font-medium not-italic">{part}</mark> : part
-      );
+      return parts.map((part, i) => {
+        if (part.toLowerCase() === term.toLowerCase()) {
+          return <mark key={i} className="bg-primary-300/20 font-medium not-italic">{part}</mark>;
+        }
+        return part;
+      });
     } catch (e) {
       return text;
     }
@@ -186,11 +199,16 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
                       onClick={() => onPreviewClick?.(preview)}
                       className="group p-3 hover:bg-accent/20 cursor-pointer transition-all duration-200"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className={`flex ${isMobile ? 'flex-col gap-1' : 'items-center gap-2'}`}>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Badge variant="outline" className="text-xs font-medium text-primary-300/70 bg-primary-300/10">
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs font-medium text-primary-300/70 bg-primary-300/10 ${
+                                  isMobile ? 'self-start' : ''
+                                }`}
+                              >
                                 {abbreviation}
                               </Badge>
                             </TooltipTrigger>
@@ -204,10 +222,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
                         </div>
                       </div>
                       <div className="text-xs text-gray-400 mt-1 line-clamp-2 group-hover:text-gray-300 transition-colors">
-                        {highlightText(
-                          truncateContent(preview.content),
-                          searchTerm
-                        )}
+                        {highlightText(preview.content, searchTerm)}
                       </div>
                     </motion.div>
                   );

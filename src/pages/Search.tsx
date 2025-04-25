@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -70,7 +69,6 @@ const Search = () => {
   const [showChat, setShowChat] = useState(false);
   const [highlightTerm, setHighlightTerm] = useState("");
 
-  // Get search history from localStorage on mount
   useEffect(() => {
     const storedHistory = localStorage.getItem('searchHistory');
     if (storedHistory) {
@@ -78,7 +76,6 @@ const Search = () => {
     }
   }, []);
 
-  // Add current search to history
   useEffect(() => {
     if (query && query.length > 1) {
       const addToHistory = () => {
@@ -159,10 +156,8 @@ const Search = () => {
           lawsToSearch = availableLaws;
         }
         
-        // Enhanced search across all tables with better ordering
         const searchResults = await searchAcrossAllLaws(query);
         
-        // Flatten results
         const results: SearchResult[] = [];
         let totalCount = 0;
         
@@ -187,7 +182,6 @@ const Search = () => {
         setNoResults(results.length === 0);
         setTotalFound(totalCount);
         
-        // Show a toast with search statistics
         if (results.length > 0) {
           toast({
             title: `${results.length} resultados encontrados`,
@@ -214,14 +208,13 @@ const Search = () => {
 
   const debouncedSearchPreview = useRef(
     debounce(async (term: string) => {
-      if (term.length < 2) {
+      if (term.length < 1) {
         setSearchPreviews([]);
         setShowPreviews(false);
         return;
       }
       
       try {
-        // Determine which laws to search based on selected category
         let lawsToSearch: string[] = [];
         
         if (selectedLaw) {
@@ -234,24 +227,24 @@ const Search = () => {
         
         const previews: SearchPreview[] = [];
         
-        // Search each law for previews
+        const isNumber = /^\d+/.test(term);
+        
         for (const law of lawsToSearch) {
           try {
-            // Try exact article match first
-            const article = await searchArticle(law, term);
+            if (isNumber) {
+              const articles = await searchArticle(law, term);
+              if (articles) {
+                const lawCategory = getLawCategory(law);
+                previews.push({
+                  article: articles.numero,
+                  content: articles.conteudo.substring(0, 100) + "...",
+                  lawName: law,
+                  previewType: 'article',
+                  category: lawCategory
+                });
+              }
+            }
             
-            if (article && article.numero) {
-              const lawCategory = getLawCategory(law);
-              previews.push({
-                article: article.numero,
-                content: article.conteudo.substring(0, 100) + "...",
-                lawName: law,
-                previewType: 'article',
-                category: lawCategory
-              });
-            } 
-            
-            // Then try term search (limited to 3 results per law)
             const termResults = await searchByTerm(law, term);
             if (termResults.length > 0) {
               termResults.slice(0, 3).forEach(result => {
@@ -272,8 +265,15 @@ const Search = () => {
           }
         }
         
-        // Limit total preview results to a reasonable number
-        const limitedPreviews = previews.slice(0, 10);
+        const sortedPreviews = previews.sort((a, b) => {
+          const aMatch = a.content.toLowerCase().includes(term.toLowerCase());
+          const bMatch = b.content.toLowerCase().includes(term.toLowerCase());
+          if (aMatch && !bMatch) return -1;
+          if (!aMatch && bMatch) return 1;
+          return 0;
+        });
+
+        const limitedPreviews = sortedPreviews.slice(0, 10);
         setSearchPreviews(limitedPreviews);
         setShowPreviews(limitedPreviews.length > 0);
       } catch (error) {
@@ -281,7 +281,7 @@ const Search = () => {
         setSearchPreviews([]);
         setShowPreviews(false);
       }
-    }, 300)
+    }, 150)
   ).current;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -386,7 +386,6 @@ const Search = () => {
     return law?.category;
   };
 
-  // Animation variants for framer motion
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -410,7 +409,6 @@ const Search = () => {
     }
   };
 
-  // Function to highlight search terms in content
   const highlightText = (text: string, term: string) => {
     if (!term) return text;
     
@@ -507,7 +505,7 @@ const Search = () => {
             
             <TabsContent value="todos" className="mt-0">
               <div className="overflow-x-auto scrollbar-thin pb-2">
-                <div className="flex space-x-2">
+                <div className="flex space-x-4 md:space-x-2">
                   <button
                     onClick={() => setSelectedLaw("")}
                     className={`px-4 py-2 whitespace-nowrap text-sm transition-all ${
@@ -523,14 +521,17 @@ const Search = () => {
                     <button
                       key={law.table}
                       onClick={() => handleLawChange(law.display)}
-                      className={`px-4 py-2 whitespace-nowrap text-sm flex items-center gap-1.5 ${
+                      className={`px-4 py-2 whitespace-nowrap text-sm flex items-center gap-2 ${
                         selectedLaw === law.display
                           ? "neomorph text-primary-300 hover:scale-[1.02] transition-transform"
                           : "text-gray-400 hover:text-gray-300 hover:bg-primary/5 rounded-md transition-colors"
                       }`}
                     >
-                      {law.display}
-                      <Badge variant="outline" className="text-[10px]">{law.abbreviation}</Badge>
+                      <span className="hidden md:inline">{law.display}</span>
+                      <span className="md:hidden">{law.abbreviation}</span>
+                      <Badge variant="outline" className="text-[10px] hidden md:inline-flex">
+                        {law.abbreviation}
+                      </Badge>
                     </button>
                   ))}
                 </div>
