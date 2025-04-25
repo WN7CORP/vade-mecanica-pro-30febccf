@@ -174,7 +174,8 @@ export function NightModeToggle({
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <style jsx global>{`
+      <style>
+        {`
         /* Aplicar estilos de modo de leitura aos elementos */
         .legal-dark-mode .article-content,
         .legal-dark-mode .card-article {
@@ -187,7 +188,8 @@ export function NightModeToggle({
           filter: contrast(var(--reading-contrast, 100%)) var(--reading-warmth, none);
           transition: filter 0.3s ease, background-color 0.3s ease, color 0.3s ease;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 }
