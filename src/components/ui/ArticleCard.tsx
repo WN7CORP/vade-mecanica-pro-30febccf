@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "./button";
 import { Plus } from "lucide-react";
@@ -50,6 +51,7 @@ const ArticleCard = ({
   const [hasCompareSelection, setHasCompareSelection] = useState(false);
   const { logUserActivity } = useUserActivity(userId);
   
+  // Updated: Safely convert content to string
   const safeContent = typeof content === 'string' ? content : JSON.stringify(content);
   const safeExample = typeof example === 'string' ? example : JSON.stringify(example);
   const hasExample = safeExample && safeExample !== '""' && safeExample !== '{}';
@@ -178,7 +180,7 @@ const ArticleCard = ({
     if (typeof content === 'object' && content !== null) {
       for (const key of possibleKeys) {
         if (key in content && content[key]) {
-          return content[key];
+          return typeof content[key] === 'string' ? content[key] : JSON.stringify(content[key]);
         }
       }
     }
@@ -186,7 +188,7 @@ const ArticleCard = ({
     if (typeof example === 'object' && example !== null) {
       for (const key of possibleKeys) {
         if (key in example && example[key]) {
-          return example[key];
+          return typeof example[key] === 'string' ? example[key] : JSON.stringify(example[key]);
         }
       }
     }

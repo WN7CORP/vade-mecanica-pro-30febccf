@@ -2,7 +2,7 @@
 import { formatTextWithMarkdown } from '@/utils/textExpansion';
 
 interface ArticleContentProps {
-  content: string;
+  content: string | { [key: string]: any };
   fontSize: number;
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
@@ -18,8 +18,13 @@ const ArticleContent = ({
   articleNumber,
   centerContent = false
 }: ArticleContentProps) => {
+  // Convert content to string if it's an object
+  const contentText = typeof content === 'string' 
+    ? content 
+    : (content?.artigo || content?.conteudo || JSON.stringify(content));
+  
   const renderContent = () => {
-    return content.split('\n').map((line, i) => {
+    return contentText.split('\n').map((line, i) => {
       const isHeader = !articleNumber && (i === 0 || line.trim().startsWith('§') || line.trim().startsWith('Art.'));
       
       // Format the text with markdown for bold sections
