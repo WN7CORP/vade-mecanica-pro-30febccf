@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -10,7 +11,7 @@ import { BackButton } from "@/components/ui/BackButton";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { PenLine, Trash2 } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "@/components/ui/use-toast";
 
 const Notes = () => {
   const navigate = useNavigate();

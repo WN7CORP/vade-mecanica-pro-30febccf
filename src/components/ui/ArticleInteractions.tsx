@@ -15,6 +15,9 @@ interface ArticleInteractionsProps {
   onShowExample?: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  onCompare?: () => void; // Added missing prop
+  onStudyMode?: () => void; // Added missing prop
+  hasCompareSelection?: boolean; // Added missing prop
 }
 
 const ArticleInteractions = ({
@@ -27,6 +30,9 @@ const ArticleInteractions = ({
   onShowExample,
   isFavorite,
   onToggleFavorite,
+  onCompare,
+  onStudyMode,
+  hasCompareSelection,
 }: ArticleInteractionsProps) => {
   const [showExplanationMenu, setShowExplanationMenu] = useState(false);
   const isMobile = useIsMobile();
@@ -105,6 +111,34 @@ const ArticleInteractions = ({
           <Bookmark size={16} fill={isFavorite ? "currentColor" : "none"} />
           <span className="text-xs">{isFavorite ? "Favoritado" : "Favoritar"}</span>
         </motion.button>
+        
+        {onCompare && (
+          <motion.button 
+            className={`article-button shadow-button px-3 py-2 ${
+              hasCompareSelection ? 'bg-primary/30 text-primary-foreground' : 'bg-primary/10 text-primary'
+            } text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30`}
+            onClick={onCompare}
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+          >
+            <BookOpen size={16} />
+            <span className="text-xs">Comparar</span>
+          </motion.button>
+        )}
+        
+        {onStudyMode && (
+          <motion.button 
+            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
+            onClick={onStudyMode}
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+          >
+            <BookOpen size={16} />
+            <span className="text-xs">Estudar</span>
+          </motion.button>
+        )}
       </div>
 
       <ArticleExplanation
