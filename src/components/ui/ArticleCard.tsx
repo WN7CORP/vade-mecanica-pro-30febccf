@@ -298,6 +298,7 @@ const ArticleCard = ({
           articleNumber={articleNumber}
           content={content}
           example={example}
+          onExplain={handleExplain}
           onAddComment={handleComment}
           onStartNarration={() => handleNarration('article')}
           onShowExample={safeExample ? handleShowExample : undefined}
