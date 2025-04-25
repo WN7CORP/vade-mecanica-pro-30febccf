@@ -1,12 +1,12 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
-import { Book, Search, Scale, BookOpen, Bookmark, ScrollText } from "lucide-react";
-import { fetchAvailableLaws, fetchCategorizedLaws, searchAcrossAllLaws } from "@/services/lawService";
+import { Scale, Search, BookOpen, Bookmark, ScrollText, History } from "lucide-react";
+import { fetchAvailableLaws, searchAcrossAllLaws } from "@/services/lawService";
 import debounce from 'lodash/debounce';
+import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -15,6 +15,10 @@ const Index = () => {
   const [searchPreviews, setSearchPreviews] = useState<any[]>([]);
   const [showPreviews, setShowPreviews] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [recentArticles] = useState(() => {
+    const saved = localStorage.getItem('recent-articles');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   useEffect(() => {
     const loadRecentLaws = async () => {
@@ -115,61 +119,83 @@ const Index = () => {
           />
         </div>
         
-        <div className="mb-8">
-          <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4">
-            Acesso rápido
-          </h2>
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <button 
+            onClick={() => navigate("/leis")}
+            className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+          >
+            <Scale size={28} className="text-primary-300 mb-3" />
+            <span className="text-gray-300 font-medium">Ver Tudo</span>
+            <span className="text-xs text-gray-400 mt-1">
+              Códigos e Estatutos
+            </span>
+          </button>
           
-          <div className="grid grid-cols-2 gap-4">
-            <button 
-              onClick={() => navigate("/leis")}
-              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
-            >
-              <BookOpen size={28} className="text-primary-300 mb-3" />
-              <span className="text-gray-300 font-medium">Ver Tudo</span>
-              <span className="text-xs text-gray-400 mt-1">
-                Navegar entre leis
-              </span>
-            </button>
-            
-            <button 
-              onClick={() => navigate("/favoritos")}
-              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
-            >
-              <Bookmark size={28} className="text-primary-300 mb-3" />
-              <span className="text-gray-300 font-medium">Favoritos</span>
-              <span className="text-xs text-gray-400 mt-1">
-                Artigos salvos
-              </span>
-            </button>
+          <button 
+            onClick={() => navigate("/favoritos")}
+            className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+          >
+            <Bookmark size={28} className="text-primary-300 mb-3" />
+            <span className="text-gray-300 font-medium">Favoritos</span>
+            <span className="text-xs text-gray-400 mt-1">
+              Artigos salvos
+            </span>
+          </button>
 
-            <button 
-              onClick={() => navigate("/anotacoes")}
-              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
-            >
-              <ScrollText size={28} className="text-primary-300 mb-3" />
-              <span className="text-gray-300 font-medium">Anotações</span>
-              <span className="text-xs text-gray-400 mt-1">
-                Anotações de estudos
-              </span>
-            </button>
-            
-            <button 
-              onClick={() => navigate("/pesquisa")}
-              className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
-            >
-              <Search size={28} className="text-primary-300 mb-3" />
-              <span className="text-gray-300 font-medium">Pesquisar</span>
-              <span className="text-xs text-gray-400 mt-1">
-                Buscar artigos e termos
-              </span>
-            </button>
-          </div>
+          <button 
+            onClick={() => navigate("/anotacoes")}
+            className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+          >
+            <ScrollText size={28} className="text-primary-300 mb-3" />
+            <span className="text-gray-300 font-medium">Anotações</span>
+            <span className="text-xs text-gray-400 mt-1">
+              Anotações de estudos
+            </span>
+          </button>
+          
+          <button 
+            onClick={() => navigate("/pesquisa")}
+            className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+          >
+            <Search size={28} className="text-primary-300 mb-3" />
+            <span className="text-gray-300 font-medium">Pesquisar</span>
+            <span className="text-xs text-gray-400 mt-1">
+              Buscar artigos e termos
+            </span>
+          </button>
         </div>
         
+        {recentArticles.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4 flex items-center gap-2">
+              <History size={20} />
+              Artigos Recentes
+            </h2>
+            
+            <div className="space-y-3">
+              {recentArticles.map((article: any, index: number) => (
+                <button
+                  key={index}
+                  onClick={() => navigate(`/lei/${encodeURIComponent(article.lawName)}?artigo=${article.number}`)}
+                  className="neomorph-sm p-4 w-full flex items-center justify-between transition-all hover:shadow-neomorph-inset"
+                >
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-primary-300">
+                      Art. {article.number}
+                    </Badge>
+                    <span className="text-gray-300">{article.lawName}</span>
+                  </div>
+                  <Scale size={16} className="text-gray-500" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        
         <div>
-          <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4">
-            Leis recentes
+          <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4 flex items-center gap-2">
+            <Scale size={20} />
+            Leis Recentes
           </h2>
           
           {isLoading ? (
@@ -189,7 +215,7 @@ const Index = () => {
                   className="neomorph-sm p-4 w-full flex items-center justify-between transition-all hover:shadow-neomorph-inset"
                 >
                   <div className="flex items-center">
-                    <Book size={18} className="text-primary-300 mr-3" />
+                    <Scale size={18} className="text-primary-300 mr-3" />
                     <span className="text-gray-300">{law}</span>
                   </div>
                   <Scale size={16} className="text-gray-500" />
