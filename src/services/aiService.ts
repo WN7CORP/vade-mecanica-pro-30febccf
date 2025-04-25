@@ -1,4 +1,3 @@
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Atualizar a chave da API para uma chave válida
@@ -36,25 +35,18 @@ const checkForExplanation = (content: any, type: 'technical' | 'formal'): string
     return null;
   }
 
-  // Try different possible column names with correct spacing
+  // Try different possible column names
   const possibleKeys = type === 'technical' 
-    ? ['explicacao tecnica', 'explicacao_tecnica', 'explicacao-tecnica'] 
-    : ['explicacao formal', 'explicacao_formal', 'explicacao-formal'];
+    ? ['explicacao_tecnica', 'explicacao tecnica', 'explicacao-tecnica'] 
+    : ['explicacao_formal', 'explicacao formal', 'explicacao-formal'];
 
-  // First try direct access with space in column name
-  const spaceKey = type === 'technical' ? 'explicacao tecnica' : 'explicacao formal';
-  if (content[spaceKey]) {
-    return content[spaceKey];
-  }
-
-  // Then try other variations
   for (const key of possibleKeys) {
     if (key in content && content[key]) {
       return content[key];
     }
   }
 
-  // If content has nested properties, try to find the explanation there
+  // If the content has nested properties, try to find the explanation there
   for (const prop in content) {
     if (typeof content[prop] === 'object') {
       const nestedResult = checkForExplanation(content[prop], type);
@@ -84,8 +76,9 @@ export const generateArticleExplanation = async (
 
     // Check for existing explanation in the content
     if (typeof articleContent === 'object') {
-      // Check both formats: with space and with underscore
-      const existingExplanation = checkForExplanation(articleContent, type);
+      const existingExplanation = type === 'technical' 
+        ? articleContent['explicacao_tecnica'] || articleContent['explicacao tecnica']
+        : articleContent['explicacao_formal'] || articleContent['explicacao formal'];
 
       if (existingExplanation) {
         console.log("Usando explicação existente do banco de dados");
