@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import ArticleHistory from "./ArticleHistory";
-import { Clock, BookOpen, GraduationCap } from "lucide-react";
 
 const LawTabbedView = () => {
   const navigate = useNavigate();
