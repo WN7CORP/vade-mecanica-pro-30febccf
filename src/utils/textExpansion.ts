@@ -1,3 +1,4 @@
+
 /**
  * Normalizes text by removing accents and converting to lowercase
  * @param text The text to normalize
@@ -87,18 +88,80 @@ export const highlightSearchTerm = (text: string, searchTerm: string): string | 
 export const expandText = (text: string): string => {
   if (!text) return '';
   
-  // Expand common legal abbreviations
-  let expandedText = text
-    .replace(/\bArt\./gi, 'Artigo')
-    .replace(/\b§/g, 'Parágrafo')
-    .replace(/\bn\./gi, 'número')
-    .replace(/\binciso\./gi, 'inciso')
-    .replace(/\balín\./gi, 'alínea')
-    .replace(/\bc\/c\b/gi, 'combinado com')
-    .replace(/\bc\./gi, 'com')
-    .replace(/\bparágrafo único\b/gi, 'Parágrafo único')
-    .replace(/\bCF\b/gi, 'Constituição Federal')
-    .replace(/\bCLT\b/gi, 'Consolidação das Leis do Trabalho');
+  // Expand common legal abbreviations - versão minimalista
+  const abbreviations: Record<string, string> = {
+    'Art\\.': 'Artigo',
+    '§': 'Parágrafo',
+    'n\\.': 'número',
+    'inc\\.': 'inciso',
+    'al\\.': 'alínea',
+    'c/c': 'combinado com',
+    'p\\.': 'página',
+    'p\\. ún\\.': 'parágrafo único',
+    'CF': 'Constituição Federal',
+    'CC': 'Código Civil',
+    'CP': 'Código Penal',
+    'CPC': 'Código de Processo Civil',
+    'CPP': 'Código de Processo Penal',
+    'CTN': 'Código Tributário Nacional',
+    'CLT': 'Consolidação das Leis do Trabalho',
+    'CDC': 'Código de Defesa do Consumidor',
+    'STF': 'Supremo Tribunal Federal',
+    'STJ': 'Superior Tribunal de Justiça',
+    'TST': 'Tribunal Superior do Trabalho',
+    'TJ': 'Tribunal de Justiça',
+    'TRT': 'Tribunal Regional do Trabalho',
+    'MP': 'Ministério Público',
+    'OAB': 'Ordem dos Advogados do Brasil',
+    'INSS': 'Instituto Nacional do Seguro Social',
+    'HC': 'Habeas Corpus',
+    'ADI': 'Ação Direta de Inconstitucionalidade',
+    'ADPF': 'Arguição de Descumprimento de Preceito Fundamental',
+    'RE': 'Recurso Extraordinário',
+    'REsp': 'Recurso Especial',
+    'AgRg': 'Agravo Regimental',
+    'ED': 'Embargos de Declaração',
+    'Min\\.': 'Ministro',
+    'Rel\\.': 'Relator',
+    'v\\.g\\.': 'verbi gratia (por exemplo)',
+    'cf\\.': 'conforme',
+    'op\\. cit\\.': 'obra citada'
+  };
+
+  let expandedText = text;
+  
+  // Substitui todas as abreviações encontradas
+  Object.entries(abbreviations).forEach(([abbr, full]) => {
+    const regex = new RegExp(`\\b${abbr}\\b`, 'gi');
+    expandedText = expandedText.replace(regex, full);
+  });
   
   return expandedText;
+};
+
+/**
+ * Normaliza e padroniza termos jurídicos para melhorar a pesquisa
+ * @param text Texto com termos jurídicos
+ * @returns Texto com termos jurídicos padronizados
+ */
+export const normalizeLegalTerms = (text: string): string => {
+  if (!text) return '';
+  
+  // Padronização de termos equivalentes
+  const normalizedText = text
+    // Artigos
+    .replace(/\bartigo\s+(\d+)/gi, 'art. $1')
+    .replace(/\bart\.\s*(\d+)/gi, 'art. $1')
+    // Parágrafos
+    .replace(/\bparágrafo\s+(\d+)/gi, '§ $1')
+    .replace(/\bparagrafo\s+(\d+)/gi, '§ $1')
+    .replace(/\bpar[áa]grafo\s+[úu]nico/gi, 'parágrafo único')
+    // Incisos
+    .replace(/\binciso\s+([ivxlcdm]+)/gi, 'inc. $1')
+    // Alíneas
+    .replace(/\bal[íi]nea\s+([a-z])/gi, 'alínea $1')
+    // Leis
+    .replace(/\blei\s+n[°º\.]?\s*([0-9\.]+)/gi, 'lei $1');
+    
+  return normalizedText;
 };
