@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "./button";
 import { Plus } from "lucide-react";
@@ -11,6 +12,7 @@ import VoiceNarration from "./VoiceNarration";
 import ArticleNotes from "./ArticleNotes";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
+import ArticleInteractions from "./ArticleInteractions";
 
 interface ArticleCardProps {
   articleNumber: string;
@@ -46,6 +48,7 @@ const ArticleCard = ({
   const [customExplanation, setCustomExplanation] = useState<string | null>(null);
   const [showCustomExplanation, setShowCustomExplanation] = useState(false);
   const [explanationTitle, setExplanationTitle] = useState("");
+  const [hasCompareSelection, setHasCompareSelection] = useState(false);
   const { logUserActivity } = useUserActivity(userId);
   
   const safeContent = typeof content === 'string' ? content : (content ? JSON.stringify(content) : '');
@@ -126,19 +129,15 @@ const ArticleCard = ({
     if (type === "technical") {
       title = "Explicação Técnica";
       
-      if (typeof content === 'object' && content !== null && 'explicacao_tecnica' in content) {
-        setCustomExplanation((content as any).explicacao_tecnica);
-      } 
-      else if (typeof content === 'object' && content !== null && 'explicacao tecnica' in content) {
-        setCustomExplanation((content as any)["explicacao tecnica"]);
-      }
-      else if (example && typeof example === 'object' && 'explicacao_tecnica' in example) {
-        setCustomExplanation((example as any).explicacao_tecnica);
-      }
-      else if (example && typeof example === 'object' && 'explicacao tecnica' in example) {
-        setCustomExplanation((example as any)["explicacao tecnica"]);
-      }
-      else {
+      // Try different variants of the technical explanation key
+      const technicalExplanation = getExplanationFromContent(content, example, [
+        'explicacao_tecnica',
+        'explicacao tecnica'
+      ]);
+      
+      if (technicalExplanation) {
+        setCustomExplanation(technicalExplanation);
+      } else {
         if (onExplainRequest) {
           onExplainRequest(type);
           return;
@@ -148,19 +147,15 @@ const ArticleCard = ({
     } else {
       title = "Explicação Formal";
       
-      if (typeof content === 'object' && content !== null && 'explicacao_formal' in content) {
-        setCustomExplanation((content as any).explicacao_formal);
-      }
-      else if (typeof content === 'object' && content !== null && 'explicacao formal' in content) {
-        setCustomExplanation((content as any)["explicacao formal"]);
-      }
-      else if (example && typeof example === 'object' && 'explicacao_formal' in example) {
-        setCustomExplanation((example as any).explicacao_formal);
-      }
-      else if (example && typeof example === 'object' && 'explicacao formal' in example) {
-        setCustomExplanation((example as any)["explicacao formal"]);
-      }
-      else {
+      // Try different variants of the formal explanation key
+      const formalExplanation = getExplanationFromContent(content, example, [
+        'explicacao_formal',
+        'explicacao formal'
+      ]);
+      
+      if (formalExplanation) {
+        setCustomExplanation(formalExplanation);
+      } else {
         if (onExplainRequest) {
           onExplainRequest(type);
           return;
@@ -175,6 +170,38 @@ const ArticleCard = ({
     if (userId) {
       logUserActivity('explain', lawName, articleNumber);
     }
+  };
+  
+  // Helper function to get explanation from content or example
+  const getExplanationFromContent = (
+    content: any, 
+    example: any, 
+    possibleKeys: string[]
+  ): string | null => {
+    // Check in content
+    if (typeof content === 'object' && content !== null) {
+      for (const key of possibleKeys) {
+        if (key in content && content[key]) {
+          return content[key];
+        }
+      }
+    }
+    
+    // Check in example
+    if (typeof example === 'object' && example !== null) {
+      for (const key of possibleKeys) {
+        if (key in example && example[key]) {
+          return example[key];
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  const handleShowExample = () => {
+    setShowExample(true);
+    if (userId) logUserActivity('view_example', lawName, articleNumber);
   };
 
   const handleComment = () => {
@@ -210,6 +237,13 @@ const ArticleCard = ({
     setIsReading(true);
   };
 
+  const handleCompare = () => {
+    if (onAddToComparison) {
+      setHasCompareSelection(true);
+      onAddToComparison();
+    }
+  };
+
   const shouldLeftAlign = articleNumber === "esquerda nas linhas";
   const shouldCenterContent = (!articleNumber || articleNumber === "0") && !shouldLeftAlign;
 
@@ -241,7 +275,7 @@ const ArticleCard = ({
           <Button
             variant="outline"
             className="max-w-xs mx-auto mt-3 bg-primary/10 text-primary hover:text-primary-foreground hover:bg-primary font-medium transition-all duration-300 hover:scale-[1.02] active:scale-95 animate-fade-in"
-            onClick={() => setShowExample(true)}
+            onClick={handleShowExample}
           >
             Ver Exemplo
           </Button>
@@ -265,18 +299,19 @@ const ArticleCard = ({
       )}
 
       {!shouldLeftAlign && (
-        <ArticleActions
+        <ArticleInteractions
           articleNumber={articleNumber}
-          content={safeContent}
+          content={content}
+          example={example}
           onExplain={handleExplain}
           onAddComment={handleComment}
-          onStartNarration={handleNarration}
+          onStartNarration={() => handleNarration('article')}
+          onShowExample={safeExample ? handleShowExample : undefined}
           isFavorite={isFavorite}
           onToggleFavorite={toggleFavorite}
-          onCompare={onAddToComparison}
+          onCompare={onAddToComparison ? handleCompare : undefined}
           onStudyMode={onStudyMode}
-          userId={userId}
-          lawName={lawName}
+          hasCompareSelection={hasCompareSelection}
         />
       )}
 

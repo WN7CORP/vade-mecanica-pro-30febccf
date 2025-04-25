@@ -210,7 +210,7 @@ const ArticleNotes = ({
           )}
 
           {showAiHelp && (
-            <Card className="mb-4 border-primary/20 animate-fade-in" ref={aiHelpRef}>
+            <Card className="mb-4 border-primary/20 animate-fade-in z-50" ref={aiHelpRef} style={{ position: 'relative', zIndex: 50 }}>
               <CardHeader>
                 <CardTitle className="text-sm text-primary-300">Assistente Jurídico IA</CardTitle>
               </CardHeader>

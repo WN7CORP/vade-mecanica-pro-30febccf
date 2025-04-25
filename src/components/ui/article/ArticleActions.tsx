@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, BookOpen, Bookmark, Volume2, MessageSquareMore, PenLine, BarChart2, Scale, GraduationCap } from "lucide-react";
+import { MessageCircle, BookOpen, Bookmark, Volume2, MessageSquareMore, PenLine, BarChart2, Scale, GraduationCap, FileText } from "lucide-react";
 import { motion } from "framer-motion";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ArticleActionsProps {
   articleNumber: string;
@@ -12,12 +13,14 @@ interface ArticleActionsProps {
   onExplain: (type: 'technical' | 'formal') => void;
   onAddComment: () => void;
   onStartNarration: (contentType: 'article') => void;
+  onShowExample?: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onCompare?: () => void;
   onStudyMode?: () => void;
   userId?: string;
   lawName: string;
+  hasCompareSelection?: boolean;
 }
 
 export const ArticleActions = ({
@@ -26,12 +29,14 @@ export const ArticleActions = ({
   onExplain,
   onAddComment,
   onStartNarration,
+  onShowExample,
   isFavorite,
   onToggleFavorite,
   onCompare,
   onStudyMode,
   userId,
-  lawName
+  lawName,
+  hasCompareSelection = false
 }: ArticleActionsProps) => {
   const [showExplanationOptions, setShowExplanationOptions] = useState(false);
   const navigate = useNavigate();
@@ -76,7 +81,7 @@ export const ArticleActions = ({
 
           {showExplanationOptions && (
             <motion.div 
-              className="absolute top-full left-0 mt-2 bg-background/95 backdrop-blur border border-border rounded-lg shadow-lg p-2 z-20 min-w-[150px]"
+              className="absolute top-full left-0 mt-2 bg-background/95 backdrop-blur border border-border rounded-lg shadow-lg p-2 z-50 min-w-[150px]"
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.2 }}
@@ -117,6 +122,18 @@ export const ArticleActions = ({
           )}
         </div>
 
+        {onShowExample && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onShowExample}
+            className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1"
+          >
+            <FileText size={16} />
+            <span className="text-xs">Exemplo Prático</span>
+          </Button>
+        )}
+
         <Button
           variant="outline"
           size="sm"
@@ -138,15 +155,26 @@ export const ArticleActions = ({
         </Button>
 
         {onCompare && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onCompare}
-            className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1"
-          >
-            <Scale size={16} />
-            <span className="text-xs">Comparar</span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onCompare}
+                  className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1"
+                >
+                  <Scale size={16} />
+                  <span className="text-xs">Comparar</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-background/90 backdrop-blur border border-border z-50">
+                {hasCompareSelection 
+                  ? "Comparando artigos..." 
+                  : "Selecione outro artigo para comparar"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
 
         {onStudyMode && (

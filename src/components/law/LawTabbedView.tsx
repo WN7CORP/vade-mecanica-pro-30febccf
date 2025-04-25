@@ -12,6 +12,7 @@ import { Article } from "@/services/lawService";
 import StudyMode from "@/pages/StudyMode";
 import LegalTimeline from "@/pages/LegalTimeline";
 import { Button } from "@/components/ui/button";
+
 const LawTabbedView = () => {
   const {
     lawName
@@ -25,6 +26,7 @@ const LawTabbedView = () => {
   const [showChat, setShowChat] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [globalFontSize, setGlobalFontSize] = useState(16);
+
   const {
     filteredArticles,
     isLoading,
@@ -33,6 +35,7 @@ const LawTabbedView = () => {
     hasMore,
     loadingRef
   } = useLawArticles(lawName);
+
   const {
     showExplanation,
     setShowExplanation,
@@ -40,6 +43,7 @@ const LawTabbedView = () => {
     loadingExplanation,
     handleExplainArticle
   } = useAIExplanation(lawName);
+
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
@@ -47,12 +51,14 @@ const LawTabbedView = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
       behavior: "smooth"
     });
   };
+
   const handleOpenSearch = () => {
     setShowSearchBar(true);
     window.scrollTo({
@@ -60,6 +66,7 @@ const LawTabbedView = () => {
       behavior: "smooth"
     });
   };
+
   const handleAddToComparison = (article: Article) => {
     if (articlesToCompare.length >= 2) {
       setArticlesToCompare([articlesToCompare[1], article]);
@@ -72,9 +79,15 @@ const LawTabbedView = () => {
       }
     }
   };
-  return <div className="space-y-4">
+
+  return (
+    <div className="space-y-4">
       <div className={`transition-all duration-300 ${showSearchBar ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
-        <SearchBar onSearch={handleSearch} initialValue={searchTerm} placeholder="Buscar artigo específico..." />
+        <SearchBar 
+          onSearch={handleSearch} 
+          initialValue={searchTerm} 
+          placeholder="Buscar artigo específico..."
+        />
       </div>
 
       <div className="flex items-center justify-between mb-2">
@@ -98,15 +111,40 @@ const LawTabbedView = () => {
         </TabsList>
 
         <TabsContent value="articles" className="mt-0">
-          {showComparison && <ComparisonTool articles={articlesToCompare} lawName={lawName} onClose={() => {
-          setShowComparison(false);
-          setArticlesToCompare([]);
-        }} />}
+          {showComparison && (
+            <ComparisonTool 
+              articles={articlesToCompare} 
+              lawName={lawName} 
+              onClose={() => {
+                setShowComparison(false);
+                setArticlesToCompare([]);
+              }} 
+            />
+          )}
 
-          <ArticleList isLoading={isLoading} searchTerm={searchTerm} filteredArticles={filteredArticles} lawName={lawName} showExplanation={showExplanation} explanation={explanation} loadingExplanation={loadingExplanation} selectedArticle={selectedArticle} showChat={showChat} loadingRef={loadingRef} hasMore={hasMore} onExplainArticle={handleExplainArticle} onAskQuestion={article => {
-          setSelectedArticle(article);
-          setShowChat(true);
-        }} onCloseChat={() => setShowChat(false)} onCloseExplanation={() => setShowExplanation(false)} onAddToComparison={handleAddToComparison} globalFontSize={globalFontSize} />
+          <ArticleList 
+            isLoading={isLoading} 
+            searchTerm={searchTerm} 
+            filteredArticles={filteredArticles} 
+            lawName={lawName} 
+            showExplanation={showExplanation} 
+            explanation={explanation} 
+            loadingExplanation={loadingExplanation} 
+            selectedArticle={selectedArticle} 
+            showChat={showChat} 
+            loadingRef={loadingRef} 
+            hasMore={hasMore} 
+            onExplainArticle={handleExplainArticle}
+            onAskQuestion={(article) => {
+              setSelectedArticle(article);
+              setShowChat(true);
+            }}
+            onCloseChat={() => setShowChat(false)}
+            onCloseExplanation={() => setShowExplanation(false)}
+            onAddToComparison={handleAddToComparison}
+            globalFontSize={globalFontSize}
+            onStudyMode={onStudyMode}
+          />
         </TabsContent>
 
         <TabsContent value="study" className="mt-0">
@@ -120,9 +158,18 @@ const LawTabbedView = () => {
 
       <FloatingSearchButton onOpenSearch={handleOpenSearch} />
       
-      {showScrollTop && <Button variant="outline" size="icon" onClick={scrollToTop} className="fixed bottom-20 right-4 z-50 bg-primary/20 text-primary hover:bg-primary/30 rounded-full shadow-lg">
+      {showScrollTop && (
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={scrollToTop} 
+          className="fixed bottom-20 right-4 z-50 bg-primary/20 text-primary hover:bg-primary/30 rounded-full shadow-lg"
+        >
           <ArrowUp className="h-4 w-4" />
-        </Button>}
-    </div>;
+        </Button>
+      )}
+    </div>
+  );
 };
+
 export default LawTabbedView;

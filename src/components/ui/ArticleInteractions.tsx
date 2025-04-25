@@ -1,9 +1,10 @@
 
 import { useState, useRef } from "react";
-import { MessageCircle, BookOpen, Bookmark, Volume2, MessageSquareMore, PenLine, BarChart2, Scale, GraduationCap } from "lucide-react";
+import { MessageCircle, BookOpen, Bookmark, Volume2, MessageSquareMore, PenLine, BarChart2, Scale, GraduationCap, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ArticleInteractionsProps {
   articleNumber: string;
@@ -12,22 +13,27 @@ interface ArticleInteractionsProps {
   onExplain: (type: 'technical' | 'formal') => void;
   onAddComment: () => void;
   onStartNarration: (contentType: 'article') => void;
+  onShowExample?: () => void; // New prop for showing examples
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onCompare?: () => void;
   onStudyMode?: () => void;
+  hasCompareSelection?: boolean;
 }
 
 const ArticleInteractions = ({
   articleNumber,
   content,
+  example,
   onExplain,
   onAddComment,
   onStartNarration,
+  onShowExample,
   isFavorite,
   onToggleFavorite,
   onCompare,
-  onStudyMode
+  onStudyMode,
+  hasCompareSelection = false
 }: ArticleInteractionsProps) => {
   const [showExplanationOptions, setShowExplanationOptions] = useState(false);
   const navigate = useNavigate();
@@ -109,7 +115,7 @@ const ArticleInteractions = ({
           
           {showExplanationOptions && (
             <motion.div 
-              className="absolute top-full left-0 mt-2 bg-background/95 backdrop-blur border border-border rounded-lg shadow-lg p-2 z-20 min-w-[150px]"
+              className="absolute top-full left-0 mt-2 bg-background/95 backdrop-blur border border-border rounded-lg shadow-lg p-2 z-50 min-w-[150px]"
               variants={explainPopupVariants}
               initial="hidden"
               animate="visible"
@@ -156,6 +162,20 @@ const ArticleInteractions = ({
             </motion.div>
           )}
         </div>
+        
+        {/* Exemplo Prático Button */}
+        {onShowExample && (
+          <motion.button 
+            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
+            onClick={onShowExample}
+            variants={staggerItem}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FileText size={16} />
+            <span className="text-xs">Exemplo Prático</span>
+          </motion.button>
+        )}
           
         {/* Adicionar anotação */}
         <motion.button 
@@ -188,22 +208,33 @@ const ArticleInteractions = ({
           <span className="text-xs">{isFavorite ? "Favoritado" : "Favoritar"}</span>
         </motion.button>
 
-        {/* Comparar (novo) */}
+        {/* Comparar (with tooltip) */}
         {onCompare && (
-          <motion.button 
-            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
-            onClick={onCompare}
-            variants={staggerItem}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            ref={(el) => (buttonRefs.current[4] = el)}
-          >
-            <Scale size={16} />
-            <span className="text-xs">Comparar</span>
-          </motion.button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button 
+                  className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
+                  onClick={onCompare}
+                  variants={staggerItem}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  ref={(el) => (buttonRefs.current[4] = el)}
+                >
+                  <Scale size={16} />
+                  <span className="text-xs">Comparar</span>
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-background/90 backdrop-blur border border-border z-50">
+                {hasCompareSelection 
+                  ? "Comparando artigos..." 
+                  : "Selecione outro artigo para comparar"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
 
-        {/* Modo de estudo (novo) */}
+        {/* Modo de estudo */}
         {onStudyMode && (
           <motion.button 
             className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
