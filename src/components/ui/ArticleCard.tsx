@@ -25,6 +25,23 @@ interface ArticleCardProps {
   globalFontSize?: number;
 }
 
+const getReadableContent = (data: string | { [key: string]: any }): string => {
+  if (data === null || data === undefined) return "";
+  if (typeof data === 'string') return data;
+  
+  try {
+    if (typeof data === 'object') {
+      return data.artigo || data.conteudo || data.content || 
+             (Object.values(data).find(val => typeof val === 'string' && val.length > 10) as string) || 
+             "Conteúdo não disponível";
+    }
+    return String(data);
+  } catch (err) {
+    console.error("Error extracting readable content:", err);
+    return "Erro ao processar conteúdo";
+  }
+};
+
 const ArticleCard = ({ 
   articleNumber,
   content = "",
@@ -55,23 +72,6 @@ const ArticleCard = ({
   const safeExample = typeof example === 'string' ? example : 
     (example ? typeof example === 'object' ? getReadableContent(example) : String(example) : "");
   const hasExample = safeExample && safeExample !== '""' && safeExample !== '{}';
-
-  const getReadableContent = (data: string | { [key: string]: any }): string => {
-    if (data === null || data === undefined) return "";
-    if (typeof data === 'string') return data;
-    
-    try {
-      if (typeof data === 'object') {
-        return data.artigo || data.conteudo || data.content || 
-               (Object.values(data).find(val => typeof val === 'string' && val.length > 10) as string) || 
-               "Conteúdo não disponível";
-      }
-      return String(data);
-    } catch (err) {
-      console.error("Error extracting readable content:", err);
-      return "Erro ao processar conteúdo";
-    }
-  };
 
   const displayContent = typeof content === 'object' ? getReadableContent(content) : safeContent;
 

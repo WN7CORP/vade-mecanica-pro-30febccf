@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,8 +20,11 @@ import Community from "./pages/Community";
 import Admin from "./pages/Admin";
 import Subscription from "./pages/Subscription";
 import { useSessionTracking } from "./hooks/useSessionTracking";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 const queryClient = new QueryClient();
+
+const publicRoutes = ["/auth"];
 
 function AppWithProviders() {
   const { studyTimeMinutes, isActive, toggleTimer } = useStudyTimer();
@@ -31,18 +33,20 @@ function AppWithProviders() {
     <>
       <Routes>
         <Route path="/auth" element={<Auth />} />
-        <Route path="/" element={<Index />} />
-        <Route path="/pesquisa" element={<Search />} />
-        <Route path="/leis" element={<AllLaws />} />
-        <Route path="/lei/:lawName" element={<LawView />} />
-        <Route path="/duvidas" element={<AIChat />} />
-        <Route path="/favoritos" element={<Favorites />} />
-        <Route path="/anotacoes" element={<Notes />} />
-        <Route path="/perfil" element={<Profile />} />
-        <Route path="/comunidade" element={<Community />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/subscription" element={<Subscription />} />
-        <Route path="*" element={<NotFound />} />
+        <Route element={<RouteGuard>
+          <Route path="/" element={<Index />} />
+          <Route path="/pesquisa" element={<Search />} />
+          <Route path="/leis" element={<AllLaws />} />
+          <Route path="/lei/:lawName" element={<LawView />} />
+          <Route path="/duvidas" element={<AIChat />} />
+          <Route path="/favoritos" element={<Favorites />} />
+          <Route path="/anotacoes" element={<Notes />} />
+          <Route path="/perfil" element={<Profile />} />
+          <Route path="/comunidade" element={<Community />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/plano" element={<Subscription />} />
+          <Route path="*" element={<NotFound />} />
+        </RouteGuard>} />
       </Routes>
       <FloatingTimer
         studyTimeMinutes={studyTimeMinutes}
