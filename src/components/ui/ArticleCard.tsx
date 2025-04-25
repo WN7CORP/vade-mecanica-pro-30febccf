@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "./button";
 import { Plus } from "lucide-react";
@@ -51,20 +50,29 @@ const ArticleCard = ({
   const [hasCompareSelection, setHasCompareSelection] = useState(false);
   const { logUserActivity } = useUserActivity(userId);
   
-  // Updated: Safely convert content and example to string
-  const safeContent = typeof content === 'string' ? content : JSON.stringify(content);
-  const safeExample = typeof example === 'string' ? example : JSON.stringify(example);
+  const safeContent = typeof content === 'string' ? content : 
+    (content ? typeof content === 'object' ? getReadableContent(content) : String(content) : "");
+  const safeExample = typeof example === 'string' ? example : 
+    (example ? typeof example === 'object' ? getReadableContent(example) : String(example) : "");
   const hasExample = safeExample && safeExample !== '""' && safeExample !== '{}';
 
-  // Extract readable content from object if needed
   const getReadableContent = (data: string | { [key: string]: any }): string => {
+    if (data === null || data === undefined) return "";
     if (typeof data === 'string') return data;
     
-    // Try to extract content from common fields
-    return data.artigo || data.conteudo || data.content || JSON.stringify(data);
+    try {
+      if (typeof data === 'object') {
+        return data.artigo || data.conteudo || data.content || 
+               (Object.values(data).find(val => typeof val === 'string' && val.length > 10) as string) || 
+               "Conteúdo não disponível";
+      }
+      return String(data);
+    } catch (err) {
+      console.error("Error extracting readable content:", err);
+      return "Erro ao processar conteúdo";
+    }
   };
 
-  // Get the content to display
   const displayContent = typeof content === 'object' ? getReadableContent(content) : safeContent;
 
   useEffect(() => {
@@ -141,7 +149,7 @@ const ArticleCard = ({
     if (typeof content === 'object' && content !== null) {
       for (const key of possibleKeys) {
         if (key in content && content[key]) {
-          return typeof content[key] === 'string' ? content[key] : JSON.stringify(content[key]);
+          return typeof content[key] === 'string' ? content[key] : getReadableContent(content[key]);
         }
       }
     }
@@ -149,7 +157,7 @@ const ArticleCard = ({
     if (typeof example === 'object' && example !== null) {
       for (const key of possibleKeys) {
         if (key in example && example[key]) {
-          return typeof example[key] === 'string' ? example[key] : JSON.stringify(example[key]);
+          return typeof example[key] === 'string' ? example[key] : getReadableContent(example[key]);
         }
       }
     }
@@ -274,7 +282,7 @@ const ArticleCard = ({
       />
       
       <ArticleContent
-        content={content}
+        content={displayContent}
         fontSize={fontSize}
         onIncreaseFontSize={() => setFontSize(prev => Math.min(prev + 1, 24))}
         onDecreaseFontSize={() => setFontSize(prev => Math.max(prev - 1, 12))}
@@ -313,7 +321,7 @@ const ArticleCard = ({
       {!shouldLeftAlign && (
         <ArticleInteractions
           articleNumber={articleNumber}
-          content={content}
+          content={displayContent}
           example={example}
           onExplain={handleExplain}
           onAddComment={handleComment}

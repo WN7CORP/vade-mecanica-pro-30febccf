@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MessageCircle, BookOpen, Bookmark, Volume2, PenLine, FileText } from "lucide-react";
 import { motion } from "framer-motion";
@@ -6,9 +7,7 @@ import { ArticleExplanation } from "./article/ArticleExplanation";
 
 interface ArticleInteractionsProps {
   articleNumber: string;
-  content: string | {
-    [key: string]: any;
-  };
+  content: string;
   example?: string | {
     [key: string]: any;
   };
@@ -39,6 +38,8 @@ const ArticleInteractions = ({
 }: ArticleInteractionsProps) => {
   const [showExplanationMenu, setShowExplanationMenu] = useState(false);
   const isMobile = useIsMobile();
+  
+  // Safely determine if there's a valid example
   const hasExample = example && example !== "" && example !== "{}" && example !== "null";
 
   const buttonVariants = {
