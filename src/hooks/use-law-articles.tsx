@@ -8,7 +8,6 @@ import {
 } from "@/services/lawService";
 import { useToast } from "@/hooks/use-toast";
 
-// Cache object to store articles by law name
 const articlesCache: Record<string, Article[]> = {};
 
 export const useLawArticles = (lawName: string | undefined) => {
@@ -24,7 +23,6 @@ export const useLawArticles = (lawName: string | undefined) => {
   const { toast } = useToast();
   const ITEMS_PER_PAGE = 20;
 
-  // Function to load articles from cache or fetch them
   const loadArticles = useCallback(async () => {
     if (!lawName) {
       console.log("Nome da lei não fornecido");
@@ -37,7 +35,6 @@ export const useLawArticles = (lawName: string | undefined) => {
       const decodedLawName = decodeURIComponent(lawName);
       console.log(`Carregando artigos para: ${decodedLawName}`);
 
-      // Check if we have cached data
       if (!articlesCache[decodedLawName]) {
         const { articles: data } = await fetchLawArticles(decodedLawName);
         articlesCache[decodedLawName] = data;
@@ -50,7 +47,6 @@ export const useLawArticles = (lawName: string | undefined) => {
 
       setArticles(currentArticles);
       
-      // Only apply search filter if there's an active search term
       if (searchTerm) {
         console.log("Aplicando filtro de busca:", searchTerm);
         setFilteredArticles(searchResults);
@@ -74,7 +70,6 @@ export const useLawArticles = (lawName: string | undefined) => {
     }
   }, [lawName, page, searchTerm, toast, searchResults]);
 
-  // Setup intersection observer for infinite scrolling
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -92,7 +87,6 @@ export const useLawArticles = (lawName: string | undefined) => {
     return () => observer.disconnect();
   }, [hasMore, isLoading, isSearching, searchTerm]);
 
-  // Handle initial load and law changes
   useEffect(() => {
     setPage(1);
     setSearchTerm("");
@@ -100,7 +94,6 @@ export const useLawArticles = (lawName: string | undefined) => {
     loadArticles();
   }, [lawName]);
 
-  // Handle page changes
   useEffect(() => {
     if (page > 1) {
       loadArticles();
@@ -119,42 +112,27 @@ export const useLawArticles = (lawName: string | undefined) => {
     setIsSearching(true);
     
     try {
-      console.log("Executando busca por:", term, "em:", lawName);
+      if (!lawName) return;
       
-      // First, try local search in already loaded articles
-      const normalizedTerm = normalizeArticleNumber(term);
+      console.log("Executing search for:", term, "in:", lawName);
+      
       const localResults = articles.filter(article => {
-        const articleNumberMatch = article.numero && 
-          normalizeArticleNumber(article.numero) === normalizedTerm;
+        const contentText = typeof article.conteudo === 'string'
+          ? article.conteudo.toLowerCase()
+          : JSON.stringify(article.conteudo).toLowerCase();
             
-        const contentMatch = article.conteudo && 
-          article.conteudo.toLowerCase().includes(term.toLowerCase());
-          
-        return articleNumberMatch || contentMatch;
+        return contentText.includes(term.toLowerCase());
       });
       
-      // Update UI immediately with local results
       setSearchResults(localResults);
       setFilteredArticles(localResults);
       
-      if (!lawName) return;
-      
-      // Then fetch more comprehensive results from the database
       const serverResults = await searchByTerm(decodeURIComponent(lawName), term);
-      console.log("Resultados da busca no servidor:", serverResults);
+      console.log("Server search results:", serverResults);
       
       if (serverResults.length > 0) {
-        // Sort results - prioritize exact matches on article number
-        const sortedResults = serverResults.sort((a, b) => {
-          // If exactly matches article.numero, put it first
-          const normalizedSearch = normalizeArticleNumber(term);
-          if (normalizeArticleNumber(a.numero) === normalizedSearch) return -1;
-          if (normalizeArticleNumber(b.numero) === normalizedSearch) return 1;
-          return 0;
-        });
-        
-        setSearchResults(sortedResults);
-        setFilteredArticles(sortedResults);
+        setSearchResults(serverResults);
+        setFilteredArticles(serverResults);
       } else if (localResults.length === 0) {
         toast({
           title: "Nenhum resultado",
@@ -163,7 +141,7 @@ export const useLawArticles = (lawName: string | undefined) => {
         });
       }
     } catch (error) {
-      console.error("Erro na busca:", error);
+      console.error("Search error:", error);
       toast({
         title: "Erro na busca",
         description: "Não foi possível completar a busca. Tente novamente.",

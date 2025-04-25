@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -42,42 +41,31 @@ export const LAW_OPTIONS: LawOption[] = [
   { display: "Estatuto da Advocacia e da OAB", table: "estatuto_da_advocacia_e_da_oab", category: 'estatuto', abbreviation: "EAOB" }
 ];
 
-// Improved number normalization function
 export const normalizeArticleNumber = (number: string): string => {
-  // Remove anything that's not a number
   const normalized = number.replace(/[^0-9]/g, '');
-  
-  // If no numbers found, return empty string
   if (!normalized) return '';
-  
   return normalized;
 };
 
-// Check if a search term could be an article number
 export const isNumberSearch = (term: string): boolean => {
   return /^\d+/.test(term) || /^art\D*\d+/i.test(term);
 };
 
-// New function to check partial number matches
 export const isPartialNumberMatch = (articleNumber: string, searchTerm: string): boolean => {
   const normalizedArticle = normalizeArticleNumber(articleNumber);
   const normalizedSearch = normalizeArticleNumber(searchTerm);
   
   if (!normalizedSearch) return false;
   
-  // Check for exact match first
   if (normalizedArticle === normalizedSearch) return true;
   
-  // Check if the search term is contained within the article number
   return normalizedArticle.includes(normalizedSearch);
 };
 
-/** Retorna apenas os nomes para popular um dropdown/menu */
 export const fetchAvailableLaws = async (): Promise<string[]> => {
   return LAW_OPTIONS.map((opt) => opt.display);
 }
 
-/** Retorna leis agrupadas por categoria (códigos e estatutos) */
 export const fetchCategorizedLaws = async (): Promise<Record<string, LawOption[]>> => {
   const categorized: Record<string, LawOption[]> = {
     'codigo': LAW_OPTIONS.filter(law => law.category === 'codigo'),
@@ -87,7 +75,6 @@ export const fetchCategorizedLaws = async (): Promise<Record<string, LawOption[]
   return categorized;
 }
 
-/** Busca o nome da tabela a partir do texto exibido */
 export function getTableName(displayName: string): string | null {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
@@ -95,7 +82,6 @@ export function getTableName(displayName: string): string | null {
   return found?.table ?? null;
 }
 
-/** Busca a categoria (código ou estatuto) a partir do nome */
 export function getLawCategory(displayName: string): 'codigo' | 'estatuto' | undefined {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
@@ -103,21 +89,16 @@ export function getLawCategory(displayName: string): 'codigo' | 'estatuto' | und
   return found?.category;
 }
 
-/** Logs a user action in the statistics table in background */
 export async function logUserAction(
   actionType: 'search' | 'explain' | 'favorite' | 'note',
   lawName?: string,
   articleNumber?: string
 ) {
   try {
-    // Get the current user's ID from the auth session
     const { data: { session } } = await supabase.auth.getSession();
     const userId = session?.user?.id;
     
-    // Only proceed if we have a user ID
     if (userId) {
-      // Run in background - don't block the main flow
-      // Using Promise-based approach instead of EdgeRuntime
       setTimeout(async () => {
         try {
           const { error } = await supabase.from('user_statistics').insert({
@@ -142,10 +123,6 @@ export async function logUserAction(
   }
 }
 
-/**
- * Mapeia os dados crus vindos do supabase para a interface Article
- * Trazendo os campos certos independentemente do nome da coluna no banco
- */
 export function mapRawArticle(dbRow: any): Article {
   return {
     id: dbRow.id,
@@ -160,9 +137,8 @@ export function mapRawArticle(dbRow: any): Article {
   };
 }
 
-// Cache for articles to avoid redundant API calls
 const articlesCache: Record<string, { timestamp: number, data: Article[] }> = {};
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
+const CACHE_TTL = 5 * 60 * 1000;
 
 export const fetchLawArticles = async (
   lawDisplayName: string
@@ -175,7 +151,6 @@ export const fetchLawArticles = async (
 
   console.log(`Buscando todos os artigos da tabela: ${tableName}`);
   
-  // Check cache first
   if (articlesCache[lawDisplayName] && 
       (Date.now() - articlesCache[lawDisplayName].timestamp) < CACHE_TTL) {
     console.log(`Usando cache para ${lawDisplayName}`);
@@ -183,11 +158,9 @@ export const fetchLawArticles = async (
     return { articles: cachedData, totalCount: cachedData.length };
   }
   
-  // Log user action in background to not block the main flow
   logUserAction('search', lawDisplayName);
 
   try {
-    // Get all articles at once - Fix: Using 'any' type and type assertion for dynamic table access
     const { data, error, count } = await supabase
       .from(tableName as any)
       .select('*', { count: 'exact' })
@@ -202,10 +175,8 @@ export const fetchLawArticles = async (
       return { articles: [], totalCount: 0 };
     }
 
-    // Map the raw data to the Article interface
     const articles = (data as any[]).map(mapRawArticle);
     
-    // Update cache
     articlesCache[lawDisplayName] = {
       timestamp: Date.now(),
       data: articles
@@ -231,7 +202,6 @@ export const searchArticle = async (
     return null;
   }
 
-  // Log search pattern for analytics
   console.log('Search pattern:', {
     isNumberSearch: isNumberSearch(searchTerm),
     term: searchTerm,
@@ -243,7 +213,6 @@ export const searchArticle = async (
   try {
     const normalizedSearchTerm = normalizeArticleNumber(searchTerm);
     
-    // Try exact match first - Fix: Using 'any' type and type assertion for dynamic table access
     const { data: exactMatch } = await supabase
       .from(tableName as any)
       .select("*")
@@ -254,9 +223,7 @@ export const searchArticle = async (
       return mapRawArticle(exactMatch);
     }
 
-    // If no exact match and it's a number search, try partial matches
     if (isNumberSearch(searchTerm)) {
-      // Fix: Using 'any' type and type assertion for dynamic table access
       const { data } = await supabase
         .from(tableName as any)
         .select("*");
@@ -265,7 +232,6 @@ export const searchArticle = async (
         return null;
       }
 
-      // Sort results by relevance
       const sortedResults = (data as any[])
         .filter(article => isPartialNumberMatch(article.numero, searchTerm))
         .sort((a, b) => {
@@ -288,9 +254,6 @@ export const searchArticle = async (
   }
 };
 
-/**
- * Normaliza o texto para busca removendo acentos e fazendo lowercase
- */
 export function normalizeText(text: string): string {
   return text.normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -309,23 +272,14 @@ export const searchByTerm = async (
 
   await logUserAction('search', lawDisplayName);
 
-  let selectCols = "*";
-  if (tableName === "constituicao_federal") {
-    selectCols = "id,numero,titulo,artigo,\"explicacao tecnica\",\"explicacao formal\",exemplo1,exemplo2,created_at";
-  }
-
-  // Normalize search term
   const term = normalizeText(searchTerm);
   
-  // Try to get articles from cache first
   if (articlesCache[lawDisplayName] && 
       (Date.now() - articlesCache[lawDisplayName].timestamp) < CACHE_TTL) {
     
-    // Simple client-side search in cached data
     const cachedResults = articlesCache[lawDisplayName].data.filter(article => {
-      const normalizedContent = normalizeText(article.conteudo);
-      const normalizedNumero = normalizeText(article.numero);
-      return normalizedContent.includes(term) || normalizedNumero.includes(term);
+      const articleText = normalizeText(getContentText(article));
+      return articleText.includes(term);
     });
     
     if (cachedResults.length > 0) {
@@ -333,31 +287,35 @@ export const searchByTerm = async (
     }
   }
   
-  // If no cache hit, perform DB search
-  // Fix: Using 'any' type and type assertion for dynamic table access
   const { data, error } = await supabase
     .from(tableName as any)
-    .select(selectCols)
+    .select('*')
     .or([
-      `numero.ilike.%${term}%`,
       `artigo.ilike.%${term}%`,
-      `titulo.ilike.%${term}%`,
       `conteudo.ilike.%${term}%`
     ].join(","));
 
   if (error) {
-    console.error("Erro na busca por termo:", error);
-    return [];
-  }
-  
-  if (!data) {
+    console.error("Error searching articles:", error);
     return [];
   }
 
-  return (data as any[]).map(mapRawArticle);
+  return data ? (data as any[]).map(mapRawArticle) : [];
 };
 
-// Interface for combined search results
+const getContentText = (article: Article): string => {
+  if (typeof article.conteudo === 'string') return article.conteudo;
+  if (article.artigo) return article.artigo;
+  
+  if (typeof article.conteudo === 'object' && article.conteudo !== null) {
+    return Object.values(article.conteudo)
+      .filter(val => typeof val === 'string')
+      .join(' ');
+  }
+  
+  return '';
+};
+
 export interface LawSearchResults {
   lawName: string;
   lawCategory: 'codigo' | 'estatuto';
@@ -365,14 +323,12 @@ export interface LawSearchResults {
   total: number;
 }
 
-// Busca em todas as leis simultaneamente
 export const searchAcrossAllLaws = async (
   searchTerm: string
 ): Promise<LawSearchResults[]> => {
   const results: LawSearchResults[] = [];
   const term = searchTerm.toLowerCase();
 
-  // Limitamos a 5 resultados por lei para não sobrecarregar
   const searchPromises = LAW_OPTIONS.map(async (law) => {
     try {
       const articles = await searchByTerm(law.display, term);
@@ -380,7 +336,7 @@ export const searchAcrossAllLaws = async (
         results.push({
           lawName: law.display,
           lawCategory: law.category,
-          articles: articles.slice(0, 5), // limita a 5 resultados por lei
+          articles: articles.slice(0, 5),
           total: articles.length
         });
       }
@@ -391,7 +347,6 @@ export const searchAcrossAllLaws = async (
 
   await Promise.all(searchPromises);
   
-  // Sort by relevance (by number of matches)
   results.sort((a, b) => b.total - a.total);
   
   return results;
