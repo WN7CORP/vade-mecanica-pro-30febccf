@@ -39,7 +39,7 @@ const ArticleCard = ({
     <div className="card-article mb-4 hover:shadow-lg transition-all duration-300 animate-fade-in relative">
       <ArticleHeader
         articleNumber={article.numero}
-        lawName={article.lei || "Lei não especificada"}
+        lawName={"Lei não especificada"}
         onCopy={() => console.log("Copy article")}
         onToggleHighlight={() => console.log("Toggle highlight")}
         showHighlightTools={false}
