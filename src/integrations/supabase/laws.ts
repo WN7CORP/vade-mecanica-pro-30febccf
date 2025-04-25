@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -41,6 +42,36 @@ export const LAW_OPTIONS: LawOption[] = [
   { display: "Estatuto da Advocacia e da OAB", table: "estatuto_da_advocacia_e_da_oab", category: 'estatuto', abbreviation: "EAOB" }
 ];
 
+// Improved number normalization function
+export const normalizeArticleNumber = (number: string): string => {
+  // Remove anything that's not a number
+  const normalized = number.replace(/[^0-9]/g, '');
+  
+  // If no numbers found, return empty string
+  if (!normalized) return '';
+  
+  return normalized;
+};
+
+// Check if a search term could be an article number
+export const isNumberSearch = (term: string): boolean => {
+  return /^\d+/.test(term) || /^art\D*\d+/i.test(term);
+};
+
+// New function to check partial number matches
+export const isPartialNumberMatch = (articleNumber: string, searchTerm: string): boolean => {
+  const normalizedArticle = normalizeArticleNumber(articleNumber);
+  const normalizedSearch = normalizeArticleNumber(searchTerm);
+  
+  if (!normalizedSearch) return false;
+  
+  // Check for exact match first
+  if (normalizedArticle === normalizedSearch) return true;
+  
+  // Check if the search term is contained within the article number
+  return normalizedArticle.includes(normalizedSearch);
+};
+
 /** Retorna apenas os nomes para popular um dropdown/menu */
 export const fetchAvailableLaws = async (): Promise<string[]> => {
   return LAW_OPTIONS.map((opt) => opt.display);
@@ -57,7 +88,7 @@ export const fetchCategorizedLaws = async (): Promise<Record<string, LawOption[]
 }
 
 /** Busca o nome da tabela a partir do texto exibido */
-function getTableName(displayName: string): string | null {
+export function getTableName(displayName: string): string | null {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
   );
@@ -65,7 +96,7 @@ function getTableName(displayName: string): string | null {
 }
 
 /** Busca a categoria (código ou estatuto) a partir do nome */
-function getLawCategory(displayName: string): 'codigo' | 'estatuto' | undefined {
+export function getLawCategory(displayName: string): 'codigo' | 'estatuto' | undefined {
   const found = LAW_OPTIONS.find(
     (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
   );
@@ -73,7 +104,7 @@ function getLawCategory(displayName: string): 'codigo' | 'estatuto' | undefined 
 }
 
 /** Logs a user action in the statistics table in background */
-async function logUserAction(
+export async function logUserAction(
   actionType: 'search' | 'explain' | 'favorite' | 'note',
   lawName?: string,
   articleNumber?: string
@@ -115,7 +146,7 @@ async function logUserAction(
  * Mapeia os dados crus vindos do supabase para a interface Article
  * Trazendo os campos certos independentemente do nome da coluna no banco
  */
-function mapRawArticle(dbRow: any): Article {
+export function mapRawArticle(dbRow: any): Article {
   return {
     id: dbRow.id,
     numero: dbRow.numero,
@@ -156,11 +187,11 @@ export const fetchLawArticles = async (
   logUserAction('search', lawDisplayName);
 
   try {
-    // Get all articles at once
+    // Get all articles at once - using type assertion to handle dynamic table names
     const { data, error, count } = await supabase
-      .from(tableName as any)
+      .from(tableName)
       .select('*', { count: 'exact' })
-      .order('id', { ascending: true });
+      .order('id', { ascending: true }) as any;
 
     if (error) {
       console.error("Erro ao buscar artigos:", error);
@@ -190,36 +221,6 @@ export const fetchLawArticles = async (
   }
 };
 
-// Improved number normalization function
-export const normalizeArticleNumber = (number: string): string => {
-  // Remove anything that's not a number
-  const normalized = number.replace(/[^0-9]/g, '');
-  
-  // If no numbers found, return empty string
-  if (!normalized) return '';
-  
-  return normalized;
-};
-
-// Check if a search term could be an article number
-export const isNumberSearch = (term: string): boolean => {
-  return /^\d+/.test(term) || /^art\D*\d+/i.test(term);
-};
-
-// New function to check partial number matches
-export const isPartialNumberMatch = (articleNumber: string, searchTerm: string): boolean => {
-  const normalizedArticle = normalizeArticleNumber(articleNumber);
-  const normalizedSearch = normalizeArticleNumber(searchTerm);
-  
-  if (!normalizedSearch) return false;
-  
-  // Check for exact match first
-  if (normalizedArticle === normalizedSearch) return true;
-  
-  // Check if the search term is contained within the article number
-  return normalizedArticle.includes(normalizedSearch);
-};
-
 export const searchArticle = async (
   lawDisplayName: string,
   searchTerm: string
@@ -242,12 +243,12 @@ export const searchArticle = async (
   try {
     const normalizedSearchTerm = normalizeArticleNumber(searchTerm);
     
-    // Try exact match first
+    // Try exact match first - using type assertion for dynamic table names
     const { data: exactMatch } = await supabase
       .from(tableName)
       .select("*")
       .eq("numero", searchTerm)
-      .maybeSingle();
+      .maybeSingle() as any;
 
     if (exactMatch) {
       return mapRawArticle(exactMatch);
@@ -255,16 +256,18 @@ export const searchArticle = async (
 
     // If no exact match and it's a number search, try partial matches
     if (isNumberSearch(searchTerm)) {
+      // Using type assertion for dynamic table names
       const { data } = await supabase
         .from(tableName)
-        .select("*");
+        .select("*") as any;
 
       if (!data || data.length === 0) {
         return null;
       }
 
-      // Sort results by relevance
-      const sortedResults = data
+      // Sort results by relevance - Here we handle strong typing by using type assertions
+      // since we've validated that these are article rows
+      const sortedResults = (data as any[])
         .filter(article => isPartialNumberMatch(article.numero, searchTerm))
         .sort((a, b) => {
           const aMatch = normalizeArticleNumber(a.numero);
@@ -289,7 +292,7 @@ export const searchArticle = async (
 /**
  * Normaliza o texto para busca removendo acentos e fazendo lowercase
  */
-function normalizeText(text: string): string {
+export function normalizeText(text: string): string {
   return text.normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
@@ -333,15 +336,16 @@ export const searchByTerm = async (
   
   // If no cache hit, perform DB search
   // Busca nos campos relevantes (numero, artigo/titulo/conteudo)
+  // Using type assertion for dynamic table names
   const { data, error } = await supabase
-    .from(tableName as any)
+    .from(tableName)
     .select(selectCols)
     .or([
       `numero.ilike.%${term}%`,
       `artigo.ilike.%${term}%`,
       `titulo.ilike.%${term}%`,
       `conteudo.ilike.%${term}%`
-    ].join(","));
+    ].join(",")) as any;
 
   if (error) {
     console.error("Erro na busca por termo:", error);
@@ -356,7 +360,7 @@ export const searchByTerm = async (
 };
 
 // Interface for combined search results
-interface LawSearchResults {
+export interface LawSearchResults {
   lawName: string;
   lawCategory: 'codigo' | 'estatuto';
   articles: Article[];
