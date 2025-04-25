@@ -39,7 +39,7 @@ export const ArticleExplanation = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
-            <div className="bg-card border rounded-lg shadow-lg p-4">
+            <div className="bg-card border rounded-lg shadow-lg p-4 w-full mx-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-primary">Tipo de Explicação</h3>
                 <Button 
