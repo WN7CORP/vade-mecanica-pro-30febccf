@@ -8,7 +8,15 @@ interface ArticleCustomExplanationProps {
   onNarrate: () => void;
 }
 
-export const ArticleCustomExplanation = ({ title, explanation, onNarrate }: ArticleCustomExplanationProps) => {
+export const ArticleCustomExplanation = ({ 
+  title, 
+  explanation, 
+  onNarrate 
+}: ArticleCustomExplanationProps) => {
+  const formattedExplanation = typeof explanation === 'string' ? 
+    explanation : 
+    'Explicação não disponível';
+
   return (
     <div className="flex flex-col mt-4 animate-fade-in">
       <div className="px-4 py-3 bg-primary-50/10 border-l-4 border-primary-200 rounded text-gray-300 text-left whitespace-pre-wrap w-full">
@@ -23,7 +31,7 @@ export const ArticleCustomExplanation = ({ title, explanation, onNarrate }: Arti
             <Volume2 size={16} />
           </Button>
         </div>
-        {explanation}
+        {formattedExplanation}
       </div>
     </div>
   );

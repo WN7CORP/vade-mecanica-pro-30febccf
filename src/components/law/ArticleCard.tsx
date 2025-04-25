@@ -5,6 +5,7 @@ import ArticleFavoriteCollections from "./ArticleFavoriteCollections";
 import ArticleNavigation from "./ArticleNavigation";
 import ArticleContent from "@/components/ui/article/ArticleContent";
 import ArticleHeader from "@/components/ui/article/ArticleHeader";
+import { ArticleExplanation } from "@/components/ui/article/ArticleExplanation";
 
 interface ArticleCardProps {
   article: Article;
@@ -20,19 +21,29 @@ const ArticleCard = ({
   hasHistory
 }: ArticleCardProps) => {
   const [isFavorited, setIsFavorited] = useState(false);
-  const [fontSize, setFontSize] = useState(16); // Default font size
+  const [fontSize, setFontSize] = useState(16);
+  const [showExplanationMenu, setShowExplanationMenu] = useState(false);
 
   const handleFavorite = (collectionName: string) => {
     console.log(`Adding to collection: ${collectionName}`);
     setIsFavorited(true);
   };
 
+  const handleExplain = (type: 'technical' | 'formal') => {
+    // Access the database explanations directly from the article object
+    const explanation = type === 'technical' ? 
+      article["explicacao tecnica"] : 
+      article["explicacao formal"];
+    
+    console.log(`Showing ${type} explanation:`, explanation);
+  };
+
   const handleIncreaseFontSize = () => {
-    setFontSize(prev => Math.min(prev + 1, 24)); // Max font size 24
+    setFontSize(prev => Math.min(prev + 1, 24));
   };
 
   const handleDecreaseFontSize = () => {
-    setFontSize(prev => Math.max(prev - 1, 12)); // Min font size 12
+    setFontSize(prev => Math.max(prev - 1, 12));
   };
 
   return (
@@ -53,6 +64,14 @@ const ArticleCard = ({
         fontSize={fontSize}
         onIncreaseFontSize={handleIncreaseFontSize}
         onDecreaseFontSize={handleDecreaseFontSize}
+      />
+
+      <ArticleExplanation
+        isOpen={showExplanationMenu}
+        onClose={() => setShowExplanationMenu(false)}
+        onExplain={handleExplain}
+        articleNumber={article.numero}
+        content={article.conteudo}
       />
 
       {(onPrevious || onNext) && (
