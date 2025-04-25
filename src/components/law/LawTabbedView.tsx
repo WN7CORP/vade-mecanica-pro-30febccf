@@ -1,20 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, GraduationCap, Clock, ArrowUp } from "lucide-react";
+import { MessageSquare, BookOpen, Clock, ArrowUp } from "lucide-react";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
-import { useAIExplanation } from "@/hooks/use-ai-explanation";
 import SearchBar from "@/components/ui/SearchBar";
 import { FloatingSearchButton } from "@/components/ui/FloatingSearchButton";
 import ComparisonTool from "@/components/law/ComparisonTool";
 import { Article } from "@/services/lawService";
-import StudyMode from "@/pages/StudyMode";
-import LegalTimeline from "@/pages/LegalTimeline";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
-import ArticleHistory from "./ArticleHistory";
+import ArticleComments from "./ArticleComments";
+import { CommentForm } from "./CommentForm";
 
 const LawTabbedView = () => {
   const navigate = useNavigate();
@@ -39,14 +35,6 @@ const LawTabbedView = () => {
     hasMore,
     loadingRef
   } = useLawArticles(lawName);
-
-  const {
-    showExplanation,
-    setShowExplanation,
-    explanation,
-    loadingExplanation,
-    handleExplainArticle
-  } = useAIExplanation(lawName);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -129,13 +117,13 @@ const LawTabbedView = () => {
             <BookOpen className="mr-2 h-4 w-4" />
             <span>Artigos</span>
           </TabsTrigger>
-          <TabsTrigger value="study" className="w-full">
-            <GraduationCap className="mr-2 h-4 w-4" />
-            <span>Estudar</span>
+          <TabsTrigger value="comments" className="w-full">
+            <MessageSquare className="mr-2 h-4 w-4" />
+            <span>Comentários</span>
           </TabsTrigger>
-          <TabsTrigger value="history" className="w-full">
+          <TabsTrigger value="article-comments" className="w-full">
             <Clock className="mr-2 h-4 w-4" />
-            <span>Histórico</span>
+            <span>Comentários do Artigo</span>
           </TabsTrigger>
         </TabsList>
 
@@ -178,12 +166,32 @@ const LawTabbedView = () => {
           />
         </TabsContent>
 
-        <TabsContent value="study" className="mt-0">
-          <StudyMode />
+        <TabsContent value="comments" className="mt-0">
+          <ArticleComments lawName={lawName || ""} />
         </TabsContent>
 
-        <TabsContent value="history" className="mt-0">
-          <ArticleHistory />
+        <TabsContent value="article-comments" className="mt-0">
+          {selectedArticle && (
+            <div className="space-y-6">
+              <CommentForm 
+                lawName={lawName || ""}
+                articleNumber={selectedArticle.numero}
+                onCommentAdded={() => {
+                  // Refresh comments after adding a new one
+                  // You can implement this if needed
+                }}
+              />
+              <ArticleComments 
+                lawName={lawName || ""} 
+                articleNumber={selectedArticle.numero}
+              />
+            </div>
+          )}
+          {!selectedArticle && (
+            <div className="text-center py-8 text-gray-400">
+              Selecione um artigo para ver ou adicionar comentários.
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
