@@ -1,6 +1,6 @@
 
 import { Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react"; // Added useState import
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RouteGuardProps {
