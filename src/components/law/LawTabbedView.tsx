@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useRef } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, BookOpen, Clock, ArrowUp } from "lucide-react";
 import ArticleList from "@/components/law/ArticleList";
@@ -11,6 +12,7 @@ import { Article } from "@/services/lawService";
 import { Button } from "@/components/ui/button";
 import ArticleComments from "./ArticleComments";
 import { CommentForm } from "./CommentForm";
+import { useToast } from "@/hooks/use-toast";
 
 const LawTabbedView = () => {
   const navigate = useNavigate();
@@ -18,6 +20,7 @@ const LawTabbedView = () => {
   const [searchParams] = useSearchParams();
   const highlightedArticleNumber = searchParams.get('artigo');
   const highlightedRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
   
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
@@ -67,7 +70,7 @@ const LawTabbedView = () => {
         }, 500);
       }
     }
-  }, [highlightedArticleNumber, filteredArticles, isLoading]);
+  }, [highlightedArticleNumber, filteredArticles, isLoading, toast]);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -144,20 +147,15 @@ const LawTabbedView = () => {
             searchTerm={searchTerm} 
             filteredArticles={filteredArticles} 
             lawName={lawName} 
-            showExplanation={showExplanation} 
-            explanation={explanation} 
-            loadingExplanation={loadingExplanation} 
             selectedArticle={selectedArticle} 
             showChat={showChat} 
             loadingRef={loadingRef} 
             hasMore={hasMore} 
-            onExplainArticle={handleExplainArticle}
             onAskQuestion={(article) => {
               setSelectedArticle(article);
               setShowChat(true);
             }}
             onCloseChat={() => setShowChat(false)}
-            onCloseExplanation={() => setShowExplanation(false)}
             onAddToComparison={handleAddToComparison}
             globalFontSize={globalFontSize}
             onStudyMode={handleStudyMode}

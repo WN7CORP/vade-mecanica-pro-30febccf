@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Loader2 } from "lucide-react";
 import { formatDistance } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 interface Comment {
   id: string;
@@ -14,10 +15,10 @@ interface Comment {
   created_at: string;
   user_id: string;
   likes: number;
-  profiles: {
+  profiles?: {
     full_name: string;
     avatar_url: string;
-  };
+  } | null;
 }
 
 interface ArticleCommentsProps {
@@ -29,6 +30,7 @@ const ArticleComments = ({ lawName, articleNumber }: ArticleCommentsProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchComments();
@@ -40,11 +42,15 @@ const ArticleComments = ({ lawName, articleNumber }: ArticleCommentsProps) => {
       let query = supabase
         .from('law_article_comments')
         .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            avatar_url
-          )
+          id,
+          content,
+          tag,
+          created_at,
+          user_id,
+          likes,
+          law_name,
+          article_number,
+          profiles:user_profiles(full_name, avatar_url)
         `)
         .order('created_at', { ascending: false });
 
@@ -60,9 +66,26 @@ const ArticleComments = ({ lawName, articleNumber }: ArticleCommentsProps) => {
 
       const { data, error } = await query;
       if (error) throw error;
-      setComments(data || []);
+      
+      // Transform the data to match our Comment interface
+      const formattedComments: Comment[] = data?.map(item => ({
+        id: item.id,
+        content: item.content,
+        tag: item.tag,
+        created_at: item.created_at,
+        user_id: item.user_id,
+        likes: item.likes || 0,
+        profiles: item.profiles?.[0] || { full_name: "Usuário", avatar_url: "/placeholder.svg" }
+      })) || [];
+      
+      setComments(formattedComments);
     } catch (error) {
       console.error('Error fetching comments:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível carregar os comentários."
+      });
     } finally {
       setIsLoading(false);
     }
