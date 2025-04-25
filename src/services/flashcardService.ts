@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { toast } from "@/hooks/use-toast";
@@ -37,11 +38,7 @@ export const generateFlashcardsForArticle = async (
   console.log('Generating new flashcards...');
   
   // Initialize Gemini AI with API key
-  const apiKey = process.env.GOOGLE_API_KEY || 
-    'AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0';
-  
-  const genAI = new GoogleGenerativeAI(apiKey);
-  // Use the correct model name "gemini-pro"
+  const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') || '');
   const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
   // Prompt for generating flashcards
@@ -85,8 +82,6 @@ export const generateFlashcardsForArticle = async (
         difficulty: ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : 'medium'
       };
 
-      console.log('Inserting flashcard:', flashcard.question.substring(0, 30) + '...');
-      
       // Insert each flashcard into the database
       const { data, error } = await supabase
         .from('law_flashcards')
@@ -95,6 +90,11 @@ export const generateFlashcardsForArticle = async (
 
       if (error) {
         console.error('Error inserting flashcard:', error);
+        toast({
+          title: "Erro ao salvar flashcard",
+          description: "Não foi possível salvar o flashcard gerado.",
+          variant: "destructive"
+        });
       } else if (data) {
         console.log('Flashcard inserted successfully');
         flashcards.push(data[0] as LawFlashcard);

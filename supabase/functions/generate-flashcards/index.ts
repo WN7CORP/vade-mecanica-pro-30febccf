@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
+import { GoogleGenerativeAI } from "npm:@google/generative-ai@0.1.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,15 +14,18 @@ serve(async (req) => {
   }
 
   try {
+    // Initialize clients
     const supabaseUrl = "https://phzcazcyjhlmdchcjagy.supabase.co";
     const supabaseServiceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const geminiApiKey = Deno.env.get('GOOGLE_API_KEY') ?? '';
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') ?? '';
 
     if (!geminiApiKey) {
       throw new Error("Gemini API key not configured");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceRole);
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     
     // Fetch articles that don't have flashcards yet
     const { data: articles, error: fetchError } = await supabase
@@ -49,7 +53,7 @@ serve(async (req) => {
             status: 'skipped',
             message: 'Flashcard already exists'
           });
-          continue; // Skip if flashcard exists
+          continue;
         }
 
         const prompt = `
@@ -62,41 +66,13 @@ serve(async (req) => {
           Difficulty: [easy/medium/hard based on the complexity of the concept]
         `;
 
-        const response = await fetch(
-          "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": geminiApiKey,
-            },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{ text: prompt }]
-              }]
-            })
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`API error: ${JSON.stringify(errorData)}`);
-        }
-
-        const result = await response.json();
-        
-        if (!result.candidates || result.candidates.length === 0 || 
-            !result.candidates[0].content || !result.candidates[0].content.parts || 
-            !result.candidates[0].content.parts[0].text) {
-          throw new Error('Invalid response format from Gemini API');
-        }
-        
-        const content = result.candidates[0].content.parts[0].text;
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
 
         // Parse the response
-        const questionMatch = content.match(/Question: (.*)/i);
-        const answerMatch = content.match(/Answer: (.*)/i);
-        const difficultyMatch = content.match(/Difficulty: (.*)/i);
+        const questionMatch = text.match(/Question: (.*)/i);
+        const answerMatch = text.match(/Answer: (.*)/i);
+        const difficultyMatch = text.match(/Difficulty: (.*)/i);
 
         if (questionMatch && answerMatch && difficultyMatch) {
           const { error } = await supabase.from('law_flashcards').insert({
@@ -116,7 +92,7 @@ serve(async (req) => {
             question: questionMatch[1].trim().substring(0, 30) + '...'
           });
         } else {
-          throw new Error('Failed to parse response: ' + content);
+          throw new Error('Failed to parse response: ' + text);
         }
       } catch (articleError) {
         results.push({ 
