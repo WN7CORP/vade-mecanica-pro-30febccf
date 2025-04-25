@@ -2,13 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
   id: number;
-  numero: string; // número do artigo
-  titulo?: string; // texto que aparece antes do artigo, opcional
-  conteudo: string; // conteúdo do artigo
-  explicacao_tecnica?: string; // explicação técnica
-  explicacao_formal?: string; // explicação formal
-  exemplo1?: string; // exemplo 1
-  exemplo2?: string; // exemplo 2
+  numero: string;
+  titulo?: string;
+  conteudo: string;
+  explicacao_tecnica?: string;
+  explicacao_formal?: string;
+  exemplo1?: string;
+  exemplo2?: string;
   created_at: string;
 }
 
@@ -17,7 +17,6 @@ export interface LawOption {
   table: string;
 }
 
-// Use literal string type instead of a type alias to ensure compatibility with Supabase's client
 export const LAW_OPTIONS: LawOption[] = [
   { display: "Constituição Federal",         table: "constituicao_federal"      },
   { display: "Código Civil",                 table: "codigo_civil"              },
@@ -27,7 +26,17 @@ export const LAW_OPTIONS: LawOption[] = [
   { display: "Código de Defesa do Consumidor", table: "codigo_defesa_consumidor" },
   { display: "Código Tributário Nacional",   table: "codigo_tributario"         },
   { display: "Consolidação das Leis do Trabalho", table: "consolidacao_leis_trabalho" },
-  { display: "Código de Trânsito Brasileiro", table: "codigo_transito"          }
+  { display: "Código de Trânsito Brasileiro", table: "codigo_transito"          },
+  { display: "Estatuto da Criança e do Adolescente", table: "estatuto_da_crianca_e_do_adolescente" },
+  { display: "Estatuto do Idoso", table: "estatuto_do_idoso" },
+  { display: "Estatuto da Pessoa com Deficiência", table: "estatuto_da_pessoa_com_deficiencia" },
+  { display: "Estatuto da Igualdade Racial", table: "estatuto_da_igualdade_racial" },
+  { display: "Estatuto do Desarmamento", table: "estatuto_do_desarmamento" },
+  { display: "Estatuto da Juventude", table: "estatuto_da_juventude" },
+  { display: "Estatuto da Cidade", table: "estatuto_da_cidade" },
+  { display: "Estatuto do Torcedor", table: "estatuto_do_torcedor" },
+  { display: "Estatuto da Terra", table: "estatuto_da_terra" },
+  { display: "Estatuto da Advocacia e da OAB", table: "estatuto_da_advocacia_e_da_oab" }
 ];
 
 /** Retorna apenas os nomes para popular um dropdown/menu */

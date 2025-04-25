@@ -337,6 +337,24 @@ export type Database = {
           },
         ]
       }
+      comment_terms_acceptance: {
+        Row: {
+          accepted_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       community_comments: {
         Row: {
           author_id: string
@@ -1077,6 +1095,306 @@ export type Database = {
         }
         Relationships: []
       }
+      estatuto_da_advocacia_e_da_oab: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      estatuto_da_cidade: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      estatuto_da_crianca_e_do_adolescente: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      estatuto_da_igualdade_racial: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      estatuto_da_juventude: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      estatuto_da_pessoa_com_deficiencia: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      estatuto_da_terra: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      estatuto_do_desarmamento: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      estatuto_do_idoso: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
+      estatuto_do_torcedor: {
+        Row: {
+          artigo: string | null
+          created_at: string | null
+          exemplo: string | null
+          explicacao_formal: string | null
+          explicacao_tecnica: string | null
+          id: number
+          numero: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          created_at?: string | null
+          exemplo?: string | null
+          explicacao_formal?: string | null
+          explicacao_tecnica?: string | null
+          id?: number
+          numero?: string | null
+        }
+        Relationships: []
+      }
       flashcards_pro: {
         Row: {
           area: string
@@ -1161,6 +1479,42 @@ export type Database = {
           pergunta?: string
           resposta?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      law_article_comments: {
+        Row: {
+          article_number: string
+          content: string
+          created_at: string | null
+          id: string
+          law_name: string
+          likes: number | null
+          tag: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          article_number: string
+          content: string
+          created_at?: string | null
+          id?: string
+          law_name: string
+          likes?: number | null
+          tag: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          article_number?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          law_name?: string
+          likes?: number | null
+          tag?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
