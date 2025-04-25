@@ -84,7 +84,7 @@ const ArticleInteractions = ({
     >
       <div className="flex items-center flex-wrap justify-center gap-2">
         <button 
-          onClick={() => onStartNarration()} 
+          onClick={onStartNarration} 
           className="article-button bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1"
         >
           <Volume2 size={16} />
