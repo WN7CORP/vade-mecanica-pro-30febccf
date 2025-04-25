@@ -1,5 +1,5 @@
-
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import ReactMarkdown from 'react-markdown';
 import { Button } from "./button";
 import { Textarea } from "./textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./card";
@@ -12,7 +12,6 @@ import { useUserActivity } from "@/hooks/useUserActivity";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "./alert";
 import { debounce } from "lodash";
-import ReactMarkdown from 'react-markdown';
 
 interface ArticleNotesProps {
   isOpen: boolean;
@@ -46,7 +45,6 @@ const ArticleNotes = ({
   
   const storageKey = `article-notes-${articleNumber}-${lawName}`;
 
-  // Debounced save function to prevent excessive saving while typing
   const debouncedSave = useRef(
     debounce((content: string, topicsList: string[]) => {
       try {
@@ -78,7 +76,6 @@ const ArticleNotes = ({
   }, []);
 
   useEffect(() => {
-    // Load saved notes from localStorage
     try {
       const savedData = localStorage.getItem(storageKey);
       if (savedData) {
@@ -91,14 +88,12 @@ const ArticleNotes = ({
     }
   }, [storageKey]);
 
-  // Auto-save when notes or topics change while editing
   useEffect(() => {
     if (isEditing && notes) {
       debouncedSave(notes, topics);
     }
   }, [notes, topics, isEditing, debouncedSave]);
 
-  // Scroll para o topo quando o AI help for exibido
   useEffect(() => {
     if (showAiHelp && aiHelpRef.current) {
       setTimeout(() => {
@@ -148,7 +143,6 @@ const ArticleNotes = ({
     updatedTopics.splice(index, 1);
     setTopics(updatedTopics);
 
-    // Auto-save topics when removed
     debouncedSave(notes, updatedTopics);
   };
 
@@ -240,7 +234,6 @@ const ArticleNotes = ({
     
     setNotes(newText);
     
-    // Restore focus and selection after state update
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(
@@ -379,7 +372,6 @@ const ArticleNotes = ({
           
           {isEditing || !notes ? (
             <div className="mb-2">
-              {/* Formatting toolbar */}
               {isEditing && (
                 <div className="flex items-center gap-2 mb-2 p-1 rounded-md bg-[#12141D]/60">
                   <Button
