@@ -190,9 +190,39 @@ export const fetchLawArticles = async (
   }
 };
 
+// Improved number normalization function
+export const normalizeArticleNumber = (number: string): string => {
+  // Remove anything that's not a number
+  const normalized = number.replace(/[^0-9]/g, '');
+  
+  // If no numbers found, return empty string
+  if (!normalized) return '';
+  
+  return normalized;
+};
+
+// Check if a search term could be an article number
+export const isNumberSearch = (term: string): boolean => {
+  return /^\d+/.test(term) || /^art\D*\d+/i.test(term);
+};
+
+// New function to check partial number matches
+export const isPartialNumberMatch = (articleNumber: string, searchTerm: string): boolean => {
+  const normalizedArticle = normalizeArticleNumber(articleNumber);
+  const normalizedSearch = normalizeArticleNumber(searchTerm);
+  
+  if (!normalizedSearch) return false;
+  
+  // Check for exact match first
+  if (normalizedArticle === normalizedSearch) return true;
+  
+  // Check if the search term is contained within the article number
+  return normalizedArticle.includes(normalizedSearch);
+};
+
 export const searchArticle = async (
   lawDisplayName: string,
-  articleNumber: string
+  searchTerm: string
 ): Promise<Article | null> => {
   const tableName = getTableName(lawDisplayName);
   if (!tableName) {
@@ -200,49 +230,60 @@ export const searchArticle = async (
     return null;
   }
 
-  await logUserAction('search', lawDisplayName, articleNumber);
-
-  // Normalize the article number for better matching
-  const normalizedNumber = articleNumber.replace(/[^0-9]/g, '');
-  
-  // Try exact match first
-  const { data: exactMatch, error: exactError } = await supabase
-    .from(tableName as any)
-    .select("*")
-    .eq("numero", articleNumber)
-    .maybeSingle();
-
-  if (exactMatch) {
-    return mapRawArticle(exactMatch);
-  }
-
-  // If no exact match, try partial number matching
-  const { data, error } = await supabase
-    .from(tableName as any)
-    .select("*")
-    .ilike("numero", `%${normalizedNumber}%`);
-
-  if (error) {
-    console.error("Erro ao buscar artigo:", error);
-    return null;
-  }
-
-  if (!data || data.length === 0) {
-    return null;
-  }
-
-  // Sort results by relevance (exact number matches first)
-  const sortedResults = data.sort((a, b) => {
-    const aNumber = normalizeArticleNumber(a.numero);
-    const bNumber = normalizeArticleNumber(b.numero);
-    
-    if (aNumber === normalizedNumber) return -1;
-    if (bNumber === normalizedNumber) return 1;
-    
-    return aNumber.indexOf(normalizedNumber) - bNumber.indexOf(normalizedNumber);
+  // Log search pattern for analytics
+  console.log('Search pattern:', {
+    isNumberSearch: isNumberSearch(searchTerm),
+    term: searchTerm,
+    normalized: normalizeArticleNumber(searchTerm),
+    timestamp: new Date().toISOString(),
+    law: lawDisplayName
   });
 
-  return mapRawArticle(sortedResults[0]);
+  try {
+    const normalizedSearchTerm = normalizeArticleNumber(searchTerm);
+    
+    // Try exact match first
+    const { data: exactMatch } = await supabase
+      .from(tableName)
+      .select("*")
+      .eq("numero", searchTerm)
+      .maybeSingle();
+
+    if (exactMatch) {
+      return mapRawArticle(exactMatch);
+    }
+
+    // If no exact match and it's a number search, try partial matches
+    if (isNumberSearch(searchTerm)) {
+      const { data } = await supabase
+        .from(tableName)
+        .select("*");
+
+      if (!data || data.length === 0) {
+        return null;
+      }
+
+      // Sort results by relevance
+      const sortedResults = data
+        .filter(article => isPartialNumberMatch(article.numero, searchTerm))
+        .sort((a, b) => {
+          const aMatch = normalizeArticleNumber(a.numero);
+          const bMatch = normalizeArticleNumber(b.numero);
+          
+          if (aMatch === normalizedSearchTerm) return -1;
+          if (bMatch === normalizedSearchTerm) return 1;
+          
+          return aMatch.indexOf(normalizedSearchTerm) - bMatch.indexOf(normalizedSearchTerm);
+        });
+
+      return sortedResults.length > 0 ? mapRawArticle(sortedResults[0]) : null;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Erro na busca por artigo:", error);
+    return null;
+  }
 };
 
 /**

@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 
 export type { 
   Article,
@@ -14,13 +15,350 @@ export {
   LAW_OPTIONS 
 } from "@/integrations/supabase/laws";
 
-// Add new number-specific search functions
+// Improved number normalization function
 export const normalizeArticleNumber = (number: string): string => {
-  return number.replace(/[^0-9]/g, '');
+  // Remove anything that's not a number
+  const normalized = number.replace(/[^0-9]/g, '');
+  
+  // If no numbers found, return empty string
+  if (!normalized) return '';
+  
+  return normalized;
 };
 
-export const isArticleNumberMatch = (articleNumber: string, searchTerm: string): boolean => {
+// Check if a search term could be an article number
+export const isNumberSearch = (term: string): boolean => {
+  return /^\d+/.test(term) || /^art\D*\d+/i.test(term);
+};
+
+// New function to check partial number matches
+export const isPartialNumberMatch = (articleNumber: string, searchTerm: string): boolean => {
   const normalizedArticle = normalizeArticleNumber(articleNumber);
   const normalizedSearch = normalizeArticleNumber(searchTerm);
+  
+  if (!normalizedSearch) return false;
+  
+  // Check for exact match first
+  if (normalizedArticle === normalizedSearch) return true;
+  
+  // Check if the search term is contained within the article number
   return normalizedArticle.includes(normalizedSearch);
 };
+
+// Enhanced search functionality
+export const searchArticle = async (
+  lawDisplayName: string,
+  searchTerm: string
+): Promise<Article | null> => {
+  const tableName = getTableName(lawDisplayName);
+  if (!tableName) {
+    console.error(`Lei inválida: "${lawDisplayName}"`);
+    return null;
+  }
+  
+  // Log search pattern for analytics
+  console.log('Search pattern:', {
+    isNumber: isNumberSearch(searchTerm),
+    term: searchTerm,
+    normalized: normalizeArticleNumber(searchTerm),
+    timestamp: new Date().toISOString(),
+    law: lawDisplayName
+  });
+
+  try {
+    // Normalize the search term
+    const normalizedSearchTerm = normalizeArticleNumber(searchTerm);
+    
+    // Try exact match first
+    const { data: exactMatch, error: exactError } = await supabase
+      .from(tableName as any)
+      .select("*")
+      .eq("numero", searchTerm)
+      .maybeSingle();
+
+    if (exactMatch) {
+      return mapRawArticle(exactMatch);
+    }
+
+    // If no exact match and it's a number search, try partial matches
+    if (isNumberSearch(searchTerm)) {
+      const { data, error } = await supabase
+        .from(tableName as any)
+        .select("*");
+
+      if (error) {
+        console.error("Erro ao buscar artigo:", error);
+        return null;
+      }
+
+      if (!data || data.length === 0) {
+        return null;
+      }
+
+      // Sort results by relevance (exact number matches first)
+      const sortedResults = data
+        .filter(article => isPartialNumberMatch(article.numero, searchTerm))
+        .sort((a, b) => {
+          const aNumber = normalizeArticleNumber(a.numero);
+          const bNumber = normalizeArticleNumber(b.numero);
+          
+          // Exact matches first
+          if (aNumber === normalizedSearchTerm) return -1;
+          if (bNumber === normalizedSearchTerm) return 1;
+          
+          // Then partial matches by position
+          return aNumber.indexOf(normalizedSearchTerm) - bNumber.indexOf(normalizedSearchTerm);
+        });
+
+      return sortedResults.length > 0 ? mapRawArticle(sortedResults[0]) : null;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Erro na busca por artigo:", error);
+    return null;
+  }
+};
+
+/**
+ * Mapeia os dados crus vindos do supabase para a interface Article
+ * Trazendo os campos certos independentemente do nome da coluna no banco
+ */
+function mapRawArticle(dbRow: any): Article {
+  return {
+    id: dbRow.id,
+    numero: dbRow.numero,
+    titulo: dbRow.titulo || undefined,
+    conteudo: dbRow.artigo || dbRow.conteudo || "",
+    explicacao_tecnica: dbRow["explicacao tecnica"] || dbRow.explicacao_tecnica || undefined,
+    explicacao_formal: dbRow["explicacao formal"] || dbRow.explicacao_formal || undefined,
+    exemplo1: dbRow.exemplo1 || undefined,
+    exemplo2: dbRow.exemplo2 || undefined,
+    created_at: dbRow.created_at
+  };
+}
+
+// Cache for articles to avoid redundant API calls
+const articlesCache: Record<string, { timestamp: number, data: Article[] }> = {};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
+
+export const fetchLawArticles = async (
+  lawDisplayName: string
+): Promise<{articles: Article[], totalCount: number}> => {
+  const tableName = getTableName(lawDisplayName);
+  if (!tableName) {
+    console.error(`Lei inválida: "${lawDisplayName}"`);
+    throw new Error(`Lei inválida: "${lawDisplayName}"`);
+  }
+
+  console.log(`Buscando todos os artigos da tabela: ${tableName}`);
+  
+  // Check cache first
+  if (articlesCache[lawDisplayName] && 
+      (Date.now() - articlesCache[lawDisplayName].timestamp) < CACHE_TTL) {
+    console.log(`Usando cache para ${lawDisplayName}`);
+    const cachedData = articlesCache[lawDisplayName].data;
+    return { articles: cachedData, totalCount: cachedData.length };
+  }
+  
+  // Log user action in background to not block the main flow
+  logUserAction('search', lawDisplayName);
+
+  try {
+    // Get all articles at once
+    const { data, error, count } = await supabase
+      .from(tableName as any)
+      .select('*', { count: 'exact' })
+      .order('id', { ascending: true });
+
+    if (error) {
+      console.error("Erro ao buscar artigos:", error);
+      throw new Error("Falha ao carregar artigos");
+    }
+    
+    if (!data) {
+      return { articles: [], totalCount: 0 };
+    }
+
+    // Map the raw data to the Article interface
+    const articles = (data as any[]).map(mapRawArticle);
+    
+    // Update cache
+    articlesCache[lawDisplayName] = {
+      timestamp: Date.now(),
+      data: articles
+    };
+    
+    return { 
+      articles,
+      totalCount: count || articles.length 
+    };
+  } catch (error) {
+    console.error("Erro ao buscar artigos:", error);
+    throw new Error("Falha ao carregar artigos");
+  }
+};
+
+/**
+ * Normaliza o texto para busca removendo acentos e fazendo lowercase
+ */
+function normalizeText(text: string): string {
+  return text.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+export const searchByTerm = async (
+  lawDisplayName: string,
+  searchTerm: string
+): Promise<Article[]> => {
+  const tableName = getTableName(lawDisplayName);
+  if (!tableName) {
+    console.error(`Lei inválida: "${lawDisplayName}"`);
+    return [];
+  }
+
+  await logUserAction('search', lawDisplayName);
+
+  let selectCols = "*";
+  if (tableName === "constituicao_federal") {
+    selectCols = "id,numero,titulo,artigo,\"explicacao tecnica\",\"explicacao formal\",exemplo1,exemplo2,created_at";
+  }
+
+  // Normalize search term
+  const term = normalizeText(searchTerm);
+  
+  // Try to get articles from cache first
+  if (articlesCache[lawDisplayName] && 
+      (Date.now() - articlesCache[lawDisplayName].timestamp) < CACHE_TTL) {
+    
+    // Simple client-side search in cached data
+    const cachedResults = articlesCache[lawDisplayName].data.filter(article => {
+      const normalizedContent = normalizeText(article.conteudo);
+      const normalizedNumero = normalizeText(article.numero);
+      return normalizedContent.includes(term) || normalizedNumero.includes(term);
+    });
+    
+    if (cachedResults.length > 0) {
+      return cachedResults;
+    }
+  }
+  
+  // If no cache hit, perform DB search
+  // Busca nos campos relevantes (numero, artigo/titulo/conteudo)
+  const { data, error } = await supabase
+    .from(tableName as any)
+    .select(selectCols)
+    .or([
+      `numero.ilike.%${term}%`,
+      `artigo.ilike.%${term}%`,
+      `titulo.ilike.%${term}%`,
+      `conteudo.ilike.%${term}%`
+    ].join(","));
+
+  if (error) {
+    console.error("Erro na busca por termo:", error);
+    return [];
+  }
+  
+  if (!data) {
+    return [];
+  }
+
+  return (data as any[]).map(mapRawArticle);
+};
+
+// Interface for combined search results
+interface LawSearchResults {
+  lawName: string;
+  lawCategory: 'codigo' | 'estatuto';
+  articles: Article[];
+  total: number;
+}
+
+// Busca em todas as leis simultaneamente
+export const searchAcrossAllLaws = async (
+  searchTerm: string
+): Promise<LawSearchResults[]> => {
+  const results: LawSearchResults[] = [];
+  const term = searchTerm.toLowerCase();
+
+  // Limitamos a 5 resultados por lei para não sobrecarregar
+  const searchPromises = LAW_OPTIONS.map(async (law) => {
+    try {
+      const articles = await searchByTerm(law.display, term);
+      if (articles.length > 0) {
+        results.push({
+          lawName: law.display,
+          lawCategory: law.category,
+          articles: articles.slice(0, 5), // limita a 5 resultados por lei
+          total: articles.length
+        });
+      }
+    } catch (err) {
+      console.error(`Erro ao buscar em ${law.display}:`, err);
+    }
+  });
+
+  await Promise.all(searchPromises);
+  
+  // Sort by relevance (by number of matches)
+  results.sort((a, b) => b.total - a.total);
+  
+  return results;
+};
+
+/** Busca o nome da tabela a partir do texto exibido */
+function getTableName(displayName: string): string | null {
+  const found = LAW_OPTIONS.find(
+    (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
+  );
+  return found?.table ?? null;
+}
+
+/** Busca a categoria (código ou estatuto) a partir do nome */
+function getLawCategory(displayName: string): 'codigo' | 'estatuto' | undefined {
+  const found = LAW_OPTIONS.find(
+    (opt) => opt.display.toLowerCase() === displayName.toLowerCase()
+  );
+  return found?.category;
+}
+
+/** Logs a user action in the statistics table in background */
+async function logUserAction(
+  actionType: 'search' | 'explain' | 'favorite' | 'note',
+  lawName?: string,
+  articleNumber?: string
+) {
+  try {
+    // Get the current user's ID from the auth session
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    
+    // Only proceed if we have a user ID
+    if (userId) {
+      // Run in background - don't block the main flow
+      // Using Promise-based approach instead of EdgeRuntime
+      setTimeout(async () => {
+        try {
+          const { error } = await supabase.from('user_statistics').insert({
+            user_id: userId,
+            action_type: actionType,
+            law_name: lawName,
+            article_number: articleNumber
+          });
+
+          if (error) {
+            console.error('Error logging user action:', error);
+          }
+        } catch (err) {
+          console.error('Background task error:', err);
+        }
+      }, 0);
+    } else {
+      console.log('User not authenticated, skipping action logging');
+    }
+  } catch (err) {
+    console.error('Failed to log user action:', err);
+  }
+}
