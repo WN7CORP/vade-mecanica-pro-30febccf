@@ -1,3 +1,4 @@
+
 import { Search, X, History } from "lucide-react";
 import { useState, useEffect, forwardRef, useMemo } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
@@ -5,7 +6,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { SearchModeToggle } from "@/components/search/SearchModeToggle";
 
 interface SearchPreview {
   article?: string;
@@ -26,8 +26,6 @@ interface SearchBarProps {
   showPreviews?: boolean;
   onPreviewClick?: (preview: SearchPreview) => void;
   showInstantResults?: boolean;
-  isNumberSearch?: boolean;
-  onSearchModeChange?: (isNumberSearch: boolean) => void;
 }
 
 const DEBOUNCE_MS = 150;
@@ -42,9 +40,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   searchPreviews = [],
   showPreviews = false,
   onPreviewClick,
-  showInstantResults = false,
-  isNumberSearch = false,
-  onSearchModeChange,
+  showInstantResults = false
 }, ref) => {
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
@@ -174,42 +170,35 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
       <motion.div 
         initial={false}
         animate={isFocused ? { scale: 1.01 } : { scale: 1 }}
-        className={`transition-all duration-300 neomorph flex flex-col ${
+        className={`transition-all duration-300 neomorph ${
           isFocused ? "neomorph-inset shadow-lg" : ""
         }`}
       >
-        <div className="flex items-center justify-between px-3 py-2">
-          <div className="flex-1 flex items-center">
-            <Search 
-              size={18} 
-              className={`mr-2 transition-colors ${
-                isFocused ? "text-primary-300" : "text-gray-400"
-              }`} 
-            />
-            
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              placeholder={placeholder}
-              className="flex-1 bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground"
-              autoComplete="off"
-              ref={ref}
-            />
-          </div>
-
-          <SearchModeToggle 
-            isNumberSearch={isNumberSearch}
-            onToggle={onSearchModeChange}
+        <div className="flex items-center px-3 py-2">
+          <Search 
+            size={18} 
+            className={`mr-2 transition-colors ${
+              isFocused ? "text-primary-300" : "text-gray-400"
+            }`} 
+          />
+          
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder={placeholder}
+            className="flex-1 bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground"
+            autoComplete="off"
+            ref={ref}
           />
           
           {searchTerm && (
             <button 
               onClick={handleClear}
-              className="p-1 text-gray-400 hover:text-gray-300 transition-colors ml-2"
+              className="p-1 text-gray-400 hover:text-gray-300 transition-colors"
               aria-label="Limpar pesquisa"
             >
               <X size={16} />
