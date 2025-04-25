@@ -26,7 +26,9 @@ interface ArticleListProps {
   onCloseExplanation: () => void;
   onAddToComparison?: (article: Article) => void;
   onStudyMode?: () => void;
-  globalFontSize?: number; // Added to resolve the type error
+  globalFontSize?: number;
+  highlightedArticleNumber?: string | null;
+  highlightedRef?: React.RefObject<HTMLDivElement>;
 }
 
 const ArticleList = ({
@@ -46,7 +48,10 @@ const ArticleList = ({
   onCloseChat,
   onCloseExplanation,
   onAddToComparison,
-  onStudyMode
+  onStudyMode,
+  globalFontSize,
+  highlightedArticleNumber,
+  highlightedRef
 }: ArticleListProps) => {
   const [isNarratingExplanation, setIsNarratingExplanation] = useState(false);
   const [narratingContent, setNarratingContent] = useState<{text: string, title: string}>({text: '', title: ''});
@@ -66,7 +71,7 @@ const ArticleList = ({
 
   if (filteredArticles.length === 0 && !isLoading) {
     return (
-      <div className="text-center py-8 neomorph">
+      <div className="text-center py-8 neomorph animate-fade-in">
         <p className="text-gray-400">
           {searchTerm 
             ? `Nenhum artigo encontrado com o termo "${searchTerm}".`
@@ -78,19 +83,32 @@ const ArticleList = ({
 
   return (
     <div className="space-y-4 pb-20">
-      {filteredArticles.map((article, index) => (
-        <ArticleCard
-          key={`${article.id}-${index}`}
-          articleNumber={article.numero}
-          content={article.conteudo}
-          example={article.exemplo1}
-          lawName={lawName ? decodeURIComponent(lawName) : ""}
-          onExplainRequest={(type) => onExplainArticle(article, type)}
-          onAskQuestion={() => onAskQuestion(article)}
-          onAddToComparison={onAddToComparison ? () => onAddToComparison(article) : undefined}
-          onStudyMode={onStudyMode}
-        />
-      ))}
+      {filteredArticles.map((article, index) => {
+        const isHighlighted = highlightedArticleNumber && article.numero === highlightedArticleNumber;
+        
+        return (
+          <div 
+            key={`${article.id}-${index}`}
+            ref={isHighlighted ? highlightedRef : undefined}
+            className={`
+              transition-all duration-500 
+              ${isHighlighted ? 'scale-[1.02] ring-4 ring-primary/40 shadow-lg' : ''}
+            `}
+          >
+            <ArticleCard
+              articleNumber={article.numero}
+              content={article.conteudo}
+              example={article.exemplo1}
+              lawName={lawName ? decodeURIComponent(lawName) : ""}
+              onExplainRequest={(type) => onExplainArticle(article, type)}
+              onAskQuestion={() => onAskQuestion(article)}
+              onAddToComparison={onAddToComparison ? () => onAddToComparison(article) : undefined}
+              onStudyMode={onStudyMode}
+              globalFontSize={globalFontSize}
+            />
+          </div>
+        );
+      })}
       
       {(hasMore || isLoading) && (
         <div

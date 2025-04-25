@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, GraduationCap, Clock, ArrowUp } from "lucide-react";
 import ArticleList from "@/components/law/ArticleList";
@@ -14,14 +14,15 @@ import StudyMode from "@/pages/StudyMode";
 import LegalTimeline from "@/pages/LegalTimeline";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 const LawTabbedView = () => {
   const navigate = useNavigate();
-  const {
-    lawName
-  } = useParams<{
-    lawName: string;
-  }>();
+  const { lawName } = useParams<{ lawName: string }>();
+  const [searchParams] = useSearchParams();
+  const highlightedArticleNumber = searchParams.get('artigo');
+  const highlightedRef = useRef<HTMLDivElement>(null);
+  
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [articlesToCompare, setArticlesToCompare] = useState<Article[]>([]);
@@ -54,6 +55,35 @@ const LawTabbedView = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Handle highlighting and scrolling to specific article
+  useEffect(() => {
+    if (highlightedArticleNumber && filteredArticles.length > 0 && !isLoading) {
+      // Find the article to highlight
+      const articleToHighlight = filteredArticles.find(
+        article => article.numero === highlightedArticleNumber
+      );
+      
+      if (articleToHighlight) {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+          if (highlightedRef.current) {
+            highlightedRef.current.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+            });
+            
+            // Show a toast to indicate the article has been found
+            toast({
+              title: `Artigo ${highlightedArticleNumber}`,
+              description: "Artigo encontrado e destacado",
+              duration: 3000
+            });
+          }
+        }, 500);
+      }
+    }
+  }, [highlightedArticleNumber, filteredArticles, isLoading]);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -152,6 +182,8 @@ const LawTabbedView = () => {
             onAddToComparison={handleAddToComparison}
             globalFontSize={globalFontSize}
             onStudyMode={handleStudyMode}
+            highlightedArticleNumber={highlightedArticleNumber}
+            highlightedRef={highlightedRef}
           />
         </TabsContent>
 
@@ -171,7 +203,7 @@ const LawTabbedView = () => {
           variant="outline" 
           size="icon" 
           onClick={scrollToTop} 
-          className="fixed bottom-20 right-4 z-50 bg-primary/20 text-primary hover:bg-primary/30 rounded-full shadow-lg"
+          className="fixed bottom-20 right-4 z-50 bg-primary/20 text-primary hover:bg-primary/30 rounded-full shadow-lg animate-fade-in"
         >
           <ArrowUp className="h-4 w-4" />
         </Button>

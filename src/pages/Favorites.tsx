@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +8,7 @@ import { Loader2, Bookmark, PieChart } from "lucide-react";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { toast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
+
 const Favorites = () => {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<any[]>([]);
@@ -15,6 +17,7 @@ const Favorites = () => {
   const {
     logUserActivity
   } = useUserActivity(userId);
+
   useEffect(() => {
     const checkAuth = async () => {
       const {
@@ -28,6 +31,7 @@ const Favorites = () => {
     };
     checkAuth();
   }, []);
+
   useEffect(() => {
     const loadFavorites = () => {
       try {
@@ -56,6 +60,16 @@ const Favorites = () => {
     };
     loadFavorites();
   }, []);
+
+  // Function to navigate to an article with highlighting
+  const navigateToArticle = (lawName: string, articleNumber: string) => {
+    navigate(`/lei/${encodeURIComponent(lawName)}?artigo=${articleNumber}`);
+    
+    if (userId) {
+      logUserActivity('favorite_view', lawName, articleNumber);
+    }
+  };
+
   return <div className="flex flex-col min-h-screen pb-16 pt-20 px-4">
       <Header />
       
@@ -67,20 +81,18 @@ const Favorites = () => {
               Seus Favoritos
             </h1>
           </div>
-          
-          
         </div>
         
         {isLoading ? <div className="text-center py-8">
             <Loader2 className="animate-spin h-8 w-8 text-primary-300 mx-auto mb-4" />
             <p className="text-gray-400">Carregando seus favoritos...</p>
           </div> : favorites.length > 0 ? <div className="space-y-4 animate-fade-in">
-            {favorites.map((fav, index) => <button key={index} onClick={() => {
-          navigate(`/lei/${encodeURIComponent(fav.lawName)}`);
-          if (userId) {
-            logUserActivity('favorite_view', fav.lawName, fav.articleNumber);
-          }
-        }} className="w-full p-4 neomorph flex items-center justify-between hover:scale-[1.02] transition-all duration-300">
+            {favorites.map((fav, index) => (
+              <button 
+                key={index} 
+                onClick={() => navigateToArticle(fav.lawName, fav.articleNumber)} 
+                className="w-full p-4 neomorph flex items-center justify-between hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
+              >
                 <div className="flex items-center gap-3">
                   <Bookmark size={18} className="text-primary-300 fill-current" />
                   <div className="text-left">
@@ -88,7 +100,8 @@ const Favorites = () => {
                     <p className="text-sm text-gray-400">Art. {fav.articleNumber}</p>
                   </div>
                 </div>
-              </button>)}
+              </button>
+            ))}
           </div> : <div className="text-center py-8 neomorph">
             <Bookmark className="h-12 w-12 text-gray-500 mx-auto mb-4" />
             <h3 className="text-xl font-heading font-semibold text-primary-100 mb-2">
@@ -103,4 +116,5 @@ const Favorites = () => {
       <Footer />
     </div>;
 };
+
 export default Favorites;
