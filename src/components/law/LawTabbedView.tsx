@@ -148,17 +148,22 @@ const LawTabbedView = () => {
             filteredArticles={filteredArticles} 
             lawName={lawName} 
             selectedArticle={selectedArticle} 
-            showChat={showChat} 
+            showChat={showChat}
+            showExplanation={false}
+            explanation={null}
+            loadingExplanation={false}
             loadingRef={loadingRef} 
             hasMore={hasMore} 
+            onExplainArticle={() => {}}
             onAskQuestion={(article) => {
               setSelectedArticle(article);
               setShowChat(true);
             }}
             onCloseChat={() => setShowChat(false)}
+            onCloseExplanation={() => {}}
             onAddToComparison={handleAddToComparison}
-            globalFontSize={globalFontSize}
             onStudyMode={handleStudyMode}
+            globalFontSize={globalFontSize}
             highlightedArticleNumber={highlightedArticleNumber}
             highlightedRef={highlightedRef}
           />

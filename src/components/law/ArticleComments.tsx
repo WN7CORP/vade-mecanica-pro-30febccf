@@ -68,15 +68,22 @@ const ArticleComments = ({ lawName, articleNumber }: ArticleCommentsProps) => {
       if (error) throw error;
       
       // Transform the data to match our Comment interface
-      const formattedComments: Comment[] = data?.map(item => ({
-        id: item.id,
-        content: item.content,
-        tag: item.tag,
-        created_at: item.created_at,
-        user_id: item.user_id,
-        likes: item.likes || 0,
-        profiles: item.profiles?.[0] || { full_name: "Usuário", avatar_url: "/placeholder.svg" }
-      })) || [];
+      const formattedComments: Comment[] = data?.map(item => {
+        // Handle the case where profiles might be missing or have an error
+        const profileData = item.profiles && Array.isArray(item.profiles) && item.profiles.length > 0 
+          ? item.profiles[0]
+          : { full_name: "Usuário", avatar_url: "/placeholder.svg" };
+          
+        return {
+          id: item.id,
+          content: item.content,
+          tag: item.tag,
+          created_at: item.created_at,
+          user_id: item.user_id,
+          likes: item.likes || 0,
+          profiles: profileData
+        };
+      }) || [];
       
       setComments(formattedComments);
     } catch (error) {
