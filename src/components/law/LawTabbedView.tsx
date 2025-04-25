@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +14,8 @@ import LegalTimeline from "@/pages/LegalTimeline";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import ArticleHistory from "./ArticleHistory";
+import { Clock, BookOpen, GraduationCap } from "lucide-react";
 
 const LawTabbedView = () => {
   const navigate = useNavigate();
@@ -56,16 +57,13 @@ const LawTabbedView = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Handle highlighting and scrolling to specific article
   useEffect(() => {
     if (highlightedArticleNumber && filteredArticles.length > 0 && !isLoading) {
-      // Find the article to highlight
       const articleToHighlight = filteredArticles.find(
         article => article.numero === highlightedArticleNumber
       );
       
       if (articleToHighlight) {
-        // Small delay to ensure DOM is ready
         setTimeout(() => {
           if (highlightedRef.current) {
             highlightedRef.current.scrollIntoView({
@@ -73,7 +71,6 @@ const LawTabbedView = () => {
               block: 'center'
             });
             
-            // Show a toast to indicate the article has been found
             toast({
               title: `Artigo ${highlightedArticleNumber}`,
               description: "Artigo encontrado e destacado",
@@ -113,7 +110,6 @@ const LawTabbedView = () => {
     }
   };
 
-  // Method to navigate to study mode
   const handleStudyMode = () => {
     navigate(`/study/${lawName}`);
   };
@@ -128,10 +124,6 @@ const LawTabbedView = () => {
         />
       </div>
 
-      <div className="flex items-center justify-between mb-2">
-        
-      </div>
-
       <Tabs defaultValue="articles" className="w-full">
         <TabsList className="w-full mb-4">
           <TabsTrigger value="articles" className="w-full">
@@ -142,9 +134,9 @@ const LawTabbedView = () => {
             <GraduationCap className="mr-2 h-4 w-4" />
             <span>Estudar</span>
           </TabsTrigger>
-          <TabsTrigger value="timeline" className="w-full">
+          <TabsTrigger value="history" className="w-full">
             <Clock className="mr-2 h-4 w-4" />
-            <span>Linha do Tempo</span>
+            <span>Histórico</span>
           </TabsTrigger>
         </TabsList>
 
@@ -191,8 +183,8 @@ const LawTabbedView = () => {
           <StudyMode />
         </TabsContent>
 
-        <TabsContent value="timeline" className="mt-0">
-          <LegalTimeline />
+        <TabsContent value="history" className="mt-0">
+          <ArticleHistory />
         </TabsContent>
       </Tabs>
 

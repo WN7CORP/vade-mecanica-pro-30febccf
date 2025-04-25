@@ -1,19 +1,21 @@
+
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { BackButton } from "@/components/ui/BackButton";
+
 const LawHeader = () => {
   const navigate = useNavigate();
-  const {
-    lawName
-  } = useParams<{
-    lawName: string;
-  }>();
-  return <div className="flex flex-col space-y-2">
-      
-      {lawName && <h1 className="text-2xl font-bold text-white">
+  const { lawName } = useParams<{ lawName: string }>();
+
+  return (
+    <div className="flex items-center justify-between mb-4">
+      {lawName && (
+        <h1 className="text-2xl font-bold text-white">
           {decodeURIComponent(lawName)}
-        </h1>}
-    </div>;
+        </h1>
+      )}
+    </div>
+  );
 };
+
 export default LawHeader;
