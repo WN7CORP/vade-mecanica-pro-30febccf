@@ -1,12 +1,16 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { 
   fetchLawArticles, 
   searchByTerm, 
+  searchArticle,
   Article, 
+  normalizeText,
   normalizeArticleNumber,
   isNumberSearch
 } from "@/services/lawService";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const articlesCache: Record<string, Article[]> = {};
 
@@ -16,12 +20,16 @@ export const useLawArticles = (lawName: string | undefined) => {
   const [searchResults, setSearchResults] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchMode, setSearchMode] = useState<'number' | 'exact'>('number');
   const [isSearching, setIsSearching] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const loadingRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const ITEMS_PER_PAGE = 20;
+
+  // Use debounced search term to prevent excessive API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const loadArticles = useCallback(async () => {
     if (!lawName) {
@@ -100,35 +108,56 @@ export const useLawArticles = (lawName: string | undefined) => {
     }
   }, [page, loadArticles]);
 
-  const handleSearch = async (term: string) => {
-    setSearchTerm(term);
-    
-    if (!term) {
-      setSearchResults([]);
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      performSearch(debouncedSearchTerm);
+    } else if (debouncedSearchTerm === "") {
       setFilteredArticles(articles);
-      return;
     }
+  }, [debouncedSearchTerm]);
+
+  const performSearch = async (term: string) => {
+    if (!term) return;
     
     setIsSearching(true);
     
     try {
       if (!lawName) return;
       
-      console.log("Executing search for:", term, "in:", lawName);
+      const decodedLawName = decodeURIComponent(lawName);
       
+      // Different search strategies based on search mode
+      if (searchMode === 'number') {
+        // For number mode, try to find exact article number match first
+        const article = await searchArticle(decodedLawName, term);
+        
+        if (article) {
+          setSearchResults([article]);
+          setFilteredArticles([article]);
+          return;
+        }
+      }
+      
+      // If not found or in exact mode, search by content
+      console.log(`Searching for "${term}" in ${decodedLawName} using mode: ${searchMode}`);
+      
+      // Try client-side search first for faster results
+      const normalizedTerm = normalizeText(term);
       const localResults = articles.filter(article => {
         const contentText = typeof article.conteudo === 'string'
-          ? article.conteudo.toLowerCase()
-          : JSON.stringify(article.conteudo).toLowerCase();
+          ? normalizeText(article.conteudo)
+          : normalizeText(JSON.stringify(article.conteudo));
             
-        return contentText.includes(term.toLowerCase());
+        return contentText.includes(normalizedTerm);
       });
       
-      setSearchResults(localResults);
-      setFilteredArticles(localResults);
+      if (localResults.length > 0) {
+        setSearchResults(localResults);
+        setFilteredArticles(localResults);
+      }
       
-      const serverResults = await searchByTerm(decodeURIComponent(lawName), term);
-      console.log("Server search results:", serverResults);
+      // Always perform server search for more comprehensive results
+      const serverResults = await searchByTerm(decodedLawName, term);
       
       if (serverResults.length > 0) {
         setSearchResults(serverResults);
@@ -139,6 +168,7 @@ export const useLawArticles = (lawName: string | undefined) => {
           description: `Nenhum artigo encontrado para "${term}"`,
           variant: "default",
         });
+        setFilteredArticles([]);
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -152,13 +182,25 @@ export const useLawArticles = (lawName: string | undefined) => {
     }
   };
 
+  const handleSearch = (term: string, mode: 'number' | 'exact' = searchMode) => {
+    setSearchTerm(term);
+    setSearchMode(mode);
+    
+    if (!term) {
+      setSearchResults([]);
+      setFilteredArticles(articles);
+    }
+  };
+
   return {
     articles,
     filteredArticles,
     isLoading,
     isSearching,
     searchTerm,
+    searchMode,
     handleSearch,
+    setSearchMode,
     hasMore,
     loadingRef,
   };

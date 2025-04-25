@@ -1,146 +1,73 @@
-// Dictionary types
-type ExpansionDictionary = {
-  [key: string]: string;
+
+/**
+ * Normalizes text by removing accents and converting to lowercase
+ * @param text The text to normalize
+ * @returns Normalized text without accents and in lowercase
+ */
+export const normalizeText = (text: string | null | undefined): string => {
+  if (!text) return '';
+  
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents/diacritics
+    .toLowerCase()
+    .trim();
 };
 
-// Legal abbreviations dictionary
-export const legalAbbreviations: ExpansionDictionary = {
-  "Art.": "Artigo",
-  "art.": "artigo",
-  "§": "parágrafo",
-  "§§": "parágrafos",
-  "inc.": "inciso",
-  "al.": "alínea",
-  "c/c": "combinado com",
-  "cf.": "conforme",
-  "v.": "veja",
-  "v.g.": "por exemplo",
-  "e.g.": "por exemplo",
-  "i.e.": "isto é",
-  "nº": "número",
-  "n.º": "número",
-  "p.": "página",
-  "et al.": "e outros",
-  "obs.": "observação",
-  "ex vi": "por força de",
-  "idem": "o mesmo",
-  "ibidem": "no mesmo lugar",
-  "loc. cit.": "no lugar citado",
-  "op. cit.": "na obra citada"
-};
-
-// Roman numerals dictionary
-export const romanNumerals: ExpansionDictionary = {
-  "I": "primeiro",
-  "II": "segundo",
-  "III": "terceiro",
-  "IV": "quarto",
-  "V": "quinto",
-  "VI": "sexto",
-  "VII": "sétimo",
-  "VIII": "oitavo",
-  "IX": "nono",
-  "X": "décimo",
-  "XI": "décimo primeiro",
-  "XII": "décimo segundo",
-  "XIII": "décimo terceiro",
-  "XIV": "décimo quarto",
-  "XV": "décimo quinto",
-  "XVI": "décimo sexto",
-  "XVII": "décimo sétimo",
-  "XVIII": "décimo oitavo",
-  "XIX": "décimo nono",
-  "XX": "vigésimo",
-  "XXI": "vigésimo primeiro",
-  "XXII": "vigésimo segundo",
-  "XXIII": "vigésimo terceiro",
-  "XXIV": "vigésimo quarto",
-  "XXV": "vigésimo quinto",
-  "XXVI": "vigésimo sexto",
-  "XXVII": "vigésimo sétimo",
-  "XXVIII": "vigésimo oitavo",
-  "XXIX": "vigésimo nono",
-  "XXX": "trigésimo"
-};
-
-// Law codes dictionary
-export const lawCodes: ExpansionDictionary = {
-  "CF": "Constituição Federal",
-  "CC": "Código Civil",
-  "CPC": "Código de Processo Civil",
-  "CP": "Código Penal",
-  "CPP": "Código de Processo Penal",
-  "CLT": "Consolidação das Leis do Trabalho",
-  "CDC": "Código de Defesa do Consumidor",
-  "CTN": "Código Tributário Nacional",
-  "ECA": "Estatuto da Criança e do Adolescente",
-  "LDB": "Lei de Diretrizes e Bases da Educação Nacional",
-  "LRF": "Lei de Responsabilidade Fiscal",
-  "STJ": "Superior Tribunal de Justiça",
-  "STF": "Supremo Tribunal Federal",
-  "TST": "Tribunal Superior do Trabalho",
-  "TRT": "Tribunal Regional do Trabalho",
-  "TJ": "Tribunal de Justiça"
-};
-
-export const expandText = (text: string): string => {
-  let expandedText = text;
-  
-  // Helper functions
-  const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  
-  const createWordBoundaryRegex = (term: string) => {
-    const escaped = escapeRegExp(term);
-    return new RegExp(`\\b${escaped}\\b`, 'g');
-  };
-  
-  const matchCase = (original: string, replacement: string) => {
-    if (original[0] === original[0].toUpperCase()) {
-      return replacement.charAt(0).toUpperCase() + replacement.slice(1);
-    }
-    return replacement;
-  };
-  
-  // Special case for "Art." -> "Artigo" before other replacements
-  expandedText = expandedText.replace(/\bArt\./g, 'Artigo');
-  
-  // Expand other legal abbreviations
-  Object.entries(legalAbbreviations).forEach(([abbr, full]) => {
-    if (abbr !== 'Art.') { // Skip Art. as it's handled above
-      const regex = createWordBoundaryRegex(abbr);
-      expandedText = expandedText.replace(regex, (match) => matchCase(match, full));
-    }
-  });
-  
-  // Expand roman numerals (only when they appear as references)
-  Object.entries(romanNumerals).forEach(([roman, full]) => {
-    const regex = new RegExp(`\\b${roman}\\b(?!\\w)`, 'g');
-    expandedText = expandedText.replace(regex, full);
-  });
-  
-  // Expand law codes
-  Object.entries(lawCodes).forEach(([code, full]) => {
-    const regex = createWordBoundaryRegex(code);
-    expandedText = expandedText.replace(regex, (match) => matchCase(match, full));
-  });
-  
-  return expandedText;
-};
-
+/**
+ * Formats text with markdown for better display
+ * @param text Text that might contain markdown-like syntax (e.g., **bold**)
+ * @returns Text with markdown formatting applied
+ */
 export const formatTextWithMarkdown = (text: string): string => {
-  let formattedText = text;
+  if (!text) return '';
   
-  // Format "Art. X" or "Art. X-Y." or "Art. X°" patterns with bold
-  formattedText = formattedText.replace(
-    /(Art\. \d+(?:-[A-Z])?(?:°)?\.)/g,
-    '**$1**'
-  );
+  // Format article references (e.g., "Art. 5" -> "**Art. 5**")
+  const artRefFormatted = text.replace(/\b(Art\.?\s*\d+[.\-,;:]?)/gi, '**$1**');
   
-  // Format "Parágrafo único" with bold
-  formattedText = formattedText.replace(
-    /(Parágrafo único.)/g,
-    '**$1**'
-  );
+  // Format paragraph references (e.g., "§ 1" -> "**§ 1**")
+  const paragraphFormatted = artRefFormatted.replace(/\b(§\s*\d+[.\-,;:]?)/gi, '**$1**');
   
-  return formattedText;
+  // Format roman numerals often used in legal texts (e.g., "I -" -> "**I -**")
+  const romanNumeralFormatted = paragraphFormatted.replace(/\b([IVX]+\s*[-–—])/g, '**$1**');
+  
+  return romanNumeralFormatted;
+};
+
+/**
+ * Truncates text to a specified length and adds an ellipsis
+ * @param text Text to truncate
+ * @param maxLength Maximum length before truncation
+ * @returns Truncated text with ellipsis if needed
+ */
+export const truncateText = (text: string, maxLength: number = 100): string => {
+  if (!text || text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+};
+
+/**
+ * Highlights search terms in text
+ * @param text Text to highlight terms in
+ * @param searchTerm Term to highlight
+ * @returns JSX with highlighted terms
+ */
+export const highlightSearchTerm = (text: string, searchTerm: string): React.ReactNode => {
+  if (!searchTerm || !text) return text;
+  
+  try {
+    const normalizedText = normalizeText(text);
+    const normalizedTerm = normalizeText(searchTerm);
+    
+    if (!normalizedText.includes(normalizedTerm)) return text;
+    
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, i) => 
+      regex.test(part) ? <mark key={i} className="bg-primary/20">{part}</mark> : part
+    );
+  } catch (e) {
+    console.error('Error highlighting text:', e);
+    return text;
+  }
 };

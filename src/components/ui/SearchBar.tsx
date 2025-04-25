@@ -1,3 +1,4 @@
+
 import { Search, X, History } from "lucide-react";
 import { useState, useEffect, forwardRef, useMemo } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
@@ -16,7 +17,7 @@ interface SearchPreview {
 }
 
 interface SearchBarProps {
-  onSearch: (term: string) => void;
+  onSearch: (term: string, mode?: 'number' | 'exact') => void;
   initialValue?: string;
   placeholder?: string;
   onInputChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -26,9 +27,9 @@ interface SearchBarProps {
   showPreviews?: boolean;
   onPreviewClick?: (preview: SearchPreview) => void;
   showInstantResults?: boolean;
+  searchMode?: 'number' | 'exact';
+  onSearchModeChange?: (mode: 'number' | 'exact') => void;
 }
-
-const DEBOUNCE_MS = 150;
 
 const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({ 
   onSearch, 
@@ -40,12 +41,24 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   searchPreviews = [],
   showPreviews = false,
   onPreviewClick,
-  showInstantResults = false
+  showInstantResults = false,
+  searchMode = 'number',
+  onSearchModeChange
 }, ref) => {
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
-  const [searchMode, setSearchMode] = useState<'number' | 'exact'>('number');
+  const [localSearchMode, setLocalSearchMode] = useState<'number' | 'exact'>(searchMode);
   const isMobile = useIsMobile();
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  useEffect(() => {
+    // Load search history from localStorage
+    const storedHistory = localStorage.getItem('searchHistory');
+    if (storedHistory) {
+      setSearchHistory(JSON.parse(storedHistory));
+    }
+  }, []);
 
   useEffect(() => {
     setSearchTerm(initialValue);
@@ -63,7 +76,14 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
-      onSearch(searchTerm.trim());
+      // Save search to history
+      const newHistory = [searchTerm, ...searchHistory.filter(item => item !== searchTerm)].slice(0, 10);
+      setSearchHistory(newHistory);
+      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+      
+      // Perform the search
+      onSearch(searchTerm.trim(), localSearchMode);
+      setShowHistory(false);
     }
   };
 
@@ -94,6 +114,12 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
       });
     }
     
+    if (!value) {
+      setShowHistory(true);
+    } else {
+      setShowHistory(false);
+    }
+    
     if (onInputChange) {
       onInputChange(e);
     }
@@ -104,15 +130,41 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     if (propOnFocus) {
       propOnFocus();
     }
+    
+    // Show search history when focused and input is empty
+    if (!searchTerm.trim() && searchHistory.length > 0) {
+      setShowHistory(true);
+    }
   };
   
   const handleBlur = () => {
     setTimeout(() => {
       setIsFocused(false);
+      setShowHistory(false);
       if (propOnBlur) {
         propOnBlur();
       }
     }, 200);
+  };
+
+  const handleModeChange = (mode: 'number' | 'exact') => {
+    setLocalSearchMode(mode);
+    
+    if (onSearchModeChange) {
+      onSearchModeChange(mode);
+    }
+  };
+
+  const clearHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem('searchHistory');
+    setShowHistory(false);
+  };
+
+  const handleHistoryClick = (term: string) => {
+    setSearchTerm(term);
+    onSearch(term, localSearchMode);
+    setShowHistory(false);
   };
 
   const groupedPreviews = useMemo(() => {
@@ -189,7 +241,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              placeholder={searchMode === 'number' ? "Digite o número do artigo..." : "Digite o texto exato..."}
+              placeholder={localSearchMode === 'number' ? "Digite o número do artigo..." : "Digite o texto exato..."}
               className="flex-1 bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground"
               autoComplete="off"
               ref={ref}
@@ -207,13 +259,48 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
           </div>
           
           <SearchModeToggle 
-            mode={searchMode} 
-            onModeChange={setSearchMode} 
+            mode={localSearchMode} 
+            onModeChange={handleModeChange} 
           />
         </div>
       </motion.div>
       
       <AnimatePresence>
+        {isFocused && showHistory && searchHistory.length > 0 && !searchTerm && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+          >
+            <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <History className="mr-2 h-4 w-4" />
+                Pesquisas recentes
+              </div>
+              <button
+                onClick={clearHistory}
+                className="text-xs text-gray-400 hover:text-primary-300 transition-colors"
+              >
+                Limpar histórico
+              </button>
+            </div>
+            {searchHistory.map((term, index) => (
+              <div
+                key={`history-${index}`}
+                onClick={() => handleHistoryClick(term)}
+                className="p-3 hover:bg-accent/20 cursor-pointer transition-all duration-200"
+              >
+                <div className="flex items-center gap-2">
+                  <History className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-primary-100">{term}</span>
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        )}
+        
         {isFocused && showPreviews && Object.keys(groupedPreviews).length > 0 && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
