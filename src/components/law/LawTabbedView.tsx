@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,7 +39,7 @@ const LawTabbedView = () => {
     filteredArticles,
     isLoading,
     searchTerm,
-    handleSearch,
+    handleSearch: handleFilterSearch,
     hasMore,
     loadingRef
   } = useLawArticles(lawName);
@@ -116,7 +117,7 @@ const LawTabbedView = () => {
     navigate(`/study/${lawName}`);
   };
 
-  const handleSearch = (term: string) => {
+  const handleArticleSearch = (term: string) => {
     if (!term) return;
     
     const article = filteredArticles.find(article => 
@@ -160,7 +161,7 @@ const LawTabbedView = () => {
         className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-lg mb-6"
       >
         <SearchBar 
-          onSearch={handleSearch}
+          onSearch={handleArticleSearch}
           initialValue={searchTerm}
           placeholder="Buscar por número do artigo ou conteúdo..."
           onFocus={() => setSearchFocused(true)}
@@ -245,19 +246,22 @@ const LawTabbedView = () => {
           <ArrowUp className="h-4 w-4" />
         </Button>
       )}
+
+      {/* Adding styles for article highlighting */}
+      <style>
+        {`
+          @keyframes highlight {
+            0% { background-color: rgba(var(--primary), 0.2); }
+            100% { background-color: transparent; }
+          }
+          
+          .highlight-article {
+            animation: highlight 2s ease-out;
+          }
+        `}
+      </style>
     </div>
   );
 };
 
 export default LawTabbedView;
-
-<style jsx global>{`
-  @keyframes highlight {
-    0% { background-color: rgba(var(--primary), 0.2); }
-    100% { background-color: transparent; }
-  }
-  
-  .highlight-article {
-    animation: highlight 2s ease-out;
-  }
-`}</style>
