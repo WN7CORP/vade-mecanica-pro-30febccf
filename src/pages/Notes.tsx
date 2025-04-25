@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -8,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { ScrollText, Search, ChartBar, FileDown, Loader2 } from "lucide-react";
 import PDFExporter from "@/components/ui/PDFExporter";
 import { BackButton } from "@/components/ui/BackButton";
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { PenLine, Trash2 } from "lucide-react";
+import { toast } from "react-toastify";
 
 const Notes = () => {
   const navigate = useNavigate();
@@ -43,6 +46,31 @@ const Notes = () => {
       topic.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
+
+  const handleEdit = (note: any) => {
+    navigate(`/lei/${encodeURIComponent(note.lawName)}?article=${note.articleNumber}&editNote=true`);
+  };
+
+  const handleDelete = async (note: any) => {
+    try {
+      localStorage.removeItem(`article-notes-${note.articleNumber}-${note.lawName}`);
+      
+      // Remove from state
+      setNotes(notes.filter(n => 
+        n.articleNumber !== note.articleNumber || n.lawName !== note.lawName
+      ));
+
+      toast({
+        description: "Anotação excluída com sucesso"
+      });
+    } catch (error) {
+      console.error("Erro ao excluir anotação:", error);
+      toast({
+        description: "Erro ao excluir anotação",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen pb-16 pt-20 px-4">
@@ -85,37 +113,55 @@ const Notes = () => {
         ) : filteredNotes.length > 0 ? (
           <div className="space-y-4 animate-fade-in">
             {filteredNotes.map((note, index) => (
-              <div
+              <motion.div
                 key={index}
                 className="p-4 neomorph hover:scale-[1.02] transition-all duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <h3 className="text-primary-200 font-medium">{note.lawName}</h3>
                     <p className="text-sm text-gray-400">Art. {note.articleNumber}</p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(`/lei/${encodeURIComponent(note.lawName)}`)}
-                    className="text-primary-300"
-                  >
-                    Ver artigo
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(note)}
+                      className="text-primary-300"
+                    >
+                      <PenLine size={16} className="mr-2" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(note)}
+                      className="text-destructive"
+                    >
+                      <Trash2 size={16} className="mr-2" />
+                      Excluir
+                    </Button>
+                  </div>
                 </div>
                 
                 {note.topics.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
                     {note.topics.map((topic: string, i: number) => (
-                      <span key={i} className="px-2 py-1 bg-primary/10 rounded-md text-xs text-primary-300">
+                      <Badge 
+                        key={i} 
+                        className="bg-primary/20 text-primary-foreground hover:bg-primary/30"
+                      >
                         {topic}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 )}
                 
                 <p className="text-gray-300 text-sm line-clamp-3">{note.notes}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         ) : (

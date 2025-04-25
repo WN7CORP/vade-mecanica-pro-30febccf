@@ -61,7 +61,7 @@ const checkForExplanation = (content: any, type: 'technical' | 'formal'): string
 
 export const generateArticleExplanation = async (
   articleNumber: string,
-  articleContent: string,
+  articleContent: string | { [key: string]: any },
   lawName: string,
   type: 'technical' | 'formal' = 'technical'
 ): Promise<AIExplanation> => {
@@ -69,22 +69,41 @@ export const generateArticleExplanation = async (
     console.log("Iniciando geração de explicação...");
     console.log(`Tipo: ${type}, Lei: ${lawName}, Artigo: ${articleNumber}`);
     
+    // Handle when content is an object
+    const content = typeof articleContent === 'object' 
+      ? articleContent.conteudo || articleContent.artigo
+      : articleContent;
+
+    // Check for existing explanation in the content
+    if (typeof articleContent === 'object') {
+      const existingExplanation = type === 'technical' 
+        ? articleContent['explicacao_tecnica'] || articleContent['explicacao tecnica']
+        : articleContent['explicacao_formal'] || articleContent['explicacao formal'];
+
+      if (existingExplanation) {
+        console.log("Usando explicação existente do banco de dados");
+        return {
+          summary: existingExplanation.substring(0, 200) + "...",
+          detailed: existingExplanation,
+          examples: [existingExplanation]
+        };
+      }
+    }
+
     const prompt = `
       ${type === 'technical' 
         ? 'Explique o seguinte artigo jurídico de forma técnica e detalhada, mantendo a linguagem formal e os termos técnicos apropriados. Estruture sua resposta em três partes: 1) Um resumo conciso, 2) Uma explicação detalhada, 3) Três exemplos práticos:'
         : 'Explique o seguinte artigo jurídico de forma clara e acessível, usando linguagem simples e exemplos práticos. Estruture sua resposta em três partes: 1) Um resumo conciso em linguagem simples, 2) Uma explicação detalhada usando termos cotidianos, 3) Três exemplos práticos do dia a dia:'}
       
       Lei: ${lawName}
-      Artigo ${articleNumber}: ${articleContent}
+      Artigo ${articleNumber}: ${content}
     `;
 
-    // Formato correto para a SDK do Gemini
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     
     console.log("Resposta do Gemini recebida:", text.substring(0, 150) + "...");
     
-    // Processar a resposta em seções
     const sections = text.split(/\n\n|\n(?=\d\.)/);
     
     return {

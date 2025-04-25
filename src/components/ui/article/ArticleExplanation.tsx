@@ -26,14 +26,14 @@ export const ArticleExplanation = ({
       {isOpen && (
         <>
           <motion.div
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 bg-background/90 backdrop-blur-lg z-[9998]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
           <motion.div
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-md p-4"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] w-full max-w-md p-4"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -59,7 +59,7 @@ export const ArticleExplanation = ({
                   onClick={() => onExplain('technical')}
                 >
                   <BookOpen className="h-4 w-4" />
-                  <span>Técnica</span>
+                  <span>Explicação Técnica</span>
                 </Button>
 
                 <Button
@@ -68,7 +68,7 @@ export const ArticleExplanation = ({
                   onClick={() => onExplain('formal')}
                 >
                   <BarChart2 className="h-4 w-4" />
-                  <span>Formal</span>
+                  <span>Explicação Formal</span>
                 </Button>
 
                 <Button
@@ -82,7 +82,7 @@ export const ArticleExplanation = ({
                   }}
                 >
                   <MessageSquareMore className="h-4 w-4" />
-                  <span>Personalizada</span>
+                  <span>Assistente Jurídico</span>
                 </Button>
               </div>
             </div>

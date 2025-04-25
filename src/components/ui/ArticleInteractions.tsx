@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { MessageCircle, BookOpen, Bookmark, Volume2, PenLine, BarChart2, Scale, GraduationCap, FileText } from "lucide-react";
+import { MessageCircle, BookOpen, Bookmark, Volume2, PenLine, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArticleExplanation } from "./article/ArticleExplanation";
@@ -15,9 +15,6 @@ interface ArticleInteractionsProps {
   onShowExample?: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  onCompare?: () => void;
-  onStudyMode?: () => void;
-  hasCompareSelection?: boolean;
 }
 
 const ArticleInteractions = ({
@@ -30,12 +27,11 @@ const ArticleInteractions = ({
   onShowExample,
   isFavorite,
   onToggleFavorite,
-  onCompare,
-  onStudyMode,
-  hasCompareSelection = false
 }: ArticleInteractionsProps) => {
   const [showExplanationMenu, setShowExplanationMenu] = useState(false);
   const isMobile = useIsMobile();
+  
+  const hasExample = example && example !== "" && example !== "{}" && example !== "null";
 
   const buttonVariants = {
     initial: { scale: 1 },
@@ -73,7 +69,7 @@ const ArticleInteractions = ({
           <span className="text-xs">Explicar</span>
         </motion.button>
 
-        {example && (
+        {hasExample && (
           <motion.button 
             className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
             onClick={onShowExample}
@@ -109,32 +105,6 @@ const ArticleInteractions = ({
           <Bookmark size={16} fill={isFavorite ? "currentColor" : "none"} />
           <span className="text-xs">{isFavorite ? "Favoritado" : "Favoritar"}</span>
         </motion.button>
-
-        {onCompare && (
-          <motion.button 
-            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
-            onClick={onCompare}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-          >
-            <Scale size={16} />
-            <span className="text-xs">Comparar</span>
-          </motion.button>
-        )}
-
-        {onStudyMode && (
-          <motion.button 
-            className="article-button shadow-button px-3 py-2 bg-primary/10 text-primary text-sm font-medium flex items-center gap-1 rounded-full transition-all hover:bg-primary/30"
-            onClick={onStudyMode}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-          >
-            <GraduationCap size={16} />
-            <span className="text-xs">Estudar</span>
-          </motion.button>
-        )}
       </div>
 
       <ArticleExplanation
