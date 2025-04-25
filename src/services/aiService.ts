@@ -1,11 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// API key para Gemini (atualizada)
+// Atualizar a chave da API para uma chave válida
 const API_KEY = "AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0";
 
 // Inicializar a API do Gemini
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-1-pro" });
 
 export interface AIExplanation {
   summary: string;
@@ -66,23 +66,9 @@ export const generateArticleExplanation = async (
   type: 'technical' | 'formal' = 'technical'
 ): Promise<AIExplanation> => {
   try {
-    // First check if we have a pre-existing explanation
-    const existingExplanation = checkForExplanation(
-      typeof articleContent === 'string' ? JSON.parse(articleContent) : articleContent,
-      type
-    );
-
-    if (existingExplanation) {
-      // Parse the existing explanation into our required format
-      const sections = existingExplanation.split(/\n\n|\n(?=\d\.)/);
-      return {
-        summary: sections[0] || "Resumo não disponível",
-        detailed: sections[1] || existingExplanation,
-        examples: sections.slice(2).map(s => s.trim()).filter(Boolean)
-      };
-    }
-
-    // If no pre-existing explanation, generate one using AI
+    console.log("Iniciando geração de explicação...");
+    console.log(`Tipo: ${type}, Lei: ${lawName}, Artigo: ${articleNumber}`);
+    
     const prompt = `
       ${type === 'technical' 
         ? 'Explique o seguinte artigo jurídico de forma técnica e detalhada, mantendo a linguagem formal e os termos técnicos apropriados. Estruture sua resposta em três partes: 1) Um resumo conciso, 2) Uma explicação detalhada, 3) Três exemplos práticos:'
@@ -92,12 +78,15 @@ export const generateArticleExplanation = async (
       Artigo ${articleNumber}: ${articleContent}
     `;
 
-    const response = await generateGeminiExplanation(prompt);
+    // Formato correto para a SDK do Gemini
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
     
-    // Split and process the response
-    const sections = response.split(/\n\n|\n(?=\d\.)|(?:Resumo:)|(?:Explicação detalhada:)|(?:Exemplos práticos)/i)
-      .filter(section => section && section.trim().length > 0);
-
+    console.log("Resposta do Gemini recebida:", text.substring(0, 150) + "...");
+    
+    // Processar a resposta em seções
+    const sections = text.split(/\n\n|\n(?=\d\.)/);
+    
     return {
       summary: sections[0]?.replace(/^.*?resumo:?\s*/i, "").trim() || "Resumo não disponível",
       detailed: sections[1]?.replace(/^.*?explicação:?\s*/i, "").trim() || sections[0] || "Explicação detalhada não disponível",
@@ -108,12 +97,7 @@ export const generateArticleExplanation = async (
     };
   } catch (error) {
     console.error("Erro ao gerar explicação:", error);
-    // Return a user-friendly error response
-    return {
-      summary: "Não foi possível gerar o resumo no momento. Por favor, tente novamente mais tarde.",
-      detailed: "Ocorreu um erro ao processar a explicação detalhada. Nossa equipe foi notificada e está trabalhando para resolver o problema.",
-      examples: ["Exemplos temporariamente indisponíveis devido a um erro técnico."]
-    };
+    throw error;
   }
 };
 

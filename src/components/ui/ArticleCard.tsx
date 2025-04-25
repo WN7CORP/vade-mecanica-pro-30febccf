@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "./button";
 import { Plus } from "lucide-react";
@@ -51,8 +50,9 @@ const ArticleCard = ({
   const [hasCompareSelection, setHasCompareSelection] = useState(false);
   const { logUserActivity } = useUserActivity(userId);
   
-  const safeContent = typeof content === 'string' ? content : (content ? JSON.stringify(content) : '');
-  const safeExample = typeof example === 'string' ? example : (example ? JSON.stringify(example) : '');
+  const safeContent = typeof content === 'string' ? content : JSON.stringify(content);
+  const safeExample = typeof example === 'string' ? example : JSON.stringify(example);
+  const hasExample = safeExample && safeExample !== '""' && safeExample !== '{}';
 
   useEffect(() => {
     if (globalFontSize) {
@@ -129,7 +129,6 @@ const ArticleCard = ({
     if (type === "technical") {
       title = "Explicação Técnica";
       
-      // Try different variants of the technical explanation key
       const technicalExplanation = getExplanationFromContent(content, example, [
         'explicacao_tecnica',
         'explicacao tecnica'
@@ -147,7 +146,6 @@ const ArticleCard = ({
     } else {
       title = "Explicação Formal";
       
-      // Try different variants of the formal explanation key
       const formalExplanation = getExplanationFromContent(content, example, [
         'explicacao_formal',
         'explicacao formal'
@@ -172,13 +170,11 @@ const ArticleCard = ({
     }
   };
   
-  // Helper function to get explanation from content or example
   const getExplanationFromContent = (
     content: any, 
     example: any, 
     possibleKeys: string[]
   ): string | null => {
-    // Check in content
     if (typeof content === 'object' && content !== null) {
       for (const key of possibleKeys) {
         if (key in content && content[key]) {
@@ -187,7 +183,6 @@ const ArticleCard = ({
       }
     }
     
-    // Check in example
     if (typeof example === 'object' && example !== null) {
       for (const key of possibleKeys) {
         if (key in example && example[key]) {
@@ -270,7 +265,7 @@ const ArticleCard = ({
         centerContent={shouldCenterContent}
       />
 
-      {!showExample && safeExample && (
+      {!showExample && hasExample && (
         <div className="flex justify-center">
           <Button
             variant="outline"
@@ -282,7 +277,7 @@ const ArticleCard = ({
         </div>
       )}
 
-      {showExample && safeExample && (
+      {showExample && hasExample && (
         <ArticleExample
           example={safeExample}
           onClose={() => setShowExample(false)}
