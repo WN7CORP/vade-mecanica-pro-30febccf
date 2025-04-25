@@ -128,7 +128,7 @@ export function mapRawArticle(dbRow: any): Article {
     id: dbRow.id,
     numero: dbRow.numero,
     titulo: dbRow.titulo || undefined,
-    conteudo: dbRow.artigo || dbRow.conteudo || "",
+    conteudo: dbRow.conteudo || dbRow.artigo || "", // Handle both field names from the database
     explicacao_tecnica: dbRow["explicacao tecnica"] || dbRow.explicacao_tecnica || undefined,
     explicacao_formal: dbRow["explicacao formal"] || dbRow.explicacao_formal || undefined,
     exemplo1: dbRow.exemplo1 || undefined,
@@ -287,25 +287,58 @@ export const searchByTerm = async (
     }
   }
   
-  const { data, error } = await supabase
-    .from(tableName as any)
-    .select('*')
-    .or([
-      `artigo.ilike.%${term}%`,
-      `conteudo.ilike.%${term}%`
-    ].join(","));
-
-  if (error) {
+  // Use a more flexible approach to handle different table schemas
+  try {
+    const { data, error } = await supabase
+      .from(tableName as any)
+      .select('*');
+    
+    if (error) throw error;
+    
+    if (!data || data.length === 0) return [];
+    
+    // Find out which column contains the article text
+    const firstRow = data[0];
+    const hasArtigo = 'artigo' in firstRow;
+    const hasConteudo = 'conteudo' in firstRow;
+    
+    // Depending on the schema, build the appropriate query
+    let searchQuery;
+    if (hasArtigo && hasConteudo) {
+      searchQuery = `artigo.ilike.%${term}%,conteudo.ilike.%${term}%`;
+    } else if (hasArtigo) {
+      searchQuery = `artigo.ilike.%${term}%`;
+    } else if (hasConteudo) {
+      searchQuery = `conteudo.ilike.%${term}%`;
+    } else {
+      // If neither column exists, search all text columns
+      const textColumns = Object.keys(firstRow).filter(
+        key => typeof firstRow[key] === 'string'
+      );
+      
+      if (textColumns.length === 0) return [];
+      
+      searchQuery = textColumns
+        .map(col => `${col}.ilike.%${term}%`)
+        .join(',');
+    }
+    
+    const { data: searchResults, error: searchError } = await supabase
+      .from(tableName as any)
+      .select('*')
+      .or(searchQuery);
+    
+    if (searchError) throw searchError;
+    
+    return searchResults ? (searchResults as any[]).map(mapRawArticle) : [];
+  } catch (error) {
     console.error("Error searching articles:", error);
     return [];
   }
-
-  return data ? (data as any[]).map(mapRawArticle) : [];
 };
 
 const getContentText = (article: Article): string => {
   if (typeof article.conteudo === 'string') return article.conteudo;
-  if (article.artigo) return article.artigo;
   
   if (typeof article.conteudo === 'object' && article.conteudo !== null) {
     return Object.values(article.conteudo)
