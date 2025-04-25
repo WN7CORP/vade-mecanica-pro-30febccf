@@ -34,7 +34,9 @@ export class FullTextSearcher {
     articles.forEach(article => {
       if (!article.id) return;
       
-      this.articles.set(article.id, article);
+      // Convert numeric id to string to ensure type safety
+      const articleId = String(article.id);
+      this.articles.set(articleId, article);
       
       const content = typeof article.conteudo === 'string' 
         ? article.conteudo 
@@ -47,15 +49,15 @@ export class FullTextSearcher {
           this.index[token] = { articleIds: [], positions: {} };
         }
         
-        if (!this.index[token].articleIds.includes(article.id)) {
-          this.index[token].articleIds.push(article.id);
+        if (!this.index[token].articleIds.includes(articleId)) {
+          this.index[token].articleIds.push(articleId);
         }
         
-        if (!this.index[token].positions[article.id]) {
-          this.index[token].positions[article.id] = [];
+        if (!this.index[token].positions[articleId]) {
+          this.index[token].positions[articleId] = [];
         }
         
-        this.index[token].positions[article.id].push(position);
+        this.index[token].positions[articleId].push(position);
       });
     });
     
