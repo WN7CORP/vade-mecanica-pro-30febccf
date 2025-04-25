@@ -30,6 +30,35 @@ const generateGeminiExplanation = async (prompt: string) => {
   }
 }
 
+const checkForExplanation = (content: any, type: 'technical' | 'formal'): string | null => {
+  if (!content || typeof content !== 'object') {
+    return null;
+  }
+
+  // Try different possible column names
+  const possibleKeys = type === 'technical' 
+    ? ['explicacao_tecnica', 'explicacao tecnica', 'explicacao-tecnica'] 
+    : ['explicacao_formal', 'explicacao formal', 'explicacao-formal'];
+
+  for (const key of possibleKeys) {
+    if (key in content && content[key]) {
+      return content[key];
+    }
+  }
+
+  // If the content has nested properties, try to find the explanation there
+  for (const prop in content) {
+    if (typeof content[prop] === 'object') {
+      const nestedResult = checkForExplanation(content[prop], type);
+      if (nestedResult) {
+        return nestedResult;
+      }
+    }
+  }
+
+  return null;
+};
+
 export const generateArticleExplanation = async (
   articleNumber: string,
   articleContent: string,
@@ -37,13 +66,23 @@ export const generateArticleExplanation = async (
   type: 'technical' | 'formal' = 'technical'
 ): Promise<AIExplanation> => {
   try {
-    console.log(`Gerando explicação ${type} para artigo ${articleNumber} da lei ${lawName}`);
-    
-    if (!articleNumber || !articleContent || !lawName) {
-      console.error("Argumentos inválidos:", { articleNumber, articleContent: articleContent?.substring(0, 20), lawName });
-      throw new Error("Argumentos inválidos para gerar explicação");
+    // First check if we have a pre-existing explanation
+    const existingExplanation = checkForExplanation(
+      typeof articleContent === 'string' ? JSON.parse(articleContent) : articleContent,
+      type
+    );
+
+    if (existingExplanation) {
+      // Parse the existing explanation into our required format
+      const sections = existingExplanation.split(/\n\n|\n(?=\d\.)/);
+      return {
+        summary: sections[0] || "Resumo não disponível",
+        detailed: sections[1] || existingExplanation,
+        examples: sections.slice(2).map(s => s.trim()).filter(Boolean)
+      };
     }
-    
+
+    // If no pre-existing explanation, generate one using AI
     const prompt = `
       ${type === 'technical' 
         ? 'Explique o seguinte artigo jurídico de forma técnica e detalhada, mantendo a linguagem formal e os termos técnicos apropriados. Estruture sua resposta em três partes: 1) Um resumo conciso, 2) Uma explicação detalhada, 3) Três exemplos práticos:'
@@ -53,85 +92,28 @@ export const generateArticleExplanation = async (
       Artigo ${articleNumber}: ${articleContent}
     `;
 
-    console.log("Enviando prompt para Gemini:", prompt.substring(0, 150) + "...");
     const response = await generateGeminiExplanation(prompt);
-    console.log("Resposta bruta recebida do Gemini:", response.substring(0, 150) + "...");
     
-    // Split the response into sections based on patterns
-    const sections = response.split(/\n\n|\n(?=\d\.)|(?:Resumo:)|(?:Explicação detalhada:)|(?:Exemplos práticos)/i);
-    console.log(`Processando ${sections.length} seções da resposta`);
-    
-    // Filter out empty sections
-    const filteredSections = sections.filter(section => section && section.trim().length > 0);
-    console.log("Seções filtradas:", filteredSections.length);
-    
-    // Now we'll try to identify the summary, detailed explanation, and examples
-    let summary = "";
-    let detailed = "";
-    let examples: string[] = [];
-    
-    if (filteredSections.length >= 3) {
-      // Try to extract the summary (should be the first meaningful section)
-      summary = filteredSections[0].replace(/^.*?resumo:?\s*/i, "").trim();
-      
-      // Try to extract the detailed explanation (should be the second meaningful section)
-      detailed = filteredSections[1].replace(/^.*?explicação:?\s*/i, "").trim();
-      
-      // Try to extract examples (everything after that, or split by numbers)
-      const examplesText = filteredSections.slice(2).join("\n\n");
-      const exampleMatches = examplesText.match(/\d+\..*?(?=\d+\.|$)/gs) || [];
-      
-      examples = exampleMatches.length > 0 
-        ? exampleMatches.map(e => e.replace(/^\d+\.\s*/, "").trim())
-        : [examplesText.trim()];
-      
-      // Ensure we have at least 3 examples
-      while (examples.length < 3) {
-        examples.push("Exemplo prático não disponível");
-      }
-    } else if (filteredSections.length === 2) {
-      summary = filteredSections[0].trim();
-      detailed = filteredSections[1].trim();
-      examples = ["Exemplo prático não disponível", "Exemplo prático não disponível", "Exemplo prático não disponível"];
-    } else if (filteredSections.length === 1) {
-      // Try to split the single section into meaningful parts
-      const text = filteredSections[0].trim();
-      const parts = text.split(/\n\n/); 
-      
-      if (parts.length >= 3) {
-        summary = parts[0];
-        detailed = parts[1];
-        examples = [parts[2], parts[3] || "Exemplo adicional não disponível", parts[4] || "Exemplo adicional não disponível"];
-      } else {
-        // If all else fails, use the entire text as an explanation
-        summary = "Resumo da explicação";
-        detailed = text;
-        examples = ["Exemplo prático não disponível", "Exemplo prático não disponível", "Exemplo prático não disponível"];
-      }
-    }
-    
-    // Ensure we have at least something for each section
-    if (!summary || summary.length < 10) summary = "Não foi possível extrair um resumo claro da explicação.";
-    if (!detailed || detailed.length < 10) detailed = "Não foi possível extrair uma explicação detalhada.";
-    if (examples.length === 0) examples = ["Não foi possível extrair exemplos claros."];
-    
-    console.log("Extração concluída:", {
-      summaryLength: summary.length,
-      detailedLength: detailed.length,
-      examplesCount: examples.length
-    });
-    
-    const result = {
-      summary,
-      detailed,
-      examples
+    // Split and process the response
+    const sections = response.split(/\n\n|\n(?=\d\.)|(?:Resumo:)|(?:Explicação detalhada:)|(?:Exemplos práticos)/i)
+      .filter(section => section && section.trim().length > 0);
+
+    return {
+      summary: sections[0]?.replace(/^.*?resumo:?\s*/i, "").trim() || "Resumo não disponível",
+      detailed: sections[1]?.replace(/^.*?explicação:?\s*/i, "").trim() || sections[0] || "Explicação detalhada não disponível",
+      examples: sections.slice(2)
+        .map(s => s.replace(/^\d+\.\s*/, "").trim())
+        .filter(Boolean)
+        .slice(0, 3) || ["Exemplo prático não disponível"]
     };
-    
-    console.log("Explicação processada com sucesso");
-    return result;
   } catch (error) {
     console.error("Erro ao gerar explicação:", error);
-    throw error;
+    // Return a user-friendly error response
+    return {
+      summary: "Não foi possível gerar o resumo no momento. Por favor, tente novamente mais tarde.",
+      detailed: "Ocorreu um erro ao processar a explicação detalhada. Nossa equipe foi notificada e está trabalhando para resolver o problema.",
+      examples: ["Exemplos temporariamente indisponíveis devido a um erro técnico."]
+    };
   }
 };
 
