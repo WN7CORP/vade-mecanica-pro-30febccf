@@ -153,26 +153,26 @@ export type Database = {
         Row: {
           artigo: string | null
           exemplo: string | null
-          "explicacao formal": string
-          "explicacao tecnica": string | null
+          formal: string
           id: number
           numero: string | null
+          tecnica: string | null
         }
         Insert: {
           artigo?: string | null
           exemplo?: string | null
-          "explicacao formal": string
-          "explicacao tecnica"?: string | null
+          formal: string
           id?: number
           numero?: string | null
+          tecnica?: string | null
         }
         Update: {
           artigo?: string | null
           exemplo?: string | null
-          "explicacao formal"?: string
-          "explicacao tecnica"?: string | null
+          formal?: string
           id?: number
           numero?: string | null
+          tecnica?: string | null
         }
         Relationships: []
       }

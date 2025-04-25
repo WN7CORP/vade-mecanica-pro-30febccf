@@ -1,11 +1,12 @@
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Atualizar a chave da API para uma chave válida
-const API_KEY = "AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0";
+const API_KEY = "AIzaSyCIQSUR9Mhy6rT1DgaszVxc5rL-gmVYGK0";
 
 // Inicializar a API do Gemini
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 export interface AIExplanation {
   summary: string;

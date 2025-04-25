@@ -15,7 +15,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = "https://phzcazcyjhlmdchcjagy.supabase.co";
     const supabaseServiceRole = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const geminiApiKey = "AIzaSyAIvZkvZIJNYS4aNFABKHbfGLH58i5grf0";
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') ?? 'AIzaSyCIQSUR9Mhy6rT1DgaszVxc5rL-gmVYGK0';
 
     const supabase = createClient(supabaseUrl, supabaseServiceRole);
     
