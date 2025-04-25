@@ -1,3 +1,4 @@
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Atualizar a chave da API para uma chave válida
@@ -83,9 +84,8 @@ export const generateArticleExplanation = async (
 
     // Check for existing explanation in the content
     if (typeof articleContent === 'object') {
-      const existingExplanation = type === 'technical' 
-        ? articleContent['explicacao_tecnica'] || articleContent['explicacao tecnica']
-        : articleContent['explicacao_formal'] || articleContent['explicacao formal'];
+      // Check both formats: with space and with underscore
+      const existingExplanation = checkForExplanation(articleContent, type);
 
       if (existingExplanation) {
         console.log("Usando explicação existente do banco de dados");

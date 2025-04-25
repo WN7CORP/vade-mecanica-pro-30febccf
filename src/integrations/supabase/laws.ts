@@ -1,3 +1,4 @@
+
 import { supabase } from "./client";
 
 // Existing types and interfaces
@@ -6,8 +7,12 @@ export interface Article {
   numero: string;
   conteudo: string;
   exemplo?: string;
+  "explicacao tecnica"?: string; 
+  "explicacao formal"?: string;
+  // For backward compatibility
   explicacao_tecnica?: string;
   explicacao_formal?: string;
+  artigo?: string; // Some tables use 'artigo' instead of 'conteudo'
 }
 
 export interface LawOption {
@@ -18,10 +23,12 @@ export interface LawOption {
 // Function to fetch articles for a given law
 export const fetchLawArticles = async (lawName: string): Promise<{ articles: Article[] }> => {
   try {
-    const tableName = LAW_OPTIONS.find((law) => law.display === lawName)?.table || 'lei_geral_protecao_dados';
+    const tableOption = LAW_OPTIONS.find((law) => law.display === lawName);
+    const tableName = tableOption?.table || 'lei_geral_protecao_dados';
     
+    // Use type assertion to tell TypeScript this is a valid table name
     let { data: articles, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*')
       .order('id', { ascending: true });
 
@@ -30,7 +37,8 @@ export const fetchLawArticles = async (lawName: string): Promise<{ articles: Art
       return { articles: [] };
     }
 
-    return { articles: articles || [] };
+    // Cast the result to Article[]
+    return { articles: (articles as unknown as Article[]) || [] };
   } catch (error) {
     console.error("Erro na requisição:", error);
     return { articles: [] };
@@ -39,10 +47,11 @@ export const fetchLawArticles = async (lawName: string): Promise<{ articles: Art
 
 export const searchArticle = async (lawName: string, searchTerm: string): Promise<Article | null> => {
   try {
-    const tableName = LAW_OPTIONS.find((law) => law.display === lawName)?.table || 'lei_geral_protecao_dados';
+    const tableOption = LAW_OPTIONS.find((law) => law.display === lawName);
+    const tableName = tableOption?.table || 'lei_geral_protecao_dados';
 
     let { data: articles, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*')
       .ilike('numero', `%${searchTerm}%`);
 
@@ -51,7 +60,8 @@ export const searchArticle = async (lawName: string, searchTerm: string): Promis
       return null;
     }
 
-    return articles && articles.length > 0 ? articles[0] : null;
+    // Cast the result to Article
+    return articles && articles.length > 0 ? (articles[0] as unknown as Article) : null;
   } catch (error) {
     console.error("Erro na requisição:", error);
     return null;
@@ -60,10 +70,11 @@ export const searchArticle = async (lawName: string, searchTerm: string): Promis
 
 export const searchByTerm = async (lawName: string, searchTerm: string): Promise<Article[]> => {
   try {
-    const tableName = LAW_OPTIONS.find((law) => law.display === lawName)?.table || 'lei_geral_protecao_dados';
+    const tableOption = LAW_OPTIONS.find((law) => law.display === lawName);
+    const tableName = tableOption?.table || 'lei_geral_protecao_dados';
 
     let { data: articles, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*')
       .ilike('conteudo', `%${searchTerm}%`);
 
@@ -72,7 +83,8 @@ export const searchByTerm = async (lawName: string, searchTerm: string): Promise
       return [];
     }
 
-    return articles || [];
+    // Cast the result to Article[]
+    return (articles as unknown as Article[]) || [];
   } catch (error) {
     console.error("Erro na requisição:", error);
     return [];
