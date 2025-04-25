@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, GraduationCap, Clock, ArrowUp } from "lucide-react";
 import ArticleList from "@/components/law/ArticleList";
@@ -9,14 +9,14 @@ import { useAIExplanation } from "@/hooks/use-ai-explanation";
 import SearchBar from "@/components/ui/SearchBar";
 import { FloatingSearchButton } from "@/components/ui/FloatingSearchButton";
 import ComparisonTool from "@/components/law/ComparisonTool";
-import { Article } from "@/services/lawService";
+import { Article, searchAcrossAllLaws } from "@/services/lawService";
 import StudyMode from "@/pages/StudyMode";
 import LegalTimeline from "@/pages/LegalTimeline";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import ArticleHistory from "./ArticleHistory";
 import { motion } from "framer-motion";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const LawTabbedView = () => {
   const navigate = useNavigate();
@@ -33,13 +33,24 @@ const LawTabbedView = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [globalFontSize, setGlobalFontSize] = useState(16);
   const [searchFocused, setSearchFocused] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-
+  const [searchInput, setSearchInput] = useState("");
+  const [searchPreviews, setSearchPreviews] = useState<{
+    lawName: string;
+    lawCategory: 'codigo' | 'estatuto';
+    article?: string;
+    content: string;
+    previewType: 'article' | 'term';
+    category?: 'codigo' | 'estatuto';
+  }[]>([]);
+  
+  const debouncedSearchInput = useDebounce(searchInput, 300);
+  
   const {
     filteredArticles,
     isLoading,
+    isSearching,
     searchTerm,
-    handleSearch: handleFilterSearch,
+    handleSearch,
     hasMore,
     loadingRef
   } = useLawArticles(lawName);
@@ -84,6 +95,40 @@ const LawTabbedView = () => {
       }
     }
   }, [highlightedArticleNumber, filteredArticles, isLoading]);
+  
+  // Fetch search previews when input changes
+  useEffect(() => {
+    const loadSearchPreviews = async () => {
+      if (debouncedSearchInput.length < 2) {
+        setSearchPreviews([]);
+        return;
+      }
+      
+      try {
+        // Search across all laws for previews
+        const results = await searchAcrossAllLaws(debouncedSearchInput);
+        console.log("Search across laws results:", results);
+        
+        const formattedPreviews = results.flatMap(lawResult => 
+          lawResult.articles.map(article => ({
+            lawName: lawResult.lawName,
+            lawCategory: lawResult.lawCategory,
+            article: article.numero,
+            content: article.conteudo,
+            previewType: 'article' as const,
+            category: lawResult.lawCategory
+          }))
+        );
+        
+        setSearchPreviews(formattedPreviews.slice(0, 10)); // Limit to 10 previews
+      } catch (error) {
+        console.error("Error fetching search previews:", error);
+        setSearchPreviews([]);
+      }
+    };
+    
+    loadSearchPreviews();
+  }, [debouncedSearchInput]);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -120,37 +165,51 @@ const LawTabbedView = () => {
   const handleArticleSearch = (term: string) => {
     if (!term) return;
     
-    const article = filteredArticles.find(article => 
-      article.numero.toLowerCase() === term.toLowerCase() ||
-      article.conteudo.toLowerCase().includes(term.toLowerCase())
-    );
+    handleSearch(term);
+    
+    // Try to find an exact match by article number
+    setTimeout(() => {
+      const article = filteredArticles.find(article => 
+        article.numero.toLowerCase() === term.toLowerCase()
+      );
 
-    if (article) {
-      const articleElement = document.getElementById(`article-${article.numero}`);
-      if (articleElement) {
-        articleElement.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'center'
-        });
-        
-        articleElement.classList.add('highlight-article');
-        setTimeout(() => {
-          articleElement.classList.remove('highlight-article');
-        }, 2000);
+      if (article) {
+        const articleElement = document.getElementById(`article-${article.numero}`);
+        if (articleElement) {
+          articleElement.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+          });
+          
+          articleElement.classList.add('highlight-article');
+          setTimeout(() => {
+            articleElement.classList.remove('highlight-article');
+          }, 2000);
 
-        toast({
-          title: `Artigo ${article.numero} encontrado`,
-          description: "Artigo encontrado e destacado",
-          duration: 3000
-        });
+          toast({
+            title: `Artigo ${article.numero} encontrado`,
+            description: "Artigo encontrado e destacado",
+            duration: 3000
+          });
+        }
       }
+    }, 500);
+  };
+
+  const handlePreviewClick = (preview: typeof searchPreviews[0]) => {
+    if (!preview.article) return;
+
+    if (preview.lawName !== lawName) {
+      // Navigate to the selected law and highlight the article
+      navigate(`/lei/${encodeURIComponent(preview.lawName)}?artigo=${preview.article}`);
     } else {
-      toast({
-        title: "Artigo não encontrado",
-        description: "Tente usar outro termo ou número",
-        variant: "destructive"
-      });
+      // Stay on the same page but scroll to the article
+      handleArticleSearch(preview.article);
     }
+  };
+  
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
   };
 
   return (
@@ -166,7 +225,11 @@ const LawTabbedView = () => {
           placeholder="Buscar por número do artigo ou conteúdo..."
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setSearchFocused(false)}
+          onInputChange={handleSearchInputChange}
           showInstantResults
+          searchPreviews={searchPreviews}
+          showPreviews={searchInput.length >= 2}
+          onPreviewClick={handlePreviewClick}
         />
       </motion.div>
 
@@ -199,7 +262,7 @@ const LawTabbedView = () => {
           )}
 
           <ArticleList 
-            isLoading={isLoading} 
+            isLoading={isLoading || isSearching} 
             searchTerm={searchTerm} 
             filteredArticles={filteredArticles} 
             lawName={lawName} 
@@ -218,8 +281,8 @@ const LawTabbedView = () => {
             onCloseChat={() => setShowChat(false)}
             onCloseExplanation={() => setShowExplanation(false)}
             onAddToComparison={handleAddToComparison}
-            globalFontSize={globalFontSize}
             onStudyMode={handleStudyMode}
+            globalFontSize={globalFontSize}
             highlightedArticleNumber={highlightedArticleNumber}
             highlightedRef={highlightedRef}
           />

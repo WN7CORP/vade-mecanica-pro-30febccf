@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { fetchLawArticles, Article } from "@/services/lawService";
+import { fetchLawArticles, searchByTerm, Article, normalizeArticleNumber } from "@/services/lawService";
 import { useToast } from "@/hooks/use-toast";
 
 // Cache object to store articles by law name
@@ -9,8 +9,10 @@ const articlesCache: Record<string, Article[]> = {};
 export const useLawArticles = (lawName: string | undefined) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
+  const [searchResults, setSearchResults] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const loadingRef = useRef<HTMLDivElement>(null);
@@ -42,21 +44,13 @@ export const useLawArticles = (lawName: string | undefined) => {
       const currentArticles = allArticles.slice(startIndex, endIndex);
 
       setArticles(currentArticles);
-      setFilteredArticles(
-        searchTerm
-          ? currentArticles.filter(
-              (article) =>
-                (article.numero &&
-                  article.numero
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase())) ||
-                (article.conteudo &&
-                  article.conteudo
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase()))
-            )
-          : currentArticles
-      );
+      
+      // If there's an active search, apply it
+      if (searchTerm) {
+        setFilteredArticles(searchResults);
+      } else {
+        setFilteredArticles(currentArticles);
+      }
 
       setHasMore(endIndex < allArticles.length);
     } catch (error) {
@@ -72,13 +66,13 @@ export const useLawArticles = (lawName: string | undefined) => {
     } finally {
       setIsLoading(false);
     }
-  }, [lawName, page, searchTerm, toast]);
+  }, [lawName, page, searchTerm, toast, searchResults]);
 
   // Setup intersection observer for infinite scrolling
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
+        if (entries[0].isIntersecting && hasMore && !isLoading && !isSearching) {
           setPage((prev) => prev + 1);
         }
       },
@@ -90,11 +84,12 @@ export const useLawArticles = (lawName: string | undefined) => {
     }
 
     return () => observer.disconnect();
-  }, [hasMore, isLoading]);
+  }, [hasMore, isLoading, isSearching]);
 
   // Handle initial load and law changes
   useEffect(() => {
     setPage(1);
+    setSearchTerm("");
     loadArticles();
   }, [lawName]);
 
@@ -105,30 +100,59 @@ export const useLawArticles = (lawName: string | undefined) => {
     }
   }, [page, loadArticles]);
 
-  const handleSearch = (term: string) => {
+  // Enhanced search function that uses both local cache and database search
+  const handleSearch = async (term: string) => {
     setSearchTerm(term);
-    setPage(1);
-
+    
     if (!term) {
+      setSearchResults([]);
       setFilteredArticles(articles);
       return;
     }
-
-    const filtered = articles.filter(
-      (article) =>
-        (article.numero &&
-          article.numero.toLowerCase().includes(term.toLowerCase())) ||
-        (article.conteudo &&
-          article.conteudo.toLowerCase().includes(term.toLowerCase()))
-    );
-
-    setFilteredArticles(filtered);
+    
+    setIsSearching(true);
+    
+    try {
+      // First, try local search in already loaded articles for instant feedback
+      const localResults = articles.filter(
+        (article) =>
+          (article.numero &&
+            article.numero.toLowerCase().includes(term.toLowerCase())) ||
+          (article.conteudo &&
+            article.conteudo.toLowerCase().includes(term.toLowerCase()))
+      );
+      
+      // Update UI immediately with local results
+      setSearchResults(localResults);
+      setFilteredArticles(localResults);
+      
+      if (!lawName) return;
+      
+      // Then fetch more comprehensive results from the database
+      const serverResults = await searchByTerm(decodeURIComponent(lawName), term);
+      console.log("Server search results:", serverResults);
+      
+      if (serverResults.length > 0) {
+        setSearchResults(serverResults);
+        setFilteredArticles(serverResults);
+      }
+    } catch (error) {
+      console.error("Erro na busca:", error);
+      toast({
+        title: "Erro na busca",
+        description: "Não foi possível completar a busca. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return {
     articles,
     filteredArticles,
     isLoading,
+    isSearching,
     searchTerm,
     handleSearch,
     hasMore,

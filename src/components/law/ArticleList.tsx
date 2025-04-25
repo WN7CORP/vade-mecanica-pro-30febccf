@@ -89,6 +89,7 @@ const ArticleList = ({
         return (
           <div 
             key={`${article.id}-${index}`}
+            id={`article-${article.numero}`}
             ref={isHighlighted ? highlightedRef : undefined}
             className={`
               transition-all duration-500 

@@ -1,3 +1,4 @@
+
 import { Search, X, History } from "lucide-react";
 import { useState, useEffect, forwardRef, useMemo } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
@@ -77,6 +78,8 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
       const event = { target: { value: "" } } as React.ChangeEvent<HTMLInputElement>;
       onInputChange(event);
     }
+    // Also trigger search with empty string to reset results
+    onSearch("");
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,10 +107,13 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   };
   
   const handleBlur = () => {
-    setIsFocused(false);
-    if (propOnBlur) {
-      propOnBlur();
-    }
+    // Delay closing previews to allow clicking on them
+    setTimeout(() => {
+      setIsFocused(false);
+      if (propOnBlur) {
+        propOnBlur();
+      }
+    }, 200);
   };
 
   const groupedPreviews = useMemo(() => {
@@ -122,6 +128,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   }, [searchPreviews]);
 
   const truncateContent = (content: string, maxLength = 90) => {
+    if (!content) return "";
     if (content.length <= maxLength) return content;
     return content.substring(0, maxLength) + '...';
   };
@@ -201,7 +208,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
       </motion.div>
       
       <AnimatePresence>
-        {showPreviews && Object.keys(groupedPreviews).length > 0 && (
+        {isFocused && showPreviews && Object.keys(groupedPreviews).length > 0 && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -252,7 +259,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
                         </div>
                       </div>
                       <div className="text-xs text-gray-400 mt-1 line-clamp-2 group-hover:text-gray-300 transition-colors">
-                        {highlightText(preview.content, searchTerm)}
+                        {highlightText(truncateContent(preview.content), searchTerm)}
                       </div>
                     </motion.div>
                   );
