@@ -1,4 +1,3 @@
-
 import { Search, X, History } from "lucide-react";
 import { useState, useEffect, forwardRef, useMemo } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
@@ -72,6 +71,14 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     const value = e.target.value;
     setSearchTerm(value);
     
+    if (value.length >= 2) {
+      console.log('Search pattern:', {
+        isNumber: /^\d+/.test(value),
+        term: value,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     if (onInputChange) {
       onInputChange(e);
     }
@@ -91,7 +98,6 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     }
   };
 
-  // Group previews by category with memoization
   const groupedPreviews = useMemo(() => {
     return searchPreviews.reduce<Record<string, SearchPreview[]>>((acc, preview) => {
       const category = preview.category || 'outros';
@@ -103,18 +109,28 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
     }, {});
   }, [searchPreviews]);
 
-  // Truncate content for preview with ellipsis
   const truncateContent = (content: string, maxLength = 90) => {
     if (content.length <= maxLength) return content;
     return content.substring(0, maxLength) + '...';
   };
 
-  // Highlight the search term in content with fuzzy matching
   const highlightText = (text: string, term: string) => {
     if (!term || !text) return text;
     
     try {
-      // Create a fuzzy matching pattern
+      const isNumberSearch = /^\d+/.test(term);
+      if (isNumberSearch) {
+        const numberPattern = `(Art\\.?\\s*${term}|${term})`;
+        const parts = text.split(new RegExp(numberPattern, 'gi'));
+        
+        return parts.map((part, i) => {
+          if (new RegExp(numberPattern, 'gi').test(part)) {
+            return <mark key={i} className="bg-primary-300/20 font-semibold not-italic">{part}</mark>;
+          }
+          return part;
+        });
+      }
+      
       const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const parts = text.split(new RegExp(`(${escapedTerm})`, 'gi'));
       
@@ -125,6 +141,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
         return part;
       });
     } catch (e) {
+      console.error('Error in highlightText:', e);
       return text;
     }
   };

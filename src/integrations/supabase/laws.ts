@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Article {
@@ -203,27 +202,47 @@ export const searchArticle = async (
 
   await logUserAction('search', lawDisplayName, articleNumber);
 
-  // Seleciona todas as colunas para não dar conflito de tipagem
-  let selectCols = "*";
-  if (tableName === "constituicao_federal") {
-    selectCols = "id,numero,titulo,artigo,\"explicacao tecnica\",\"explicacao formal\",exemplo1,exemplo2,created_at";
-  }
-
-  const { data, error } = await supabase
+  // Normalize the article number for better matching
+  const normalizedNumber = articleNumber.replace(/[^0-9]/g, '');
+  
+  // Try exact match first
+  const { data: exactMatch, error: exactError } = await supabase
     .from(tableName as any)
-    .select(selectCols)
+    .select("*")
     .eq("numero", articleNumber)
     .maybeSingle();
+
+  if (exactMatch) {
+    return mapRawArticle(exactMatch);
+  }
+
+  // If no exact match, try partial number matching
+  const { data, error } = await supabase
+    .from(tableName as any)
+    .select("*")
+    .ilike("numero", `%${normalizedNumber}%`);
 
   if (error) {
     console.error("Erro ao buscar artigo:", error);
     return null;
   }
-  if (!data) {
+
+  if (!data || data.length === 0) {
     return null;
   }
 
-  return mapRawArticle(data);
+  // Sort results by relevance (exact number matches first)
+  const sortedResults = data.sort((a, b) => {
+    const aNumber = normalizeArticleNumber(a.numero);
+    const bNumber = normalizeArticleNumber(b.numero);
+    
+    if (aNumber === normalizedNumber) return -1;
+    if (bNumber === normalizedNumber) return 1;
+    
+    return aNumber.indexOf(normalizedNumber) - bNumber.indexOf(normalizedNumber);
+  });
+
+  return mapRawArticle(sortedResults[0]);
 };
 
 /**
