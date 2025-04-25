@@ -337,24 +337,6 @@ export type Database = {
           },
         ]
       }
-      comment_terms_acceptance: {
-        Row: {
-          accepted_at: string | null
-          id: string
-          user_id: string
-        }
-        Insert: {
-          accepted_at?: string | null
-          id?: string
-          user_id: string
-        }
-        Update: {
-          accepted_at?: string | null
-          id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       community_comments: {
         Row: {
           author_id: string
@@ -1179,42 +1161,6 @@ export type Database = {
           pergunta?: string
           resposta?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      law_article_comments: {
-        Row: {
-          article_number: string
-          content: string
-          created_at: string | null
-          id: string
-          law_name: string
-          likes: number | null
-          tag: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          article_number: string
-          content: string
-          created_at?: string | null
-          id?: string
-          law_name: string
-          likes?: number | null
-          tag: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          article_number?: string
-          content?: string
-          created_at?: string | null
-          id?: string
-          law_name?: string
-          likes?: number | null
-          tag?: string
-          updated_at?: string | null
-          user_id?: string
         }
         Relationships: []
       }
