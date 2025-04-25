@@ -51,7 +51,7 @@ export const truncateText = (text: string, maxLength: number = 100): string => {
  * @param searchTerm Term to highlight
  * @returns JSX with highlighted terms
  */
-export const highlightSearchTerm = (text: string, searchTerm: string): React.ReactNode => {
+export const highlightSearchTerm = (text: string, searchTerm: string): JSX.Element | string => {
   if (!searchTerm || !text) return text;
   
   try {
@@ -64,8 +64,13 @@ export const highlightSearchTerm = (text: string, searchTerm: string): React.Rea
     const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     const parts = text.split(regex);
     
-    return parts.map((part, i) => 
-      regex.test(part) ? <mark key={i} className="bg-primary/20">{part}</mark> : part
+    // Return JSX with proper type annotation and correct JSX syntax
+    return (
+      <>
+        {parts.map((part, i) => 
+          regex.test(part) ? <mark key={i} className="bg-primary/20">{part}</mark> : part
+        )}
+      </>
     );
   } catch (e) {
     console.error('Error highlighting text:', e);
