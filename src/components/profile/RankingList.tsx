@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, TrendingUp, Medal, ChevronDown } from "lucide-react";
@@ -52,25 +51,26 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
 
   const displayedRankings = showAllRankings ? sortedRankings.slice(0, 100) : sortedRankings.slice(0, 20);
   
-  // Check if current user is in the displayed rankings
   const isUserInRankings = currentUserId ? displayedRankings.some(rank => rank.id === currentUserId) : false;
   
-  // Get current user data from rankings
   const currentUserData: CurrentUserData | undefined = currentUserId ?
     rankings.find(rank => rank.id === currentUserId) : undefined;
   
   return (
-    <Card className="h-full">
+    <Card className="h-full bg-gradient-to-b from-gray-900/50 to-gray-800/30 border border-gray-800/50 shadow-xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Star className="h-5 w-5 text-primary-300" />
-          Ranking da Justiça
+          <span className="bg-gradient-to-r from-primary-300 to-primary-200 text-transparent bg-clip-text">
+            Ranking da Justiça
+          </span>
         </CardTitle>
         <div className="flex gap-4 mt-2">
           <Button
             variant={activeTab === 'total' ? "default" : "ghost"}
             onClick={() => setActiveTab('total')}
             size="sm"
+            className="shadow-md hover:shadow-lg transition-all"
           >
             Ranking Total
           </Button>
@@ -78,6 +78,7 @@ export function RankingList({ rankings, currentUserId, userRank }: RankingListPr
             variant={activeTab === 'weekly' ? "default" : "ghost"}
             onClick={() => setActiveTab('weekly')}
             size="sm"
+            className="shadow-md hover:shadow-lg transition-all"
           >
             Ranking Semanal
           </Button>

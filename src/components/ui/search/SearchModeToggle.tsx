@@ -15,7 +15,7 @@ const SearchModeToggle = ({ mode, onModeChange }: SearchModeToggleProps) => {
         type="single"
         value={mode}
         onValueChange={(value) => value && onModeChange(value as 'number')}
-        className="bg-background/50 backdrop-blur-sm border rounded-md w-full"
+        className="bg-gradient-to-b from-gray-900/50 to-gray-800/30 backdrop-blur-sm border border-gray-800/50 rounded-md w-full shadow-lg"
       >
         <TooltipProvider>
           <Tooltip>
@@ -23,13 +23,13 @@ const SearchModeToggle = ({ mode, onModeChange }: SearchModeToggleProps) => {
               <ToggleGroupItem 
                 value="number" 
                 aria-label="Search by number"
-                className="flex-1 data-[state=on]:bg-primary/20 data-[state=on]:text-primary-foreground"
+                className="flex-1 data-[state=on]:bg-primary-300/20 data-[state=on]:text-primary-foreground hover:bg-primary-300/10 transition-all"
               >
                 <Text className="h-4 w-4 mr-1" />
                 <span className="text-xs">Número do Artigo</span>
               </ToggleGroupItem>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent className="bg-gray-900/90 border border-gray-800">
               <p>Buscar por número do artigo (ex: 5, art. 5)</p>
             </TooltipContent>
           </Tooltip>
