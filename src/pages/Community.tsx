@@ -1,7 +1,7 @@
+
 import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CommunityFeed from "@/components/community/CommunityFeed";
-import CommunityRanking from "@/components/community/CommunityRanking";
 import CommunityMetricsTable from "@/components/community/CommunityMetricsTable";
 import { BackButton } from "@/components/ui/BackButton";
 import NotificationCenter from "@/components/layout/NotificationCenter";
@@ -26,8 +26,8 @@ const Community = () => {
             <TabsTrigger value="feed" className="flex-1">
               Feed
             </TabsTrigger>
-            <TabsTrigger value="ranking" className="flex-1">
-              Ranking & Métricas
+            <TabsTrigger value="metrics" className="flex-1">
+              Métricas
             </TabsTrigger>
           </TabsList>
           <TabsContent value="feed" className="p-0">
@@ -37,10 +37,7 @@ const Community = () => {
               onDecreaseFont={() => setFontSize((s) => Math.max(12, s - 2))}
             />
           </TabsContent>
-          <TabsContent value="ranking" className="p-0">
-            <div className="mb-6">
-              <CommunityRanking />
-            </div>
+          <TabsContent value="metrics" className="p-0">
             <CommunityMetricsTable />
           </TabsContent>
         </Tabs>
