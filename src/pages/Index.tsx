@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
@@ -7,6 +8,7 @@ import { Scale, Search, BookOpen, Bookmark, ScrollText, History } from "lucide-r
 import { fetchAvailableLaws, searchAcrossAllLaws } from "@/services/lawService";
 import debounce from 'lodash/debounce';
 import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -15,6 +17,8 @@ const Index = () => {
   const [searchPreviews, setSearchPreviews] = useState<any[]>([]);
   const [showPreviews, setShowPreviews] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSearchBar, setShowSearchBar] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [recentArticles] = useState(() => {
     const saved = localStorage.getItem('recent-articles');
     return saved ? JSON.parse(saved) : [];
@@ -35,10 +39,33 @@ const Index = () => {
     loadRecentLaws();
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        setShowSearchBar(false);
+      } else {
+        setShowSearchBar(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+    
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
   const handleSearch = (term: string) => {
     if (term) {
       navigate(`/pesquisa?q=${encodeURIComponent(term)}`);
     }
+  };
+  
+  const handleSearchClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setShowSearchBar(true);
   };
 
   const debouncedSearch = debounce(async (term: string) => {
@@ -99,16 +126,28 @@ const Index = () => {
       <Header />
       
       <main className="flex-1 max-w-screen-md mx-auto w-full">
-        <div className="text-center mb-8">
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <h1 className="text-3xl font-heading font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-300 to-primary-500">
             VADE MECUM <span className="text-primary-100">PRO</span>
           </h1>
           <p className="text-gray-400 mt-2">
             Vade Mecum Profissional
           </p>
-        </div>
+        </motion.div>
         
-        <div className="mb-10 relative">
+        <motion.div 
+          className={`mb-10 relative transition-all duration-300 ${
+            showSearchBar ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10 pointer-events-none"
+          }`}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
           <SearchBar 
             onSearch={handleSearch} 
             placeholder="Buscar artigo, lei ou assunto..." 
@@ -117,56 +156,74 @@ const Index = () => {
             showPreviews={showPreviews}
             onPreviewClick={handlePreviewClick}
           />
-        </div>
+        </motion.div>
         
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <button 
+        <motion.div 
+          className="grid grid-cols-2 gap-4 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <motion.button 
             onClick={() => navigate("/leis")}
             className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Scale size={28} className="text-primary-300 mb-3" />
             <span className="text-gray-300 font-medium">Ver Tudo</span>
             <span className="text-xs text-gray-400 mt-1">
               Códigos e Estatutos
             </span>
-          </button>
+          </motion.button>
           
-          <button 
+          <motion.button 
             onClick={() => navigate("/favoritos")}
             className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Bookmark size={28} className="text-primary-300 mb-3" />
             <span className="text-gray-300 font-medium">Favoritos</span>
             <span className="text-xs text-gray-400 mt-1">
               Artigos salvos
             </span>
-          </button>
+          </motion.button>
 
-          <button 
+          <motion.button 
             onClick={() => navigate("/anotacoes")}
             className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
           >
             <ScrollText size={28} className="text-primary-300 mb-3" />
             <span className="text-gray-300 font-medium">Anotações</span>
             <span className="text-xs text-gray-400 mt-1">
               Anotações de estudos
             </span>
-          </button>
+          </motion.button>
           
-          <button 
+          <motion.button 
             onClick={() => navigate("/pesquisa")}
             className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Search size={28} className="text-primary-300 mb-3" />
             <span className="text-gray-300 font-medium">Pesquisar</span>
             <span className="text-xs text-gray-400 mt-1">
               Buscar artigos e termos
             </span>
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
         
         {recentArticles.length > 0 && (
-          <div className="mb-8">
+          <motion.div 
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
             <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4 flex items-center gap-2">
               <History size={20} />
               Artigos Recentes
@@ -174,10 +231,15 @@ const Index = () => {
             
             <div className="space-y-3">
               {recentArticles.map((article: any, index: number) => (
-                <button
+                <motion.button
                   key={index}
                   onClick={() => navigate(`/lei/${encodeURIComponent(article.lawName)}?artigo=${article.number}`)}
                   className="neomorph-sm p-4 w-full flex items-center justify-between transition-all hover:shadow-neomorph-inset"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ y: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: 0.1 * index }}
                 >
                   <div className="flex items-center gap-3">
                     <Badge variant="outline" className="text-primary-300">
@@ -186,13 +248,17 @@ const Index = () => {
                     <span className="text-gray-300">{article.lawName}</span>
                   </div>
                   <Scale size={16} className="text-gray-500" />
-                </button>
+                </motion.button>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
         
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+        >
           <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4 flex items-center gap-2">
             <Scale size={20} />
             Leis Recentes
@@ -209,17 +275,22 @@ const Index = () => {
           ) : (
             <div className="space-y-3">
               {recentLaws.map((law, index) => (
-                <button
+                <motion.button
                   key={index}
                   onClick={() => navigate(`/lei/${encodeURIComponent(law)}`)}
                   className="neomorph-sm p-4 w-full flex items-center justify-between transition-all hover:shadow-neomorph-inset"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ y: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: 0.1 * index }}
                 >
                   <div className="flex items-center">
                     <Scale size={18} className="text-primary-300 mr-3" />
                     <span className="text-gray-300">{law}</span>
                   </div>
                   <Scale size={16} className="text-gray-500" />
-                </button>
+                </motion.button>
               ))}
               
               {recentLaws.length === 0 && (
@@ -229,10 +300,14 @@ const Index = () => {
               )}
             </div>
           )}
-        </div>
+        </motion.div>
       </main>
       
       <Footer />
+      
+      {!showSearchBar && (
+        <FloatingSearchButton onOpenSearch={handleSearchClick} />
+      )}
     </div>
   );
 };

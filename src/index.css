@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -22,7 +23,7 @@
     --card: 224 71% 4%;
     --card-foreground: 213 31% 91%;
     
-    --primary: 262 60% 75%;
+    --primary: 265 100% 67%;
     --primary-foreground: 222.2 47.4% 11.2%;
     
     --secondary: 260 50% 52%;
@@ -31,7 +32,7 @@
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
     
-    --ring: 262 60% 75%;
+    --ring: 265 100% 67%;
     
     --radius: 0.5rem;
   }
@@ -48,8 +49,8 @@
   .hover-card {
     @apply transition-all duration-300 hover:border-primary-300/20;
     &:hover {
-      box-shadow: 0 8px 32px -2px rgba(155, 135, 245, 0.2),
-                  0 4px 16px -2px rgba(155, 135, 245, 0.1);
+      box-shadow: 0 8px 32px -2px rgba(149, 84, 255, 0.2),
+                  0 4px 16px -2px rgba(149, 84, 255, 0.1);
     }
   }
 
@@ -224,10 +225,10 @@
 
 @keyframes glow {
   0%, 100% {
-    box-shadow: 0 0 5px 2px rgba(155, 135, 245, 0.3);
+    box-shadow: 0 0 5px 2px rgba(149, 84, 255, 0.3);
   }
   50% {
-    box-shadow: 0 0 15px 5px rgba(155, 135, 245, 0.5);
+    box-shadow: 0 0 15px 5px rgba(149, 84, 255, 0.5);
   }
 }
 
@@ -274,13 +275,13 @@
 @layer components {
   .gradient-button {
     @apply rounded-lg px-4 py-2 text-white transition-all duration-300;
-    background: linear-gradient(135deg, #9b87f5 0%, #7E69AB 100%);
-    box-shadow: 0 4px 12px rgba(155, 135, 245, 0.25);
+    background: linear-gradient(135deg, #ab7dff 0%, #7025e2 100%);
+    box-shadow: 0 4px 12px rgba(149, 84, 255, 0.25);
   }
   
   .gradient-button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(155, 135, 245, 0.35);
+    box-shadow: 0 6px 16px rgba(149, 84, 255, 0.35);
   }
   
   .search-preview {
