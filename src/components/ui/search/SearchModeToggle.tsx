@@ -23,7 +23,7 @@ const SearchModeToggle = ({ mode, onModeChange }: SearchModeToggleProps) => {
               <ToggleGroupItem 
                 value="number" 
                 aria-label="Search by number"
-                className="flex-1 data-[state=on]:bg-primary-300/20 data-[state=on]:text-primary-foreground hover:bg-primary-300/10 transition-all"
+                className="flex-1 data-[state=on]:bg-primary-500/20 data-[state=on]:text-primary-foreground hover:bg-primary-500/10 transition-all"
               >
                 <Text className="h-4 w-4 mr-1" />
                 <span className="text-xs">Número do Artigo</span>
