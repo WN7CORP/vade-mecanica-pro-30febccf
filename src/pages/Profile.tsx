@@ -143,7 +143,7 @@ const Profile = () => {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="subscription">Versão Premium</TabsTrigger>
+            <TabsTrigger value="subscription">Assinatura</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -222,7 +221,7 @@ const LawTabbedView = () => {
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-lg mb-6"
+        className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-lg mb-6"
       >
         <SearchBar 
           onSearch={handleArticleSearch}

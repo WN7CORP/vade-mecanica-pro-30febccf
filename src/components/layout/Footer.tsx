@@ -1,5 +1,5 @@
 
-import { Home, MessageCircle, Scale, Users } from "lucide-react";
+import { Home, MessageCircle, Scale, Users, Award } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Footer = () => {
@@ -32,6 +32,12 @@ const Footer = () => {
       label: "Comunidade",
       path: "/comunidade",
       active: isActive("/comunidade")
+    },
+    {
+      icon: <Award size={24} />,
+      label: "Ranking",
+      path: "/perfil",
+      active: isActive("/perfil")
     }
   ];
 
