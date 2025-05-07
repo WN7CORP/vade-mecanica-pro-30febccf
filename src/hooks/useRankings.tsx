@@ -2,49 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Ranking {
-  id: string;
-  full_name: string | null;
-  total_points: number | null;
-  rank_score: number | null;
-  activity_points: number | null;
-  global_rank: number | null;
-  position?: number;
-  streak_points?: number | null;
-  streak_change?: number | null;
-}
-
-export function useRankings() {
-  return useQuery({
-    queryKey: ['rankings'],
-    queryFn: async (): Promise<Ranking[]> => {
-      try {
-        const { data, error } = await supabase
-          .from('user_rankings')
-          .select('*')
-          .order('total_points', { ascending: false })
-          .limit(100);
-
-        if (error) throw error;
-        
-        // Adicionar posição formatada ao ranking e valores de exemplo para streak
-        return data.map((user, index) => ({
-          ...user,
-          position: index + 1,
-          streak_points: user.activity_points || 0,
-          // Simulação de mudança de streak (para demonstração)
-          streak_change: Math.random() > 0.8 ? -5 : null
-        }));
-      } catch (error) {
-        console.error("Erro ao buscar rankings:", error);
-        return [];
-      }
-    },
-    refetchInterval: 30000 // Recarregar a cada 30 segundos para manter atualizado
-  });
-}
-
-// Hook para registrar login e calcular pontos de streak
+// Hook for registering login and calculating points of streak
 export function useLoginStreak(userId: string | undefined) {
   const recordLogin = async () => {
     if (!userId) return;
@@ -154,34 +112,4 @@ export function useLoginStreak(userId: string | undefined) {
     recordLogin,
     calculateStreakLoss
   };
-}
-
-// Hook para buscar a posição do usuário atual no ranking
-export function useUserRank(userId: string | undefined) {
-  return useQuery({
-    queryKey: ['user-rank', userId],
-    queryFn: async (): Promise<number | null> => {
-      if (!userId) return null;
-      
-      try {
-        // Use a typed approach without specifying the RPC function name in the type parameter
-        const { data, error } = await supabase
-          .from('user_rankings')
-          .select('global_rank')
-          .eq('id', userId)
-          .single();
-          
-        if (error) {
-          console.error("Error fetching user rank:", error);
-          throw error;
-        }
-        
-        return data?.global_rank || null;
-      } catch (error) {
-        console.error("Erro ao buscar posição do usuário:", error);
-        return null;
-      }
-    },
-    enabled: !!userId
-  });
 }

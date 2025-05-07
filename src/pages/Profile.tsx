@@ -4,10 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { RankingList } from "@/components/profile/RankingList";
 import { ActivityChart } from "@/components/profile/ActivityChart";
 import { SubscriptionPlans } from "@/components/profile/SubscriptionPlans";
-import { useRankings, useLoginStreak, useUserRank } from "@/hooks/useRankings";
+import { useLoginStreak } from "@/hooks/useRankings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BackButton } from "@/components/ui/BackButton";
@@ -23,10 +22,8 @@ const Profile = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [userProfile, setUserProfile] = useState<any>(null);
-  const { data: rankings } = useRankings();
   const [userId, setUserId] = useState<string>();
   const { recordLogin, calculateStreakLoss } = useLoginStreak(userId);
-  const { data: userRank } = useUserRank(userId);
   const [hasShownWelcomeToast, setHasShownWelcomeToast] = useState(false);
 
   const { data: stats = {
@@ -73,13 +70,6 @@ const Profile = () => {
       await calculateStreakLoss();
       
       queryClient.invalidateQueries({ queryKey: ['user-stats', userId] });
-      queryClient.invalidateQueries({ queryKey: ['rankings'] });
-      queryClient.invalidateQueries({ queryKey: ['user-rank', userId] });
-      
-      // Updated toast method to use Sonner's syntax
-      toast.success("Bem-vindo(a) de volta!", {
-        description: "Você ganhou +20 pontos por acessar hoje!",
-      });
       
       setHasShownWelcomeToast(true);
     };
@@ -104,8 +94,6 @@ const Profile = () => {
         () => {
           queryClient.invalidateQueries({ queryKey: ['user-stats', userId] });
           queryClient.invalidateQueries({ queryKey: ['user-activity', userId] });
-          queryClient.invalidateQueries({ queryKey: ['rankings'] });
-          queryClient.invalidateQueries({ queryKey: ['user-rank', userId] });
         }
       )
       .subscribe();
@@ -159,18 +147,9 @@ const Profile = () => {
           </TabsList>
 
           <TabsContent value="overview">
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="order-2 md:order-1">
+            <div className="grid gap-6">
+              <div className="w-full">
                 <ActivityChart />
-              </div>
-              <div className="order-1 md:order-2">
-                {rankings && (
-                  <RankingList 
-                    rankings={rankings} 
-                    currentUserId={userId} 
-                    userRank={userRank || undefined}
-                  />
-                )}
               </div>
             </div>
           </TabsContent>
