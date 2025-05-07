@@ -15,7 +15,7 @@ const SearchModeToggle = ({ mode, onModeChange }: SearchModeToggleProps) => {
         type="single"
         value={mode}
         onValueChange={(value) => value && onModeChange(value as 'number')}
-        className="bg-gradient-to-b from-gray-900/50 to-gray-800/30 backdrop-blur-sm border border-gray-800/50 rounded-md w-full shadow-lg"
+        className="bg-gradient-to-b from-gray-900/80 to-gray-800/50 backdrop-blur-sm border border-gray-800/50 rounded-md w-full shadow-md"
       >
         <TooltipProvider>
           <Tooltip>
@@ -23,10 +23,10 @@ const SearchModeToggle = ({ mode, onModeChange }: SearchModeToggleProps) => {
               <ToggleGroupItem 
                 value="number" 
                 aria-label="Search by number"
-                className="flex-1 data-[state=on]:bg-primary-500/20 data-[state=on]:text-primary-foreground hover:bg-primary-500/10 transition-all"
+                className="flex-1 data-[state=on]:bg-primary-500/20 data-[state=on]:text-primary-300 hover:bg-primary-500/10 transition-all py-1.5"
               >
-                <Text className="h-4 w-4 mr-1" />
-                <span className="text-xs">Número do Artigo</span>
+                <Text className="h-4 w-4 mr-1.5" />
+                <span className="text-xs font-medium">Número do Artigo</span>
               </ToggleGroupItem>
             </TooltipTrigger>
             <TooltipContent className="bg-gray-900/90 border border-gray-800">
