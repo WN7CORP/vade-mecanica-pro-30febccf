@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, GraduationCap, Clock, ArrowUp } from "lucide-react";
+import { BookOpen, GraduationCap, Clock, ArrowUp, BookText, FileText } from "lucide-react";
 import ArticleList from "@/components/law/ArticleList";
 import { useLawArticles } from "@/hooks/use-law-articles";
 import { useAIExplanation } from "@/hooks/use-ai-explanation";
@@ -62,6 +63,21 @@ const LawTabbedView = () => {
     handleExplainArticle
   } = useAIExplanation(lawName);
 
+  // Determine law category for styling
+  const getLawCategory = (name: string | undefined): 'codigo' | 'estatuto' | 'outros' => {
+    if (!name) return 'outros';
+    
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes('código') || lowerName.includes('consolidação') || lowerName === 'constituição federal') {
+      return 'codigo';
+    } else if (lowerName.includes('estatuto')) {
+      return 'estatuto';
+    }
+    return 'outros';
+  };
+
+  const lawCategory = getLawCategory(lawName);
+
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
@@ -96,6 +112,7 @@ const LawTabbedView = () => {
     }
   }, [highlightedArticleNumber, filteredArticles, isLoading]);
   
+  // Modified to search only within current law
   useEffect(() => {
     const loadSearchPreviews = async () => {
       if (debouncedSearchInput.length < 2) {
@@ -104,22 +121,28 @@ const LawTabbedView = () => {
       }
       
       try {
-        console.log("Buscando previews para:", debouncedSearchInput);
-        const results = await searchAcrossAllLaws(debouncedSearchInput);
-        console.log("Resultados da busca em todas as leis:", results);
-        
-        const formattedPreviews = results.flatMap(lawResult => 
-          lawResult.articles.map(article => ({
-            lawName: lawResult.lawName,
-            lawCategory: lawResult.lawCategory,
-            article: article.numero,
-            content: article.conteudo,
-            previewType: 'article' as const,
-            category: lawResult.lawCategory
-          }))
-        );
-        
-        setSearchPreviews(formattedPreviews.slice(0, 10)); // Limit to 10 previews
+        // Instead of searching across all laws, only search in current law
+        if (lawName) {
+          // Get articles from current law that match the search term
+          const results = await searchAcrossAllLaws(debouncedSearchInput, [lawName]);
+          
+          if (results && results.length > 0) {
+            const currentLawResult = results[0]; // There should only be one law result
+            
+            const formattedPreviews = currentLawResult.articles.map(article => ({
+              lawName: currentLawResult.lawName,
+              lawCategory: currentLawResult.lawCategory,
+              article: article.numero,
+              content: article.conteudo,
+              previewType: 'article' as const,
+              category: currentLawResult.lawCategory
+            }));
+            
+            setSearchPreviews(formattedPreviews.slice(0, 10)); // Limit to 10 previews
+          } else {
+            setSearchPreviews([]);
+          }
+        }
       } catch (error) {
         console.error("Error fetching search previews:", error);
         setSearchPreviews([]);
@@ -127,7 +150,7 @@ const LawTabbedView = () => {
     };
     
     loadSearchPreviews();
-  }, [debouncedSearchInput]);
+  }, [debouncedSearchInput, lawName]);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -216,17 +239,33 @@ const LawTabbedView = () => {
     setSearchInput(e.target.value);
   };
 
+  // Get icon based on law category
+  const getCategoryIcon = () => {
+    switch (lawCategory) {
+      case 'codigo':
+        return <BookOpen className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />;
+      case 'estatuto':
+        return <FileText className="mr-2 h-4 w-4 text-estatuto-light dark:text-estatuto-dark" />;
+      default:
+        return <BookText className="mr-2 h-4 w-4" />;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="sticky top-20 z-10 bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-lg mb-6"
+        className={`sticky top-20 z-10 bg-background/80 backdrop-blur-sm p-3 rounded-lg shadow-lg mb-6 ${
+          lawCategory === 'codigo' ? 'border-l-4 border-blue-500' : 
+          lawCategory === 'estatuto' ? 'border-l-4 border-estatuto-light dark:border-estatuto-dark' :
+          'border-l-4 border-gray-300'
+        }`}
       >
         <SearchBar 
           onSearch={handleArticleSearch}
           initialValue={searchTerm}
-          placeholder="Buscar por número do artigo ou conteúdo..."
+          placeholder={`Buscar no ${lawCategory === 'codigo' ? 'Código' : lawCategory === 'estatuto' ? 'Estatuto' : 'Documento'}...`}
           onFocus={() => setSearchFocused(true)}
           onBlur={() => setSearchFocused(false)}
           onInputChange={handleSearchInputChange}
@@ -234,13 +273,19 @@ const LawTabbedView = () => {
           searchPreviews={searchPreviews}
           showPreviews={searchInput.length >= 2}
           onPreviewClick={handlePreviewClick}
+          categoryIcon={getCategoryIcon()}
+          lawCategory={lawCategory}
         />
       </motion.div>
 
       <Tabs defaultValue="articles" className="w-full">
-        <TabsList className="w-full mb-4">
+        <TabsList className={`w-full mb-4 ${
+          lawCategory === 'codigo' ? 'bg-blue-50 dark:bg-blue-950/20' : 
+          lawCategory === 'estatuto' ? 'bg-green-50 dark:bg-green-950/20' :
+          ''
+        }`}>
           <TabsTrigger value="articles" className="w-full">
-            <BookOpen className="mr-2 h-4 w-4" />
+            {getCategoryIcon()}
             <span>Artigos</span>
           </TabsTrigger>
           <TabsTrigger value="study" className="w-full">
@@ -289,6 +334,7 @@ const LawTabbedView = () => {
             globalFontSize={globalFontSize}
             highlightedArticleNumber={highlightedArticleNumber}
             highlightedRef={highlightedRef}
+            lawCategory={lawCategory}
           />
         </TabsContent>
 

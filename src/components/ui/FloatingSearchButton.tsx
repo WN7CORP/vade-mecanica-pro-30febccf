@@ -26,7 +26,7 @@ export const FloatingSearchButton = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Return null when not visible, but always return something
+  // Return null when not visible to avoid any rendering issues
   if (!isVisible) return null;
 
   return (
@@ -37,12 +37,13 @@ export const FloatingSearchButton = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.3 }}
+          className="fixed bottom-20 right-4 z-50"
         >
           <Button
             onClick={onOpenSearch}
             variant="default"
             size="icon"
-            className="fixed bottom-20 right-4 z-50 rounded-full shadow-lg"
+            className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
           >
             <Search className="h-5 w-5" />
           </Button>
@@ -51,3 +52,5 @@ export const FloatingSearchButton = ({
     </AnimatePresence>
   );
 };
+
+export default FloatingSearchButton;

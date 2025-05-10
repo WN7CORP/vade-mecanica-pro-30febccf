@@ -1,5 +1,5 @@
 
-import { Search, X, History } from "lucide-react";
+import { Search, X, History, BookOpen, FileText, BookText } from "lucide-react";
 import { useState, useEffect, forwardRef, useMemo } from "react";
 import { getLawAbbreviation } from "@/utils/lawAbbreviations";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SearchModeToggle from "./search/SearchModeToggle";
 import { highlightSearchTerm } from "@/utils/textExpansion";
+import { ReactNode } from "react";
 
 interface SearchPreview {
   article?: string;
@@ -28,9 +29,11 @@ interface SearchBarProps {
   showPreviews?: boolean;
   onPreviewClick?: (preview: SearchPreview) => void;
   showInstantResults?: boolean;
+  categoryIcon?: ReactNode;
+  lawCategory?: 'codigo' | 'estatuto' | 'outros';
 }
 
-const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({ 
+const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   onSearch, 
   initialValue = "", 
   placeholder = "Buscar artigo...",
@@ -41,6 +44,8 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   showPreviews = false,
   onPreviewClick,
   showInstantResults = false,
+  categoryIcon,
+  lawCategory = 'outros',
 }, ref) => {
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
@@ -162,94 +167,171 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
   };
 
   const renderHighlightedText = (text: string, term: string) => {
-    if (!term || !text) return text;
+    if (!text || !term) return text;
     
     try {
-      const result = highlightSearchTerm(text, term);
-      
-      if (typeof result === 'string') {
-        return result;
-      }
-      
-      return result.map((part, index) => (
-        part.highlight 
-          ? <mark key={index} className="bg-primary-300/20 font-semibold not-italic">{part.text}</mark>
-          : part.text
-      ));
+      const regex = new RegExp(`(${term})`, 'gi');
+      return text.replace(regex, match => `<span class="search-highlight">${match}</span>`);
     } catch (e) {
-      console.error('Error in renderHighlightedText:', e);
       return text;
     }
   };
+  
+  const getPreviewIcon = (preview: SearchPreview) => {
+    if (preview.category === 'codigo') {
+      return <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />;
+    } else if (preview.category === 'estatuto') {
+      return <FileText className="h-4 w-4 text-estatuto-light dark:text-estatuto-dark flex-shrink-0" />;
+    }
+    return <BookText className="h-4 w-4 text-gray-500 flex-shrink-0" />;
+  };
 
   return (
-    <div className="relative">
-      <motion.div 
-        initial={false}
-        animate={isFocused ? { scale: 1.01 } : { scale: 1 }}
-        className={`transition-all duration-300 neomorph ${
-          isFocused ? "neomorph-inset shadow-lg" : ""
-        }`}
-      >
-        <div className="flex flex-col gap-2 p-3">
-          <div className="flex items-center gap-2">
-            <Search 
-              size={18} 
-              className={`transition-colors ${
-                isFocused ? "text-primary-300" : "text-gray-400"
-              }`} 
-            />
-            
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              placeholder="Digite o número do artigo..."
-              className="flex-1 bg-transparent outline-none border-none text-foreground placeholder:text-muted-foreground"
-              autoComplete="off"
-              ref={ref}
-            />
-            
-            {searchTerm && (
-              <button 
-                onClick={handleClear}
-                className="p-1 text-gray-400 hover:text-gray-300 transition-colors"
-                aria-label="Limpar pesquisa"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-          
-          <SearchModeToggle 
-            mode={localSearchMode} 
-            onModeChange={() => {}} 
-          />
+    <div className="relative w-full">
+      <div className={`relative flex items-center rounded-lg border ${
+        lawCategory === 'codigo' ? 'border-blue-200 dark:border-blue-800/50 focus-within:border-blue-400 dark:focus-within:border-blue-600' : 
+        lawCategory === 'estatuto' ? 'border-green-200 dark:border-green-800/50 focus-within:border-green-400 dark:focus-within:border-green-600' :
+        'border-gray-200 dark:border-gray-800 focus-within:border-primary dark:focus-within:border-primary-400'
+      } bg-background transition-all duration-200 focus-within:ring-1 ${
+        lawCategory === 'codigo' ? 'focus-within:ring-blue-400/30 dark:focus-within:ring-blue-400/20' : 
+        lawCategory === 'estatuto' ? 'focus-within:ring-green-400/30 dark:focus-within:ring-green-400/20' :
+        'focus-within:ring-primary/30 dark:focus-within:ring-primary-400/20'
+      }`}>
+        <div className="pl-3 flex items-center">
+          {categoryIcon || <Search className="h-4 w-4 text-muted-foreground" />}
         </div>
-      </motion.div>
-      
+        <input
+          ref={ref}
+          type="text"
+          value={searchTerm}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          className={`flex-1 py-3 px-3 bg-transparent border-0 outline-none text-foreground placeholder:text-muted-foreground ${
+            lawCategory === 'codigo' ? 'focus:ring-0 text-blue-900 dark:text-blue-300' : 
+            lawCategory === 'estatuto' ? 'focus:ring-0 text-green-900 dark:text-green-300' :
+            'focus:ring-0'
+          }`}
+          aria-label="Buscar"
+        />
+        {searchTerm && (
+          <button
+            onClick={handleClear}
+            className="mr-1 p-2 hover:bg-muted rounded-full"
+            aria-label="Limpar pesquisa"
+          >
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
+        <button
+          onClick={handleSearch}
+          className={`px-4 py-2 mr-1 rounded-md ${
+            lawCategory === 'codigo' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 
+            lawCategory === 'estatuto' ? 'bg-estatuto-light hover:bg-estatuto-light/90 text-white' :
+            'bg-primary hover:bg-primary/90 text-primary-foreground'
+          } transition-colors`}
+          aria-label="Pesquisar"
+        >
+          <Search className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Search previews */}
       <AnimatePresence>
-        {isFocused && showHistory && searchHistory.length > 0 && !searchTerm && (
-          <motion.div 
+        {showPreviews && searchPreviews.length > 0 && (
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+            transition={{ duration: 0.15 }}
+            className={`absolute z-50 mt-1 w-full bg-popover border ${
+              lawCategory === 'codigo' ? 'border-blue-200 dark:border-blue-800/50' : 
+              lawCategory === 'estatuto' ? 'border-green-200 dark:border-green-800/50' :
+              'border-border'
+            } rounded-md shadow-lg overflow-hidden max-h-[70vh] overflow-y-auto`}
           >
-            <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+            <div className="p-1 divide-y divide-border">
+              {Object.entries(groupedPreviews).length > 0 ? (
+                Object.entries(groupedPreviews).map(([category, previews]) => (
+                  <div key={category} className="py-1">
+                    <div className={`px-3 py-1.5 text-xs font-medium ${
+                      category === 'codigo' ? 'text-blue-600 dark:text-blue-400' : 
+                      category === 'estatuto' ? 'text-estatuto-light dark:text-estatuto-dark' :
+                      'text-muted-foreground'
+                    }`}>
+                      {category === 'codigo' ? 'Códigos' : 
+                       category === 'estatuto' ? 'Estatutos' : 'Outros'}
+                    </div>
+                    {previews.map((preview, index) => (
+                      <div
+                        key={`${preview.article || 'term'}-${index}`}
+                        className={`px-3 py-2 hover:bg-muted cursor-pointer transition-colors ${
+                          preview.category === 'codigo' ? 'hover:bg-blue-50 dark:hover:bg-blue-950/20' : 
+                          preview.category === 'estatuto' ? 'hover:bg-green-50 dark:hover:bg-green-950/20' :
+                          'hover:bg-accent'
+                        }`}
+                        onClick={() => onPreviewClick && onPreviewClick(preview)}
+                      >
+                        <div className="flex items-start gap-2">
+                          {getPreviewIcon(preview)}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm font-medium truncate max-w-[150px]">
+                                  {preview.lawName}
+                                </span>
+                                {preview.article && (
+                                  <Badge variant="outline" className={`text-xs ${
+                                    preview.category === 'codigo' ? 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400' : 
+                                    preview.category === 'estatuto' ? 'bg-green-50 dark:bg-green-950/20 text-estatuto-light dark:text-estatuto-dark' :
+                                    ''
+                                  }`}>
+                                    Art. {preview.article}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: renderHighlightedText(truncateContent(preview.content), searchTerm),
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              ) : (
+                <div className="p-3 text-sm text-muted-foreground">Buscando resultados...</div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Search history */}
+        {showHistory && searchHistory.length > 0 && !showPreviews && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-50 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+          >
+            <div className="flex items-center justify-between p-3 border-b border-border">
               <div className="flex items-center text-sm text-muted-foreground">
                 <History className="mr-2 h-4 w-4" />
                 Pesquisas recentes
               </div>
               <button
                 onClick={clearHistory}
-                className="text-xs text-gray-400 hover:text-primary-300 transition-colors"
+                className="text-xs text-muted-foreground hover:text-destructive"
               >
-                Limpar histórico
+                Limpar
               </button>
             </div>
             {searchHistory.map((term, index) => (
@@ -262,67 +344,6 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(({
                   <History className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-primary-100">{term}</span>
                 </div>
-              </div>
-            ))}
-          </motion.div>
-        )}
-        
-        {isFocused && showPreviews && Object.keys(groupedPreviews).length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
-          >
-            {Object.entries(groupedPreviews).map(([category, categoryPreviews]) => (
-              <div key={category} className="border-b border-border last:border-0">
-                {category !== 'outros' && (
-                  <div className="text-xs font-semibold text-primary-300/70 px-3 pt-2 pb-1 uppercase flex items-center">
-                    {category === 'codigo' ? 'Códigos' : category === 'estatuto' ? 'Estatutos' : 'Outros'}
-                    <Badge variant="secondary" className="ml-2 text-[10px]">
-                      {categoryPreviews.length}
-                    </Badge>
-                  </div>
-                )}
-                
-                {categoryPreviews.map((preview, index) => {
-                  const abbreviation = getLawAbbreviation(preview.lawName);
-                  return (
-                    <motion.div
-                      key={`${category}-${index}`}
-                      whileHover={{ backgroundColor: "rgba(var(--accent), 0.2)" }}
-                      onClick={() => onPreviewClick?.(preview)}
-                      className="group p-3 hover:bg-accent/20 cursor-pointer transition-all duration-200"
-                    >
-                      <div className={`flex ${isMobile ? 'flex-col gap-1' : 'items-center gap-2'}`}>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge 
-                                variant="outline" 
-                                className={`text-xs font-medium text-primary-300/70 bg-primary-300/10 ${
-                                  isMobile ? 'self-start' : ''
-                                }`}
-                              >
-                                {abbreviation}
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{preview.lawName}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <div className="text-sm text-primary-100 group-hover:text-primary-300 transition-colors">
-                          {preview.previewType === 'article' ? 'Art.' : ''} {preview.article}
-                        </div>
-                      </div>
-                      <div className="text-xs text-gray-400 mt-1 line-clamp-2 group-hover:text-gray-300 transition-colors">
-                        {renderHighlightedText(truncateContent(preview.content), searchTerm)}
-                      </div>
-                    </motion.div>
-                  );
-                })}
               </div>
             ))}
           </motion.div>

@@ -20,7 +20,6 @@ import AIChat from "./pages/AIChat";
 import NotFound from "./pages/NotFound";
 import Favorites from "./pages/Favorites";
 import Notes from "./pages/Notes";
-import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Community from "./pages/Community";
 import Admin from "./pages/Admin";
@@ -55,7 +54,6 @@ function AppWithProviders() {
         <main className={`pt-20 px-4 pb-24 ${isMobile ? "pt-4" : ""}`}>
           <div className="max-w-6xl mx-auto">
             <Routes>
-              <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<Index />} />
               <Route path="/pesquisa" element={<Search />} />
               <Route path="/leis" element={<AllLaws />} />

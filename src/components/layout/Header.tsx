@@ -1,28 +1,14 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Bell, User, Sun, Moon, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 
 const Header = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: {
-          session
-        }
-      } = await supabase.auth.getSession();
-      setIsLoggedIn(!!session);
-    };
-    
-    checkAuth();
-    
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       if (scrollPosition > 10) {
@@ -55,26 +41,6 @@ const Header = () => {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          
-          {isLoggedIn ? (
-            <>
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <Link to="/perfil">
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <User className="h-5 w-5" />
-                </Button>
-              </Link>
-            </>
-          ) : (
-            <Link to="/auth">
-              <Button variant="outline" size="sm" className="gap-2">
-                <User size={16} />
-                <span>Login</span>
-              </Button>
-            </Link>
-          )}
         </div>
       </div>
 
