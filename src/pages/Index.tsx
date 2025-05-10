@@ -1,14 +1,26 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import SearchBar from "@/components/ui/SearchBar";
 import { FloatingSearchButton } from "@/components/ui/FloatingSearchButton";
-import { Scale, Search, BookOpen, Bookmark, ScrollText, History } from "lucide-react";
+import SearchBar from "@/components/ui/SearchBar";
+import { 
+  Scale, 
+  Search, 
+  BookOpen, 
+  Bookmark, 
+  ScrollText, 
+  History, 
+  Sparkles,
+  BarChart3,
+  MessageCircle,
+  Clock,
+  Lightbulb
+} from "lucide-react";
 import { fetchAvailableLaws, searchAcrossAllLaws } from "@/services/lawService";
 import debounce from 'lodash/debounce';
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 const Index = () => {
@@ -122,189 +134,264 @@ const Index = () => {
     return 'outros';
   };
 
-  return (
-    <div className="flex flex-col min-h-screen pb-16 pt-20 px-4">
-      <Header />
-      
-      <main className="flex-1 max-w-screen-md mx-auto w-full">
-        <motion.div 
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl font-heading font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-300 to-primary-500">
-            VADE MECUM <span className="text-primary-100">PRO</span>
-          </h1>
-          <p className="text-gray-400 mt-2">
-            Vade Mecum Profissional
-          </p>
-        </motion.div>
-        
-        <motion.div 
-          className={`mb-10 relative transition-all duration-300 ${
-            showSearchBar ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10 pointer-events-none"
-          }`}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          <SearchBar 
-            onSearch={handleSearch} 
-            placeholder="Buscar artigo, lei ou assunto..." 
-            onInputChange={handleInputChange}
-            searchPreviews={searchPreviews}
-            showPreviews={showPreviews}
-            onPreviewClick={handlePreviewClick}
-          />
-        </motion.div>
-        
-        <motion.div 
-          className="grid grid-cols-2 gap-4 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <motion.button 
-            onClick={() => navigate("/leis")}
-            className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Scale size={28} className="text-primary-300 mb-3" />
-            <span className="text-gray-300 font-medium">Ver Tudo</span>
-            <span className="text-xs text-gray-400 mt-1">
-              Códigos e Estatutos
-            </span>
-          </motion.button>
-          
-          <motion.button 
-            onClick={() => navigate("/favoritos")}
-            className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Bookmark size={28} className="text-primary-300 mb-3" />
-            <span className="text-gray-300 font-medium">Favoritos</span>
-            <span className="text-xs text-gray-400 mt-1">
-              Artigos salvos
-            </span>
-          </motion.button>
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
 
-          <motion.button 
-            onClick={() => navigate("/anotacoes")}
-            className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <ScrollText size={28} className="text-primary-300 mb-3" />
-            <span className="text-gray-300 font-medium">Anotações</span>
-            <span className="text-xs text-gray-400 mt-1">
-              Anotações de estudos
-            </span>
-          </motion.button>
-          
-          <motion.button 
-            onClick={() => navigate("/pesquisa")}
-            className="neomorph p-6 flex flex-col items-center justify-center text-center h-32 hover:scale-105 transition-all duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Search size={28} className="text-primary-300 mb-3" />
-            <span className="text-gray-300 font-medium">Pesquisar</span>
-            <span className="text-xs text-gray-400 mt-1">
-              Buscar artigos e termos
-            </span>
-          </motion.button>
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
+  return (
+    <div className="flex flex-col space-y-8">
+      <motion.div 
+        className="text-center mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-3xl font-heading font-bold gradient-text">
+          VADE MECUM <span className="text-primary-500">PRO</span>
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">
+          Seu assistente jurídico profissional
+        </p>
+      </motion.div>
+      
+      <motion.div 
+        className={`relative transition-all duration-300 mb-6 ${
+          showSearchBar ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10 pointer-events-none"
+        }`}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <SearchBar 
+          onSearch={handleSearch} 
+          placeholder="Buscar artigo, lei ou assunto..." 
+          onInputChange={handleInputChange}
+          searchPreviews={searchPreviews}
+          showPreviews={showPreviews}
+          onPreviewClick={handlePreviewClick}
+        />
+      </motion.div>
+      
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+      >
+        <motion.div variants={item}>
+          <Card onClick={() => navigate("/leis")} className="cursor-pointer hover:shadow-md transition-all h-36">
+            <CardHeader className="pb-2">
+              <Scale className="h-8 w-8 text-primary-500" />
+            </CardHeader>
+            <CardContent>
+              <CardTitle className="text-base">Ver Tudo</CardTitle>
+              <p className="text-sm text-gray-500 mt-1">Códigos e Estatutos</p>
+            </CardContent>
+          </Card>
         </motion.div>
-        
-        {recentArticles.length > 0 && (
-          <motion.div 
-            className="mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-          >
-            <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4 flex items-center gap-2">
-              <History size={20} />
-              Artigos Recentes
-            </h2>
-            
-            <div className="space-y-3">
-              {recentArticles.map((article: any, index: number) => (
-                <motion.button
-                  key={index}
-                  onClick={() => navigate(`/lei/${encodeURIComponent(article.lawName)}?artigo=${article.number}`)}
-                  className="neomorph-sm p-4 w-full flex items-center justify-between transition-all hover:shadow-neomorph-inset"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ y: 0 }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: 0.1 * index }}
-                >
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="text-primary-300">
-                      Art. {article.number}
-                    </Badge>
-                    <span className="text-gray-300">{article.lawName}</span>
-                  </div>
-                  <Scale size={16} className="text-gray-500" />
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-        
+
+        <motion.div variants={item}>
+          <Card onClick={() => navigate("/favoritos")} className="cursor-pointer hover:shadow-md transition-all h-36">
+            <CardHeader className="pb-2">
+              <Bookmark className="h-8 w-8 text-primary-500" />
+            </CardHeader>
+            <CardContent>
+              <CardTitle className="text-base">Favoritos</CardTitle>
+              <p className="text-sm text-gray-500 mt-1">Artigos salvos</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={item}>
+          <Card onClick={() => navigate("/anotacoes")} className="cursor-pointer hover:shadow-md transition-all h-36">
+            <CardHeader className="pb-2">
+              <ScrollText className="h-8 w-8 text-primary-500" />
+            </CardHeader>
+            <CardContent>
+              <CardTitle className="text-base">Anotações</CardTitle>
+              <p className="text-sm text-gray-500 mt-1">Suas notas de estudo</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div variants={item}>
+          <Card onClick={() => navigate("/duvidas")} className="cursor-pointer hover:shadow-md transition-all h-36">
+            <CardHeader className="pb-2">
+              <Sparkles className="h-8 w-8 text-primary-500" />
+            </CardHeader>
+            <CardContent>
+              <CardTitle className="text-base">IA Jurídica</CardTitle>
+              <p className="text-sm text-gray-500 mt-1">Assistente inteligente</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
+      
+      {recentArticles.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
+          transition={{ delay: 0.4 }}
+          className="space-y-4"
         >
-          <h2 className="text-xl font-heading font-semibold text-primary-100 mb-4 flex items-center gap-2">
-            <Scale size={20} />
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-heading font-semibold flex items-center gap-2">
+              <Clock size={18} className="text-primary-500" />
+              Artigos Recentes
+            </h2>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/historico")}>
+              Ver tudo
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {recentArticles.slice(0, 4).map((article: any, index: number) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: 0.1 * index }}
+              >
+                <Card 
+                  onClick={() => navigate(`/lei/${encodeURIComponent(article.lawName)}?artigo=${article.number}`)}
+                  className="cursor-pointer hover:shadow-md hover:border-primary-100 transition-all"
+                >
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="text-primary-500 bg-primary-50 dark:bg-primary-900/20">
+                        Art. {article.number}
+                      </Badge>
+                      <span className="text-sm truncate max-w-[150px]">{article.lawName}</span>
+                    </div>
+                    <Clock size={14} className="text-gray-400" />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+      
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-heading font-semibold flex items-center gap-2">
+            <BookOpen size={18} className="text-primary-500" />
             Leis Recentes
           </h2>
-          
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="neomorph-sm p-4 animate-pulse">
-                  <div className="h-5 bg-muted rounded w-3/4"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentLaws.map((law, index) => (
-                <motion.button
-                  key={index}
+          <Button variant="ghost" size="sm" onClick={() => navigate("/leis")}>
+            Ver todas
+          </Button>
+        </div>
+        
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-4 h-12 flex items-center">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {recentLaws.map((law, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: 0.1 * index }}
+              >
+                <Card 
                   onClick={() => navigate(`/lei/${encodeURIComponent(law)}`)}
-                  className="neomorph-sm p-4 w-full flex items-center justify-between transition-all hover:shadow-neomorph-inset"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ y: 0 }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: 0.1 * index }}
+                  className="cursor-pointer hover:shadow-md hover:border-primary-100 transition-all"
                 >
-                  <div className="flex items-center">
-                    <Scale size={18} className="text-primary-300 mr-3" />
-                    <span className="text-gray-300">{law}</span>
-                  </div>
-                  <Scale size={16} className="text-gray-500" />
-                </motion.button>
-              ))}
-              
-              {recentLaws.length === 0 && (
-                <div className="text-center py-6 text-gray-400">
-                  Nenhuma lei encontrada. Verifique a conexão com a planilha.
-                </div>
-              )}
-            </div>
-          )}
-        </motion.div>
-      </main>
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Scale size={16} className="text-primary-500" />
+                      <span className="text-sm truncate max-w-[200px]">{law}</span>
+                    </div>
+                    <BookOpen size={14} className="text-gray-400" />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+            
+            {recentLaws.length === 0 && (
+              <Card className="col-span-2">
+                <CardContent className="p-6 text-center">
+                  <p className="text-gray-500">
+                    Nenhuma lei encontrada. Verifique a conexão com a planilha.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+      </motion.div>
       
-      <Footer />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8 }}
+        className="space-y-4 mb-6"
+      >
+        <h2 className="text-xl font-heading font-semibold flex items-center gap-2">
+          <Lightbulb size={18} className="text-primary-500" />
+          Recursos de Estudo
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="hover:shadow-md transition-all">
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <MessageCircle className="h-8 w-8 text-primary-500 mb-2" />
+              <h3 className="font-medium mb-1">Assistente IA</h3>
+              <p className="text-sm text-gray-500">Tire suas dúvidas com nossa inteligência artificial especializada em Direito</p>
+              <Button className="mt-4" onClick={() => navigate("/duvidas")}>
+                Conversar
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-all">
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <BarChart3 className="h-8 w-8 text-primary-500 mb-2" />
+              <h3 className="font-medium mb-1">Estatísticas de Estudo</h3>
+              <p className="text-sm text-gray-500">Acompanhe seu progresso e métricas de estudo personalizadas</p>
+              <Button className="mt-4" variant="outline" onClick={() => navigate("/estatisticas")}>
+                Visualizar
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-all">
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <Lightbulb className="h-8 w-8 text-primary-500 mb-2" />
+              <h3 className="font-medium mb-1">Modo Estudo</h3>
+              <p className="text-sm text-gray-500">Estude com flashcards, anotações e recursos especiais para memorização</p>
+              <Button className="mt-4" variant="outline" onClick={() => navigate("/estudos")}>
+                Começar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </motion.div>
       
       {!showSearchBar && (
         <FloatingSearchButton onOpenSearch={handleSearchClick} />

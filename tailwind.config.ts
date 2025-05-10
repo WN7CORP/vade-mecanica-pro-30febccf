@@ -8,7 +8,7 @@ const config = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
-	],
+  ],
   prefix: "",
   theme: {
     container: {
@@ -28,32 +28,44 @@ const config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          50: "#f8f5ff",
-          100: "#eee8ff",
-          200: "#dfd2ff",
-          300: "#c7adff",
-          400: "#ab7dff",
-          500: "#9554ff",
-          600: "#8137f5",
-          700: "#7025e2",
-          800: "#5d20b7",
-          900: "#4d1e95",
+          50: "#f4f1ff",
+          100: "#e8e1ff",
+          200: "#d5c8ff",
+          300: "#b69dff",
+          400: "#9669ff",
+          500: "#7c3aff",
+          600: "#7025f5",
+          700: "#621be0",
+          800: "#5018b8",
+          900: "#411893",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          100: "#e2f8ff",
+          200: "#c0eeff",
+          300: "#a1ddff",
+          400: "#64bef9",
+          500: "#3b9eff",
+          600: "#2b7ff4",
+          700: "#2467e0",
+          800: "#2353b8",
+          900: "#224991",
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+          300: "#ffbfbf",
+          500: "#ff5a5a",
+          700: "#e53535",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -63,11 +75,31 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          300: "#c2f5d3",
+          500: "#4ade80",
+          700: "#22c55e",
+        },
+        warning: {
+          300: "#fff0c2",
+          500: "#fbbf24",
+          700: "#f59e0b",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        sans: ['Inter var', 'sans-serif'],
+        heading: ['Poppins', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+      boxShadow: {
+        'soft': '0 2px 10px rgba(0, 0, 0, 0.08)',
+        'glow': '0 0 15px rgba(124, 58, 255, 0.5)',
+        'card': '0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03)',
       },
       keyframes: {
         "accordion-down": {
@@ -106,6 +138,10 @@ const config = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -117,6 +153,7 @@ const config = {
         "scale-in": "scale-in 0.2s ease-out",
         "scale-out": "scale-out 0.2s ease-out",
         "pulse": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "float": "float 5s ease-in-out infinite",
       },
     },
   },

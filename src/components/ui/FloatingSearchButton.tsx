@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { Button } from "./button";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface FloatingSearchButtonProps {
   onOpenSearch: () => void;
@@ -29,13 +30,24 @@ export const FloatingSearchButton = ({
   if (!isVisible) return null;
 
   return (
-    <Button
-      onClick={onOpenSearch}
-      variant="outline"
-      size="icon"
-      className="fixed bottom-20 right-4 z-50 rounded-full shadow-lg bg-primary-300/20 text-primary-300 hover:bg-primary-300/30 animate-fade-in"
-    >
-      <Search className="h-5 w-5" />
-    </Button>
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Button
+            onClick={onOpenSearch}
+            variant="default"
+            size="icon"
+            className="fixed bottom-20 right-4 z-50 rounded-full shadow-lg"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
