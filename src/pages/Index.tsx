@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SearchBar from "@/components/ui/SearchBar";
+import { FloatingSearchButton } from "@/components/ui/FloatingSearchButton";
 import { Scale, Search, BookOpen, Bookmark, ScrollText, History } from "lucide-react";
 import { fetchAvailableLaws, searchAcrossAllLaws } from "@/services/lawService";
 import debounce from 'lodash/debounce';
