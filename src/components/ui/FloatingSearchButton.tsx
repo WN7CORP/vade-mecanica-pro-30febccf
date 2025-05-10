@@ -18,10 +18,14 @@ export const FloatingSearchButton = ({
       setIsVisible(scrollY > 200); // Show after 200px of scroll
     };
 
+    // Initialize visibility check
+    handleScroll();
+    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Return null when not visible, but always return something
   if (!isVisible) return null;
 
   return (
