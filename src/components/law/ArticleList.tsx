@@ -29,6 +29,7 @@ interface ArticleListProps {
   globalFontSize?: number;
   highlightedArticleNumber?: string | null;
   highlightedRef?: React.RefObject<HTMLDivElement>;
+  lawCategory?: 'codigo' | 'estatuto' | 'outros';
 }
 
 const ArticleList = ({
@@ -51,7 +52,8 @@ const ArticleList = ({
   onStudyMode,
   globalFontSize,
   highlightedArticleNumber,
-  highlightedRef
+  highlightedRef,
+  lawCategory
 }: ArticleListProps) => {
   const [isNarratingExplanation, setIsNarratingExplanation] = useState(false);
   const [narratingContent, setNarratingContent] = useState<{text: string, title: string}>({text: '', title: ''});

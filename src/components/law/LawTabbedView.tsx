@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -184,6 +183,7 @@ const LawTabbedView = () => {
     navigate(`/study/${lawName}`);
   };
 
+  // Fix here - remove the second parameter
   const handleArticleSearch = (term: string) => {
     if (!term) return;
     
